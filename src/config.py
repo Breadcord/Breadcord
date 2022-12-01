@@ -44,6 +44,28 @@ class Settings:
 
         return self._settings[key]
 
+    def set(self, key: str, value: Any, *, strict: bool = True) -> None:
+        """Sets the value for a setting by its key.
+
+        :param key: The key for the setting (the identifier before the equals sign in a TOML document).
+        :param value: The new value to set for the setting.
+        :param strict: Whether KeyError should be thrown when the key doesn't exist, instead of creating a new setting.
+        """
+
+        if not strict and key not in self._settings:
+            self._settings[key] = Setting(key, value)
+        self._settings[key].value = value
+
+    def update_values(self, data: dict, strict: bool = True) -> None:
+        """Overwrites existing values for settings, creating new :class:`Setting` entries if necessary.
+
+        :param data: A dict containing key-value pairs.
+        :param strict: Whether KeyError should be thrown when the key doesn't exist, instead of creating a new setting.
+        """
+
+        for item in data.items():
+            self.set(*item, strict=strict)
+
 
 def parse_chunk(chunk: list[tuple[Optional[Key], Item]]) -> Setting:
     """Converts a TOMLDocument.body chunk into a :class:`Setting` instance.
