@@ -21,7 +21,7 @@ class Settings:
     """Holds a collection of :class:`Setting` instances."""
 
     def __init__(self, settings: list[Setting] = None) -> None:
-        self._settings: dict[str, Setting] = {setting.key: setting for setting in settings}
+        self._settings: dict[str, Setting] = {} if settings is None else {setting.key: setting for setting in settings}
 
     def __repr__(self) -> str:
         return f'Settings({", ".join(repr(setting) for setting in self._settings.values())})'
@@ -105,3 +105,13 @@ def load_schema(file_path: str | PathLike[str]) -> Settings:
                 chunk = []
 
     return Settings(settings)
+
+
+def load_settings(file_path: str | PathLike[str]) -> dict[str, Any]:
+    """Loads and deserialises a TOML settings file into a :class:`tomlkit.TOMLDocument` instance.
+
+    :param file_path: Path to the TOML settings file.
+    :returns: A dict structure representing the hierarchy of the TOML document.
+    """
+
+    return dict(TOMLFile(file_path).read())
