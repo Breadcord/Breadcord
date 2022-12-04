@@ -1,8 +1,9 @@
 from os import PathLike
 from typing import Optional, Any
 
-from tomlkit.items import Key, Item, Comment, Whitespace
-from tomlkit.toml_file import TOMLFile
+import tomlkit
+from tomlkit.items import Key, Item, Comment, Whitespace, Table
+from tomlkit.toml_file import TOMLDocument, TOMLFile
 
 
 class Setting:
@@ -66,6 +67,24 @@ class Settings:
         for item in data.items():
             self.set(*item, strict=strict)
 
+    def as_toml(self, *, table: bool = False) -> TOMLDocument | Table:
+        """Exports the settings as a :class:`TOMLDocument` or :class:`Table` instance.
+
+        This method works recursively on any settings which have a value of a :class:`Settings` instance,
+        adding them to the TOML document as tables.
+
+        :param table: Whether a table should be generated instead of a document.
+        """
+
+        document = tomlkit.table() if table else TOMLDocument()
+        for setting in self._settings.values():
+            if isinstance(setting.value, Settings):
+                document.append(setting.key, setting.value.as_toml(table=True))
+            else:
+                document.append(setting.key, setting.value)
+
+        return document
+
 
 def parse_chunk(chunk: list[tuple[Optional[Key], Item]]) -> Setting:
     """Converts a TOMLDocument.body chunk into a :class:`Setting` instance.
@@ -108,7 +127,7 @@ def load_schema(file_path: str | PathLike[str]) -> Settings:
 
 
 def load_settings(file_path: str | PathLike[str]) -> dict[str, Any]:
-    """Loads and deserialises a TOML settings file into a :class:`tomlkit.TOMLDocument` instance.
+    """Loads and deserialises a TOML settings file into a :class:`TOMLDocument` instance.
 
     :param file_path: Path to the TOML settings file.
     :returns: A dict structure representing the hierarchy of the TOML document.
