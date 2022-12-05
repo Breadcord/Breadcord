@@ -27,6 +27,12 @@ class Settings:
     def __repr__(self) -> str:
         return f'Settings({", ".join(repr(setting) for setting in self._settings.values())})'
 
+    def __getattr__(self, item: str) -> Any:
+        return self.get(item)
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        self.set(key, value)
+
     def get(self, key: str) -> Any:
         """Gets the value for a setting by its key.
 
