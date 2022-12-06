@@ -31,6 +31,10 @@ class Settings:
         return self.get(item)
 
     def __setattr__(self, key: str, value: Any) -> None:
+        if key == '_settings':
+            super().__setattr__(key, value)
+            return
+
         self.set(key, value)
 
     def get(self, key: str) -> Any:
