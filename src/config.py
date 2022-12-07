@@ -91,6 +91,8 @@ class Settings:
             if isinstance(setting.value, Settings):
                 document.append(setting.key, setting.value.as_toml(table=True))
             else:
+                for line in setting.description.splitlines():
+                    document.add(tomlkit.comment(line))
                 document.append(setting.key, setting.value)
 
         return document
