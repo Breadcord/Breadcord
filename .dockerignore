@@ -1,6 +1,6 @@
 *
 
-!src/
+!bot/
 !requirements.txt
 
 **/__pycache__/

@@ -20,7 +20,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 COPY --from=build /app/venv ./venv
-COPY src ./src
+COPY bot ./bot
 
 ENV PATH="/app/venv/bin:$PATH"
-CMD ["python", "src/main.py"]
+CMD ["python", "-m", "bot"]
