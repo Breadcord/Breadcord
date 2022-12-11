@@ -114,7 +114,7 @@ def parse_chunk(chunk: list[tuple[Optional[Key], Item]]) -> Setting:
             description += chunk[0][1].indent(0).as_string().lstrip('# ')
         chunk.pop(0)
 
-    return Setting(chunk[0][0].key, chunk[0][1], description.rstrip())
+    return Setting(chunk[0][0].key, chunk[0][1].unwrap(), description.rstrip())
 
 
 def load_schema(file_path: str | PathLike[str]) -> Settings:
@@ -145,4 +145,4 @@ def load_settings(file_path: str | PathLike[str]) -> dict[str, Any]:
     :returns: A dict structure representing the hierarchy of the TOML document.
     """
 
-    return dict(TOMLFile(file_path).read())
+    return TOMLFile(file_path).read().unwrap()
