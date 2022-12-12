@@ -87,13 +87,20 @@ class Settings:
         """
 
         document = tomlkit.table() if table else TOMLDocument()
+        top_level: list[Setting] = []
+        nested: list[Setting] = []
         for setting in self._settings.values():
-            if isinstance(setting.value, Settings):
-                document.append(setting.key, setting.value.as_toml(table=True))
-            else:
-                for line in setting.description.splitlines():
-                    document.add(tomlkit.comment(line))
-                document.append(setting.key, setting.value)
+            (nested if isinstance(setting.value, Settings) else top_level).append(setting)
+
+        for setting in top_level:
+            for line in setting.description.splitlines():
+                document.add(tomlkit.comment(line))
+            document.append(setting.key, setting.value)
+            document.add(tomlkit.nl())
+
+        for setting in nested:
+            document.add(tomlkit.nl())
+            document.append(setting.key, setting.value.as_toml(table=True))
 
         return document
 
