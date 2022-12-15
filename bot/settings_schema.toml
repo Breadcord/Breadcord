@@ -8,3 +8,6 @@ token = ''
 
 # Bot command prefix
 command_prefix = '!'
+
+# Enabled modules
+modules = ['core']

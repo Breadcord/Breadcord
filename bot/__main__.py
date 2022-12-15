@@ -24,7 +24,7 @@ class Bot(commands.Bot):
 
     async def setup_hook(self) -> None:
         for module in self.modules:
-            if (module/'__init__.py').is_file():
+            if module.name in self.settings.modules:
                 await self.load_extension(f'bot.modules.{module.name}')
 
     async def close(self) -> None:
