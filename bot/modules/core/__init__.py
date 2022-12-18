@@ -1,17 +1,10 @@
-from typing import TYPE_CHECKING
-
 import discord
 from discord import app_commands
-from discord.ext import commands
 
-if TYPE_CHECKING:
-    from bot.__main__ import Bot
+from bot import Bot, Module
 
 
-class Core(commands.Cog):
-    def __init__(self, bot: 'Bot'):
-        self.bot = bot
-
+class Core(Module):
     @app_commands.command()
     async def sync(self, interaction: discord.Interaction):
         self.bot.tree.copy_global_to(guild=interaction.guild)
@@ -19,5 +12,5 @@ class Core(commands.Cog):
         await interaction.response.send_message('Commands synchronised!')
 
 
-async def setup(bot: 'Bot'):
+async def setup(bot: Bot):
     await bot.add_cog(Core(bot))
