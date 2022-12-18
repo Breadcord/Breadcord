@@ -13,4 +13,4 @@ class Core(Module):
 
 
 async def setup(bot: Bot):
-    await bot.add_cog(Core(bot))
+    await bot.add_cog(Core(__name__, bot))

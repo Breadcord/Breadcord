@@ -1,13 +1,12 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+import logging
 
 from discord.ext import commands
 
-if TYPE_CHECKING:
-    from bot.__main__ import Bot
+from bot import Bot
 
 
 class Module(commands.Cog):
-    def __init__(self, bot: Bot):
+    def __init__(self, name: str, bot: Bot):
+        self.name = name
         self.bot = bot
+        self.logger = logging.getLogger(name)
