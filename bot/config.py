@@ -13,6 +13,7 @@ class Setting:
         self.key = key
         self.value = value
         self.description = description
+        self.type = type(value)
 
     def __repr__(self) -> str:
         return f'Setting(key={repr(self.key)}, value={repr(self.value)}, description={repr(self.description)})'
@@ -65,6 +66,11 @@ class Settings:
 
         if not strict and key not in self._settings:
             self._settings[key] = Setting(key, value)
+        if not isinstance(value, self._settings[key].type):
+            raise TypeError(
+                f'{key!r} should be type {self._settings[key].type.__name__!r}, '
+                f'but value has type {type(value).__name__!r}'
+            )
         self._settings[key].value = value
 
     def update_values(self, data: dict, strict: bool = True) -> None:
