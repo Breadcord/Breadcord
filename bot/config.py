@@ -74,7 +74,7 @@ class Settings:
         self._settings[key].value = value
 
     def update_values(self, data: dict, strict: bool = True) -> None:
-        """Overwrites existing values for settings, creating new :class:`Setting` entries if necessary.
+        """Overwrites existing values for settings, creating new :class:`Setting` entries if not using strict mode.
 
         :param data: A dict containing key-value pairs.
         :param strict: Whether KeyError should be thrown when the key doesn't exist, instead of creating a new setting.
