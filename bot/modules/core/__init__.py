@@ -1,10 +1,10 @@
 import discord
 from discord import app_commands
 
-from bot import Bot, Module
+from bot import Bot, ModuleCog
 
 
-class Core(Module):
+class Core(ModuleCog):
     @app_commands.command()
     async def sync(self, interaction: discord.Interaction):
         self.bot.tree.copy_global_to(guild=interaction.guild)
