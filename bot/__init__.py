@@ -1,2 +1,2 @@
 from .bot import Bot
-from .module import Module
+from .module import ModuleCog
