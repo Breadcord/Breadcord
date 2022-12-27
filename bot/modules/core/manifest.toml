@@ -1,8 +1,8 @@
 manifest_version = 1
 
 [module]
-name = 'Core'
-description = 'A collection of preinstalled general-purpose commands and tools'
-version = '0.1.0-alpha'
-license = 'GNU GPLv3'
-authors = ['ThatOtherAndrew']
+name = "Core"
+description = "A collection of preinstalled general-purpose commands and tools"
+version = "0.1.0-alpha"
+license = "GNU GPLv3"
+authors = ["ThatOtherAndrew"]
