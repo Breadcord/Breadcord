@@ -23,7 +23,7 @@ class Bot(commands.Bot):
         discord.utils.setup_logging()
 
         if not (settings_path := Path('config/settings.toml')).is_file():
-            self.logger.info('Generating missing settings file in config/settings.toml')
+            self.logger.info('Generating missing config/settings.toml file')
             self.save_settings()
             self.logger.warning('Bot token must be supplied to start the bot')
             return
