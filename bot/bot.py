@@ -1,4 +1,4 @@
-from logging import getLogger
+import logging
 from pathlib import Path
 
 import discord
@@ -8,7 +8,7 @@ from . import config
 from .module import Module
 
 
-_logger = getLogger('bot')
+_logger = logging.getLogger('bot')
 
 
 class Bot(commands.Bot):
@@ -23,6 +23,10 @@ class Bot(commands.Bot):
     def run(self, **kwargs) -> None:
         discord.utils.setup_logging()
         self.reload_settings()
+        if self.settings.debug:
+            logging.getLogger().setLevel(logging.DEBUG)
+            _logger.debug('Debug mode enabled')
+            logging.getLogger('discord').setLevel(logging.INFO)
         self.command_prefix = commands.when_mentioned_or(self.settings.command_prefix)
 
         if not Path('config/settings.toml').is_file():
