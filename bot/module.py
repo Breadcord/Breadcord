@@ -31,20 +31,18 @@ class Module:
         self.name = self.manifest.name
 
     async def load(self) -> None:
-        self.load_settings()
+        self.load_settings_schema()
         await self.bot.load_extension(self.import_path)
         self.loaded = True
         self.logger.info(f'{self.name} module loaded')
 
-    def load_settings(self) -> None:
-        loaded_settings = config.load_settings('config/settings.toml')
-
-        if (schema_path := self.path / 'settings_schema.toml').is_file():
-            self.bot.settings.set(self.name, config.load_schema(schema_path), strict=False)
-            if self.name in loaded_settings and isinstance(loaded_settings[self.name], dict):
-                self.bot.settings.get(self.name).update_values(loaded_settings[self.name], strict=False)
-                del loaded_settings[self.name]
-        self.bot.settings.update_values(loaded_settings, strict=False)
+    def load_settings_schema(self) -> None:
+        if not (schema_path := self.path / 'settings_schema.toml').is_file():
+            return
+        self.bot.settings.update_from_dict({self.name: {}})
+        setting = self.bot.settings.get_full(self.name)
+        setting.value.set_schema(schema_path)
+        setting.in_schema = True
 
 
 class ModuleCog(commands.Cog):
