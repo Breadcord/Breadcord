@@ -8,7 +8,7 @@ from . import config
 from .module import Module
 
 
-_logger = logging.getLogger('bot')
+_logger = logging.getLogger('breadcord')
 
 
 class Bot(commands.Bot):
@@ -38,7 +38,7 @@ class Bot(commands.Bot):
         super().run(token=self.settings.token, log_handler=None, **kwargs)
 
     async def setup_hook(self) -> None:
-        for module_path in Path('bot/modules').iterdir():
+        for module_path in Path('breadcord/modules').iterdir():
             if (module_path / 'manifest.toml').is_file() and module_path.name in self.settings.modules:
                 module = Module(self, module_path)
                 self.modules.append(module)
@@ -50,7 +50,7 @@ class Bot(commands.Bot):
 
     def reload_settings(self) -> None:
         settings = config.Settings()
-        settings.set_schema('bot/settings_schema.toml')
+        settings.set_schema('breadcord/settings_schema.toml')
         settings.update_from_dict(config.load_settings('config/settings.toml'), strict=False)
         for module in self.modules:
             module.load_settings_schema()
