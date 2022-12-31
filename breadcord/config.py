@@ -36,7 +36,7 @@ class Setting:
 
 class SettingsEvent:
     """A class to handle triggered events for :class:`Settings` instances."""
-    def __init__(self):
+    def __init__(self) -> None:
         self.__listeners: list[dict] = []
     
     def on_change(self, event: str) -> callable:

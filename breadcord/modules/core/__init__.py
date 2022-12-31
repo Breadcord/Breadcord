@@ -11,5 +11,6 @@ class Core(ModuleCog):
         await self.bot.tree.sync(guild=interaction.guild)
         await interaction.response.send_message('Commands synchronised!')
 
+
 async def setup(bot: Bot):
     await bot.add_cog(Core(__name__, bot))
