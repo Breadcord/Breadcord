@@ -1,6 +1,7 @@
 from logging import getLogger
 from os import PathLike
-from typing import Optional, Any
+from typing import Optional, Any, Callable
+from functools import wraps
 
 import tomlkit
 from tomlkit.items import Key, Item, Comment, Whitespace, Table
@@ -34,10 +35,36 @@ class Setting:
         )
 
 
-class Settings:
+class SettingsEvent:
+    """A class to handle triggered events for :class:`Settings` instances."""
+    def __init__(self) -> None:
+        self.__listeners: list[dict] = []
+    
+    def on_change(self, func: Callable) -> Callable:
+        """A decorator to register a function to be called when a setting is changed."""
+        @wraps(func)
+        def wrapper(key: str):
+            listener = {
+                "key": key,
+                "func": func
+            }
+
+            self.__listeners.append(listener)
+        
+        return wrapper
+
+    def broadcast_change(self, key: str, data) -> None:
+        """Triggers an event and calls all registered functions."""
+        for listener in self.__listeners:
+            if listener["key"] == key:
+                listener["func"](data=data)
+
+
+class Settings(SettingsEvent):
     """Holds a collection of :class:`Setting` instances."""
 
     def __init__(self, settings: list[Setting] = None) -> None:
+        super().__init__()
         self._settings: dict[str, Setting] = {} if settings is None else {setting.key: setting for setting in settings}
 
     def __repr__(self) -> str:
@@ -111,6 +138,9 @@ class Settings:
                 f'{key!r} should be type {self._settings[key].type.__name__!r}, '
                 f'but value has type {type(value).__name__!r}'
             )
+        
+        if not value == self._settings[key].value:
+            self.broadcast_change(key, value)
         self._settings[key].value = value
 
     def update_from_dict(self, data: dict, *, strict: bool = True) -> None:
@@ -136,6 +166,8 @@ class Settings:
                     )
                 settings.update_from_dict(value, strict=strict)
             else:
+                if not value == self._settings[key].value:
+                    self.broadcast_change(key, value)
                 self.set(key, value, strict=strict)
 
     def as_toml(self, *, table: bool = False, warn_schema: bool = True) -> TOMLDocument | Table:
