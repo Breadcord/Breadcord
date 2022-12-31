@@ -1,4 +1,4 @@
-from bot import Bot
+from breadcord import Bot
 
 bot = Bot()
 
