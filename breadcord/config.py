@@ -51,11 +51,11 @@ class SettingsEvent:
         
         return wrapper
 
-    def trigger(self, event: str, *args):
+    def trigger(self, event: str, data):
         """Triggers an event and calls all registered functions."""
         for listener in self.__listeners:
             if listener["event"] == event:
-                listener["func"](*args)
+                listener["func"](data=data)
 
 
 class Settings(SettingsEvent):
