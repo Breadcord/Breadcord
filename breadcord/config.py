@@ -39,7 +39,7 @@ class SettingsEvent:
     def __init__(self):
         self.__listeners: list[dict] = []
     
-    def on_change(self, event: str):
+    def on_change(self, event: str) -> callable:
         """A decorator to register a function to be called when a setting is changed."""
         def wrapper(func):
             listener = {
@@ -51,7 +51,7 @@ class SettingsEvent:
         
         return wrapper
 
-    def trigger(self, event: str, data):
+    def trigger(self, event: str, data) -> None:
         """Triggers an event and calls all registered functions."""
         for listener in self.__listeners:
             if listener["event"] == event:
