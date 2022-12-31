@@ -1,6 +1,6 @@
 from logging import getLogger
 from os import PathLike
-from typing import Optional, Any
+from typing import Optional, Any, Callable
 
 import tomlkit
 from tomlkit.items import Key, Item, Comment, Whitespace, Table
@@ -39,7 +39,7 @@ class SettingsEvent:
     def __init__(self) -> None:
         self.__listeners: list[dict] = []
     
-    def on_change(self, event: str) -> callable:
+    def on_change(self, event: str) -> Callable:
         """A decorator to register a function to be called when a setting is changed."""
         def wrapper(func):
             listener = {
