@@ -34,10 +34,35 @@ class Setting:
         )
 
 
-class Settings:
+class SettingsEvent:
+    """A class to handle triggered events for :class:`Settings` instances."""
+    def __init__(self):
+        self.__listeners: list[dict] = []
+    
+    def on_change(self, event: str):
+        """A decorator to register a function to be called when a setting is changed."""
+        def wrapper(func):
+            listener = {
+                "event": event,
+                "func": func
+            }
+
+            self.__listeners.append(listener)
+        
+        return wrapper
+
+    def trigger(self, event: str, *args):
+        """Triggers an event and calls all registered functions."""
+        for listener in self.__listeners:
+            if listener["event"] == event:
+                listener["func"](*args)
+
+
+class Settings(SettingsEvent):
     """Holds a collection of :class:`Setting` instances."""
 
     def __init__(self, settings: list[Setting] = None) -> None:
+        super().__init__()
         self._settings: dict[str, Setting] = {} if settings is None else {setting.key: setting for setting in settings}
 
     def __repr__(self) -> str:
@@ -112,6 +137,7 @@ class Settings:
                 f'but value has type {type(value).__name__!r}'
             )
         self._settings[key].value = value
+        self.trigger(key, value)
 
     def update_from_dict(self, data: dict, *, strict: bool = True) -> None:
         """Recursively sets settings from a provided :class:`dict` object.
@@ -137,6 +163,7 @@ class Settings:
                 settings.update_from_dict(value, strict=strict)
             else:
                 self.set(key, value, strict=strict)
+                self.trigger(key, value)
 
     def as_toml(self, *, table: bool = False, warn_schema: bool = True) -> TOMLDocument | Table:
         """Exports the settings as a :class:`TOMLDocument` or :class:`Table` instance.
