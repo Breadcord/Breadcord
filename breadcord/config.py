@@ -1,6 +1,7 @@
 from logging import getLogger
 from os import PathLike
 from typing import Optional, Any, Callable
+from functools import wraps
 
 import tomlkit
 from tomlkit.items import Key, Item, Comment, Whitespace, Table
@@ -39,11 +40,12 @@ class SettingsEvent:
     def __init__(self) -> None:
         self.__listeners: list[dict] = []
     
-    def on_change(self, event: str) -> Callable:
+    def on_change(self, func: Callable) -> Callable:
         """A decorator to register a function to be called when a setting is changed."""
-        def wrapper(func):
+        @wraps(func)
+        def wrapper(key: str):
             listener = {
-                "event": event,
+                "key": key,
                 "func": func
             }
 
@@ -51,10 +53,10 @@ class SettingsEvent:
         
         return wrapper
 
-    def trigger(self, event: str, data) -> None:
+    def broadcast_change(self, key: str, data) -> None:
         """Triggers an event and calls all registered functions."""
         for listener in self.__listeners:
-            if listener["event"] == event:
+            if listener["key"] == key:
                 listener["func"](data=data)
 
 
@@ -136,8 +138,10 @@ class Settings(SettingsEvent):
                 f'{key!r} should be type {self._settings[key].type.__name__!r}, '
                 f'but value has type {type(value).__name__!r}'
             )
+        
+        if not value == self._settings[key].value:
+            self.broadcast_change(key, value)
         self._settings[key].value = value
-        self.trigger(key, value)
 
     def update_from_dict(self, data: dict, *, strict: bool = True) -> None:
         """Recursively sets settings from a provided :class:`dict` object.
@@ -162,8 +166,9 @@ class Settings(SettingsEvent):
                     )
                 settings.update_from_dict(value, strict=strict)
             else:
+                if not value == self._settings[key].value:
+                    self.broadcast_change(key, value)
                 self.set(key, value, strict=strict)
-                self.trigger(key, value)
 
     def as_toml(self, *, table: bool = False, warn_schema: bool = True) -> TOMLDocument | Table:
         """Exports the settings as a :class:`TOMLDocument` or :class:`Table` instance.
