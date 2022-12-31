@@ -38,15 +38,22 @@ class Bot(commands.Bot):
         super().run(token=self.settings.token, log_handler=None, **kwargs)
 
     async def setup_hook(self) -> None:
-        for module_path in Path('breadcord/modules').iterdir():
-            if (module_path / 'manifest.toml').is_file() and module_path.name in self.settings.modules:
-                module = Module(self, module_path)
-                self.modules.append(module)
-                await module.load()
+        self.discover_modules()
+        for module in self.modules:
+            await module.load()
 
     async def close(self) -> None:
         self.save_settings()
         await super().close()
+
+    def discover_modules(self) -> None:
+        modules = []
+        for search_location in Path('breadcord/core_modules'), Path('breadcord/modules'):
+            for module_path in search_location.iterdir():
+                if (module_path / 'manifest.toml').is_file() and module_path.name in self.settings.modules:
+                    module = Module(self, module_path)
+                    modules.append(module)
+        self.modules = modules
 
     def reload_settings(self) -> None:
         settings = config.Settings()
