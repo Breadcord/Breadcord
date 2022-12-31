@@ -10,10 +10,10 @@ from packaging.version import Version
 import pydantic
 from discord.ext import commands
 
-from bot import config
+from breadcord import config
 
 if TYPE_CHECKING:
-    from bot import Bot
+    from breadcord import Bot
 
 
 class Module:

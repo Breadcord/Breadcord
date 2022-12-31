@@ -1,7 +1,7 @@
 import discord
 from discord import app_commands
 
-from bot import Bot, ModuleCog
+from breadcord import Bot, ModuleCog
 
 
 class Core(ModuleCog):

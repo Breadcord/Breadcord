@@ -7,7 +7,7 @@ from tomlkit.items import Key, Item, Comment, Whitespace, Table
 from tomlkit.toml_file import TOMLDocument, TOMLFile
 
 
-_logger = getLogger('bot.config')
+_logger = getLogger('breadcord.config')
 
 
 class Setting:

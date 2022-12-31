@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   bot:
-    container_name: bot
+    container_name: breadcord
     build: .
     restart: on-failure
     network_mode: host

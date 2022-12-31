@@ -20,7 +20,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 COPY --from=build /app/venv ./venv
-COPY bot ./bot
+COPY breadcord ./breadcord
 
 ENV PATH="/app/venv/bin:$PATH"
-CMD ["python", "-m", "bot"]
+CMD ["python", "-m", "breadcord"]
