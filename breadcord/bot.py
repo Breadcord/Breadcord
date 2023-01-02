@@ -22,12 +22,6 @@ class Bot(commands.Bot):
 
     def run(self, **kwargs) -> None:
         discord.utils.setup_logging()
-        self.reload_settings()
-        if self.settings.debug.value:
-            logging.getLogger().setLevel(logging.DEBUG)
-            _logger.debug('Debug mode enabled')
-            logging.getLogger('discord').setLevel(logging.INFO)
-        self.command_prefix = commands.when_mentioned_or(self.settings.command_prefix.value)
 
         if not Path('config/settings.toml').is_file():
             _logger.info('Generating missing config/settings.toml file'),
@@ -35,6 +29,13 @@ class Bot(commands.Bot):
             _logger.warning('Bot token must be supplied to start the bot')
             return
 
+        self.reload_settings()
+        if self.settings.debug.value:
+            logging.getLogger().setLevel(logging.DEBUG)
+            _logger.debug('Debug mode enabled')
+            logging.getLogger('discord').setLevel(logging.INFO)
+
+        self.command_prefix = commands.when_mentioned_or(self.settings.command_prefix.value)
         super().run(token=self.settings.token.value, log_handler=None, **kwargs)
 
     async def setup_hook(self) -> None:
@@ -49,6 +50,7 @@ class Bot(commands.Bot):
     def discover_modules(self) -> None:
         modules = []
         for search_location in Path('breadcord/core_modules'), Path('breadcord/modules'):
+            search_location.mkdir(exist_ok=True)
             for module_path in search_location.iterdir():
                 if (module_path / 'manifest.toml').is_file() and module_path.name in self.settings.modules.value:
                     module = Module(self, module_path)
