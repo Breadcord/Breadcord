@@ -30,6 +30,9 @@ class Module:
 
         self.name = self.manifest.name
 
+    def __repr__(self) -> str:
+        return f'Module({self.import_path})'
+
     async def load(self) -> None:
         self.load_settings_schema()
         await self.bot.load_extension(self.import_path)
