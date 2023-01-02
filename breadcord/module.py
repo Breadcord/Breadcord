@@ -43,7 +43,7 @@ class Module:
         if not (schema_path := self.path / 'settings_schema.toml').is_file():
             return
         self.bot.settings.update_from_dict({self.name: {}})
-        setting = self.bot.settings.get_full(self.name)
+        setting = self.bot.settings.get(self.name)
         setting.value.set_schema(schema_path)
         setting.in_schema = True
 

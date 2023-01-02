@@ -97,7 +97,7 @@ class Settings:
         return f'Settings({", ".join(repr(setting) for setting in self._settings.values())})'
 
     def __getattr__(self, item: str) -> Setting | Settings:
-        setting = self.get_full(item)
+        setting = self.get(item)
         return setting.value if setting.type == Settings else setting
 
     def __iter__(self) -> Generator[Setting, None, None]:
@@ -131,17 +131,15 @@ class Settings:
             chunk = []
 
     def get(self, key: str) -> Any:
-        """Gets the value for a setting by its key.
-
-        This method can be thought of as a shortcut for ``get_full().value``.
-
-        :param key: The key for the setting (the identifier before the equals sign in a TOML document).
-        """
-
-        return self._settings[key].value
-
-    def get_full(self, key: str) -> Setting:
         """Gets a :class:`Setting` object by its key.
+
+        If the setting is not of type :class:`Settings`, then the setting can be accessed by attribute as a shortcut.
+        For example, ``settings.debug`` can be used instead of ``settings.get('debug')``. If the setting is of type
+        :class:`Settings`, then the setting value will be returned instead.
+
+        Attributes can be accessed recursively to traverse a nested settings structure. For example,
+        ``settings.ModuleName.some_setting.value`` is equivalent to
+        ``settings.get('ModuleName').value.get('some_setting').value``. Phew!
 
         :param key: The key for the setting (the identifier before the equals sign in a TOML document).
         """
@@ -181,7 +179,7 @@ class Settings:
             if isinstance(value, dict):
                 if key not in self._settings:
                     self.set(key, settings := Settings(), strict=False)
-                elif (setting := self.get_full(key)).type == Settings:
+                elif (setting := self.get(key)).type == Settings:
                     settings = setting.value
                 else:
                     raise ValueError(
