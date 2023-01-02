@@ -172,7 +172,8 @@ class Settings:
         :class:`dict`, regardless of the value of ``strict``.
 
         :param data: A dict containing key-value pairs.
-        :param strict: Whether :class:`KeyError` should be thrown when a key doesn't exist, instead of creating a new setting.
+        :param strict: Whether :class:`KeyError` should be thrown when a key doesn't exist, instead of creating a new
+            setting.
         """
 
         for key, value in data.items():
