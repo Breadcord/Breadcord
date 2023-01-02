@@ -102,13 +102,17 @@ class Settings:
         chunk = []
         for item in body:
             chunk.append(item)
-            if item[0] is not None:
-                if chunk:
-                    setting = parse_schema_chunk(chunk)
-                    self._settings[setting.key] = Setting(key=setting.key, value=self._settings[
-                        setting.key].value if setting.key in self else setting.value, description=setting.description,
-                                                          in_schema=True)
-                    chunk = []
+            if item[0] is None or not chunk:
+                continue
+
+            setting = parse_schema_chunk(chunk)
+            self._settings[setting.key] = Setting(
+                key=setting.key,
+                value=self._settings[setting.key].value if setting.key in self else setting.value,
+                description=setting.description,
+                in_schema=True
+            )
+            chunk = []
 
     def get(self, key: str) -> Any:
         """Gets the value for a setting by its key.
