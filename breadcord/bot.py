@@ -58,7 +58,7 @@ class Bot(commands.Bot):
 
     def reload_settings(self) -> None:
         settings = config.Settings()
-        settings.set_schema('breadcord/settings_schema.toml')
+        settings.set_schema('settings_schema.toml')
         settings.update_from_dict(config.load_settings('config/settings.toml'), strict=False)
         for module in self.modules:
             module.load_settings_schema()
