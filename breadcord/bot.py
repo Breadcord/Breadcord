@@ -48,8 +48,9 @@ class Bot(commands.Bot):
         await super().close()
 
     def discover_modules(self) -> None:
+        Path('modules').mkdir(exist_ok=True)
         modules = []
-        for search_location in Path('breadcord/core_modules'), Path('breadcord/modules'):
+        for search_location in Path('core_modules'), Path('modules'):
             for module_path in search_location.iterdir():
                 if (module_path / 'manifest.toml').is_file() and module_path.name in self.settings.modules.value:
                     module = Module(self, module_path)
