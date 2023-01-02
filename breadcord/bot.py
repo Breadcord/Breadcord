@@ -22,18 +22,19 @@ class Bot(commands.Bot):
 
     def run(self, **kwargs) -> None:
         discord.utils.setup_logging()
-        self.reload_settings()
-        if self.settings.debug.value:
-            logging.getLogger().setLevel(logging.DEBUG)
-            _logger.debug('Debug mode enabled')
-            logging.getLogger('discord').setLevel(logging.INFO)
-        self.command_prefix = commands.when_mentioned_or(self.settings.command_prefix.value)
 
         if not Path('config/settings.toml').is_file():
             _logger.info('Generating missing config/settings.toml file'),
             self.save_settings()
             _logger.warning('Bot token must be supplied to start the bot')
             return
+
+        self.reload_settings()
+        if self.settings.debug.value:
+            logging.getLogger().setLevel(logging.DEBUG)
+            _logger.debug('Debug mode enabled')
+            logging.getLogger('discord').setLevel(logging.INFO)
+        self.command_prefix = commands.when_mentioned_or(self.settings.command_prefix.value)
 
         super().run(token=self.settings.token.value, log_handler=None, **kwargs)
 
