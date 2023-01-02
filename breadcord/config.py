@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from functools import partial, wraps
 from logging import getLogger
 from os import PathLike
@@ -81,8 +83,9 @@ class Settings:
     def __repr__(self) -> str:
         return f'Settings({", ".join(repr(setting) for setting in self._settings.values())})'
 
-    def __getattr__(self, item: str) -> Any:
-        return self.get(item)
+    def __getattr__(self, item: str) -> Setting | Settings:
+        setting = self.get_full(item)
+        return setting.value if setting.type == Settings else setting
 
     def __iter__(self):
         yield from self._settings.values()
