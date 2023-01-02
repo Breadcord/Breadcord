@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Generator
 from functools import partial, wraps
 from logging import getLogger
 from os import PathLike
@@ -31,7 +32,7 @@ class Setting:
         self.description = description
         self.type: type = type(value)
         self.in_schema = in_schema
-        self._observers = []
+        self._observers: list[Callable[[Any, Any], None]] = []
 
     def __repr__(self) -> str:
         return (
@@ -44,11 +45,11 @@ class Setting:
         )
 
     @property
-    def value(self):
+    def value(self) -> Any:
         return self._value
 
     @value.setter
-    def value(self, new_value):
+    def value(self, new_value: Any) -> None:
         if not isinstance(new_value, self.type):
             raise TypeError(
                 f'Cannot assign type {type(new_value).__name__!r} to setting with type {self.type.__name__!r}'
@@ -99,7 +100,7 @@ class Settings:
         setting = self.get_full(item)
         return setting.value if setting.type == Settings else setting
 
-    def __iter__(self):
+    def __iter__(self) -> Generator[Setting, None, None]:
         yield from self._settings.values()
 
     def __contains__(self, item: Any) -> bool:
