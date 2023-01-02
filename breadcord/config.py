@@ -1,12 +1,11 @@
+from functools import partial, wraps
 from logging import getLogger
 from os import PathLike
 from typing import Optional, Any, Callable
-from functools import wraps
 
 import tomlkit
 from tomlkit.items import Key, Item, Comment, Whitespace, Table
 from tomlkit.toml_file import TOMLDocument, TOMLFile
-
 
 _logger = getLogger('breadcord.config')
 
@@ -19,52 +18,64 @@ class Setting:
 
     def __init__(self, key: str, value: Any, description: str = '', *, in_schema: bool = False) -> None:
         self.key = key
-        self.value = value
+        self._value = value
         self.description = description
         self.type: type = type(value)
         self.in_schema = in_schema
+        self._observers = []
 
     def __repr__(self) -> str:
         return (
             f'Setting('
             f'key={self.key!r}, '
-            f'value={self.value!r}, '
+            f'value={self._value!r}, '
             f'description={self.description!r}, '
             f'in_schema={self.in_schema!r}'
             f')'
         )
 
+    @property
+    def value(self):
+        return self._value
 
-class SettingsEvent:
-    """A class to handle triggered events for :class:`Settings` instances."""
-    def __init__(self) -> None:
-        self.__listeners: list[dict] = []
-    
-    def on_change(self, func: Callable) -> Callable:
-        """A decorator to register a function to be called when a setting is changed."""
-        @wraps(func)
-        def wrapper(key: str):
-            listener = {
-                "key": key,
-                "func": func
-            }
+    @value.setter
+    def value(self, new_value):
+        old_value = self._value
+        self._value = new_value
+        for observer in self._observers:
+            observer(old_value, new_value)
 
-            self.__listeners.append(listener)
-        
+    def new_observer(
+        self,
+        observer: Callable[[Any, Any], Any] | None = None,
+        *,
+        always_trigger: bool = False
+    ) -> Callable[[Any, Any], None]:
+        """Registers an observer function which is called whenever the setting value is updated.
+
+        :param observer: The callback function. Takes two parameters ``old`` and ``new``, which correspond to the value
+            of the setting before and after it is updateed respectively.
+        :param always_trigger: If the observer should be called even if the updated value is equal to the previous
+            value.
+        """
+
+        if observer is None:
+            return partial(self.new_observer, always_trigger=always_trigger)
+
+        @wraps(observer)
+        def wrapper(old: Any, new: Any) -> None:
+            if not always_trigger and old == new:
+                return
+            observer(old, new)
+
+        self._observers.append(wrapper)
         return wrapper
 
-    def broadcast_change(self, key: str, data) -> None:
-        """Triggers an event and calls all registered functions."""
-        for listener in self.__listeners:
-            if listener["key"] == key:
-                listener["func"](data=data)
 
-
-class Settings(SettingsEvent):
+class Settings:
     """Holds a collection of :class:`Setting` instances."""
 
     def __init__(self, settings: list[Setting] = None) -> None:
-        super().__init__()
         self._settings: dict[str, Setting] = {} if settings is None else {setting.key: setting for setting in settings}
 
     def __repr__(self) -> str:
@@ -138,9 +149,7 @@ class Settings(SettingsEvent):
                 f'{key!r} should be type {self._settings[key].type.__name__!r}, '
                 f'but value has type {type(value).__name__!r}'
             )
-        
-        if not value == self._settings[key].value:
-            self.broadcast_change(key, value)
+
         self._settings[key].value = value
 
     def update_from_dict(self, data: dict, *, strict: bool = True) -> None:
@@ -166,8 +175,6 @@ class Settings(SettingsEvent):
                     )
                 settings.update_from_dict(value, strict=strict)
             else:
-                if not value == self._settings[key].value:
-                    self.broadcast_change(key, value)
                 self.set(key, value, strict=strict)
 
     def as_toml(self, *, table: bool = False, warn_schema: bool = True) -> TOMLDocument | Table:
