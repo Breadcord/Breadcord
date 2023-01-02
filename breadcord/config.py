@@ -42,6 +42,11 @@ class Setting:
 
     @value.setter
     def value(self, new_value):
+        if not isinstance(new_value, self.type):
+            raise TypeError(
+                f'Cannot assign type {type(new_value).__name__!r} to setting with type {self.type.__name__!r}'
+            )
+
         old_value = self._value
         self._value = new_value
         for observer in self._observers:
@@ -136,11 +141,11 @@ class Settings:
         return self._settings[key]
 
     def set(self, key: str, value: Any, *, strict: bool = True) -> None:
-        """Sets the value for a setting by its key.
+        """Sets the value for a setting by its key, creating new settings as necessary if not using strict mode.
 
         :param key: The key for the setting (the identifier before the equals sign in a TOML document).
         :param value: The new value to set for the setting.
-        :param strict: Whether KeyError should be thrown when the key doesn't exist in the schema.
+        :param strict: Whether :class:`KeyError` should be thrown when the key doesn't exist in the schema.
         """
 
         if strict and (
@@ -151,11 +156,6 @@ class Settings:
 
         if key not in self._settings:
             self._settings[key] = Setting(key, value, in_schema=False)
-        elif not isinstance(value, self._settings[key].type):
-            raise TypeError(
-                f'{key!r} should be type {self._settings[key].type.__name__!r}, '
-                f'but value has type {type(value).__name__!r}'
-            )
 
         self._settings[key].value = value
 
@@ -166,7 +166,7 @@ class Settings:
         :class:`dict`, regardless of the value of ``strict``.
 
         :param data: A dict containing key-value pairs.
-        :param strict: Whether KeyError should be thrown when a key doesn't exist, instead of creating a new setting.
+        :param strict: Whether :class:`KeyError` should be thrown when a key doesn't exist, instead of creating a new setting.
         """
 
         for key, value in data.items():
