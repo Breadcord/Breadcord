@@ -34,8 +34,8 @@ class Bot(commands.Bot):
             logging.getLogger().setLevel(logging.DEBUG)
             _logger.debug('Debug mode enabled')
             logging.getLogger('discord').setLevel(logging.INFO)
-        self.command_prefix = commands.when_mentioned_or(self.settings.command_prefix.value)
 
+        self.command_prefix = commands.when_mentioned_or(self.settings.command_prefix.value)
         super().run(token=self.settings.token.value, log_handler=None, **kwargs)
 
     async def setup_hook(self) -> None:
