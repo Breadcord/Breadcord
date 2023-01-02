@@ -13,9 +13,16 @@ _logger = getLogger('breadcord.config')
 
 
 class Setting:
+    # noinspection PyUnresolvedReferences
     """Holds a single setting key-value pair, and optionally a description of the setting.
 
     The data type is enforced in subsequent writes to the value of this setting, inferring from the initial data type.
+
+    :ivar key: The setting identifier.
+    :ivar value: The value held by the setting.
+    :ivar description: A description intended to explain the setting to a user, usually parsed from a settings schema.
+    :ivar type: The data type held by the setting.
+    :ivar in_schema: Whether the setting is present in the settings schema.
     """
 
     def __init__(self, key: str, value: Any, description: str = '', *, in_schema: bool = False) -> None:
