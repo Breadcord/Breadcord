@@ -2,9 +2,9 @@ name: Auto Assign
 
 on:
   issues:
-    types: opened
+    types: [ opened ]
   pull_request:
-    types: opened
+    types: [ opened ]
 
 jobs:
   assign_members:
@@ -23,5 +23,5 @@ jobs:
     steps:
       - uses: actions/add-to-project@v0.4.0
         with:
-          github-token: ${{ secrets.ACTIONS_ADD_TO_PROJECT }}
+          github-token: ${{ secrets.ACTIONS_TOKEN }}
           project-url: https://github.com/orgs/Breadcord/projects/1
