@@ -2,10 +2,11 @@ name: CodeQL Analysis
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [ main ]
+    branches:
+      - main
   schedule:
     - cron: '0 7 * * 1'
 
@@ -31,7 +32,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Initialises the CodeQL tools for scanning.
       - name: Initialise CodeQL
         uses: github/codeql-action/init@v2
         with:

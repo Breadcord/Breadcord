@@ -2,10 +2,12 @@ name: Close Project Item
 
 on:
   issues:
-    types: [ closed ]
+    types:
+      - closed
   # Commented out due to action failing with PRs currently
   # pull_request:
-  #   types: [ closed ]
+  #   types:
+  #     - closed
 
 jobs:
   if_merged:
