@@ -96,8 +96,6 @@ def parse_manifest(manifest: dict[str, Any]) -> ModuleManifest:
     match manifest:
         case {'manifest_version': 1, **data}:
             flattened_data: dict[str, Any] = data['module']
-            if 'install' in data:
-                flattened_data.update(data['install'])
             return ModuleManifest(**flattened_data)
         case _:
             raise ValueError('invalid manifest version')
