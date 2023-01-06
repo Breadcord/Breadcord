@@ -15,7 +15,7 @@ _logger = getLogger('breadcord.config')
 
 class Setting:
     # noinspection PyUnresolvedReferences
-    """Holds a single setting key-value pair, and optionally a description of the setting.
+    """A single setting key-value pair, and metadata such as the setting description.
 
     The data type is enforced in subsequent writes to the value of this setting, inferring from the initial data type.
 
@@ -88,7 +88,7 @@ class Setting:
 
 
 class Settings:
-    """Holds a collection of :class:`Setting` instances."""
+    """A collection of :class:`Setting` instances."""
 
     def __init__(self, settings: list[Setting] = None) -> None:
         self._settings: dict[str, Setting] = {} if settings is None else {setting.key: setting for setting in settings}
