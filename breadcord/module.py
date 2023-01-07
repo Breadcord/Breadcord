@@ -33,6 +33,12 @@ class Module:
 
         self.name = self.manifest.name
 
+    @property
+    def storage_path(self) -> Path:
+        path = Path(f'storage/{self.name}').resolve()
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
     def __repr__(self) -> str:
         return f'Module({self.import_string})'
 
