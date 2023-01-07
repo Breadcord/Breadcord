@@ -23,8 +23,8 @@ class Module:
     def __init__(self, bot: Bot, module_path: str | PathLike[str]) -> None:
         self.bot = bot
         self.path = Path(module_path).resolve()
-        self.import_path = self.path.relative_to(Path().resolve()).as_posix().replace('/', '.')
-        self.logger = getLogger(self.import_path)
+        self.import_string = self.path.relative_to(Path().resolve()).as_posix().replace('/', '.')
+        self.logger = getLogger(self.import_string)
         self.loaded = False
 
         if not (self.path / 'manifest.toml').is_file():
@@ -34,11 +34,11 @@ class Module:
         self.name = self.manifest.name
 
     def __repr__(self) -> str:
-        return f'Module({self.import_path})'
+        return f'Module({self.import_string})'
 
     async def load(self) -> None:
         self.load_settings_schema()
-        await self.bot.load_extension(self.import_path)
+        await self.bot.load_extension(self.import_string)
         self.loaded = True
         self.logger.info(f'{self.name} module loaded')
 
@@ -67,7 +67,7 @@ class Modules:
     def add(self, module: Module) -> None:
         if module.name in self._modules:
             module.logger.error(
-                f'module name conflicts with {self.get(module.name).import_path} so it will not be loaded'
+                f'module name conflicts with {self.get(module.name).import_string} so it will not be loaded'
             )
         self._modules[module.name] = module
 
