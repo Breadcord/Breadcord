@@ -1,4 +1,5 @@
 import logging
+from os import PathLike
 from pathlib import Path
 
 import discord
@@ -57,9 +58,10 @@ class Bot(commands.Bot):
             module.load_settings_schema()
         self.settings = settings
 
-    def save_settings(self) -> None:
-        _logger.info('Saving settings to config/settings.toml')
-        Path('config').mkdir(exist_ok=True)
-        with open('config/settings.toml', 'w+', encoding='utf-8') as file:
+    def save_settings(self, file_path: PathLike | str = 'config/settings.toml') -> None:
+        path = Path(file_path)
+        _logger.info(f'Saving settings to {path.as_posix()}')
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open('w+', encoding='utf-8') as file:
             output = self.settings.as_toml().as_string().rstrip() + '\n'
             file.write(output)
