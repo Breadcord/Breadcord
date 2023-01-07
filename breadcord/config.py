@@ -98,7 +98,7 @@ class Settings:
 
     def __getattr__(self, item: str) -> Setting | Settings:
         setting = self.get(item)
-        return setting.value if setting.type == Settings else setting
+        return setting.value if setting.type is Settings else setting
 
     def __iter__(self) -> Generator[Setting, None, None]:
         yield from self._settings.values()
@@ -180,7 +180,7 @@ class Settings:
             if isinstance(value, dict):
                 if key not in self._settings:
                     self.set(key, settings := Settings(), strict=False)
-                elif (setting := self.get(key)).type == Settings:
+                elif (setting := self.get(key)).type is Settings:
                     settings = setting.value
                 else:
                     raise ValueError(
