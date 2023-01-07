@@ -130,7 +130,7 @@ class Settings:
             )
             chunk = []
 
-    def get(self, key: str) -> Any:
+    def get(self, key: str) -> Setting:
         """Gets a :class:`Setting` object by its key.
 
         If the setting is not of type :class:`Settings`, then the setting can be accessed by attribute as a shortcut.
