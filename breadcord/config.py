@@ -90,7 +90,7 @@ class Setting:
 class Settings:
     """A collection of :class:`Setting` instances."""
 
-    def __init__(self, settings: list[Setting] = None) -> None:
+    def __init__(self, settings: list[Setting] | None = None) -> None:
         self._settings: dict[str, Setting] = {} if settings is None else {setting.key: setting for setting in settings}
 
     def __repr__(self) -> str:

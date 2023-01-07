@@ -5,20 +5,22 @@ import discord
 from discord.ext import commands
 
 from . import config
-from .module import Module
+from .module import Modules, global_modules
 
-
-_logger = logging.getLogger('breadcord')
+_logger = logging.getLogger('breadcord.bot')
 
 
 class Bot(commands.Bot):
     def __init__(self) -> None:
         self.settings = config.Settings()
-        self.modules: list[Module] = []
         super().__init__(
             command_prefix=None,
             intents=discord.Intents.all()
         )
+
+    @property
+    def modules(self) -> Modules:
+        return global_modules
 
     def run(self, **kwargs) -> None:
         discord.utils.setup_logging()
@@ -39,23 +41,13 @@ class Bot(commands.Bot):
         super().run(token=self.settings.token.value, log_handler=None, **kwargs)
 
     async def setup_hook(self) -> None:
-        self.discover_modules()
+        self.modules.discover(self, search_paths=('breadcord/core_modules', 'breadcord/modules'))
         for module in self.modules:
             await module.load()
 
     async def close(self) -> None:
         self.save_settings()
         await super().close()
-
-    def discover_modules(self) -> None:
-        modules = []
-        for search_location in Path('breadcord/core_modules'), Path('breadcord/modules'):
-            search_location.mkdir(exist_ok=True)
-            for module_path in search_location.iterdir():
-                if (module_path / 'manifest.toml').is_file() and module_path.name in self.settings.modules.value:
-                    module = Module(self, module_path)
-                    modules.append(module)
-        self.modules = modules
 
     def reload_settings(self) -> None:
         settings = config.Settings()

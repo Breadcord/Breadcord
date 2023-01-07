@@ -1,10 +1,10 @@
 import discord
 from discord import app_commands
 
-from breadcord import Bot, ModuleCog
+import breadcord
 
 
-class Core(ModuleCog):
+class Core(breadcord.module.ModuleCog):
     @app_commands.command()
     async def sync(self, interaction: discord.Interaction):
         self.bot.tree.copy_global_to(guild=interaction.guild)
@@ -12,5 +12,5 @@ class Core(ModuleCog):
         await interaction.response.send_message('Commands synchronised!')
 
 
-async def setup(bot: Bot):
-    await bot.add_cog(Core(__name__, bot))
+async def setup(bot: breadcord.Bot):
+    await bot.add_cog(Core())
