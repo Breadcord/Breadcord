@@ -96,6 +96,12 @@ class ModuleCog(commands.Cog):
         self.bot = self.module.bot
         self.logger = self.module.logger
 
+    @property
+    def settings(self) -> config.Settings:
+        if self.name not in self.bot.settings or self.bot.settings.get(self.name).type is not config.Settings:
+            raise AttributeError(f'module {self.name!r} does not have settings')
+        return self.bot.settings.get(self.name).value
+
 
 class ModuleManifest(pydantic.BaseModel):
     class Config:
