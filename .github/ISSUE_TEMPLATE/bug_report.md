@@ -9,11 +9,11 @@ assignees: ''
 ## Bug Report
 
 ### Checklist
-<!-- Check all checkboxes that apply. These aren't all required, but they are helpful! -->
+<!-- Check all checkboxes that apply. These aren't required, but more is better! -->
 
 - [ ] I have been able to successfully and reliably reproduce the issue.
 - [ ] I confirm this issue is present as of the latest commit on the `main` branch.
-- [ ] I have searched for a similar issue in the repository and didn't find anything relevant.
+- [ ] I have searched for a similar issue in this repository and didn't find anything relevant.
 
 ### Description
 <!-- A clear and concise description of what the bug is. -->

@@ -9,10 +9,10 @@ assignees: ''
 ## Feature Request
 
 ### Checklist
-<!-- Check all checkboxes that apply. These aren't all required, but they are helpful! -->
+<!-- Check all checkboxes that apply. These aren't required, but more is better! -->
 
 - [ ] I am willing to follow this issue and provide additional information and feedback.
-- [ ] I have searched for a similar feature in the repository and didn't find anything relevant.
+- [ ] I have searched for a similar feature in this repository and didn't find anything relevant.
 - [ ] I am willing to provide specific implementation or solution examples to aid design and development.
 
 ### Problem
