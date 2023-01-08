@@ -1,5 +1,6 @@
 .idea/
 config/
+storage/
 
 ### Python template
 # Byte-compiled / optimized / DLL files
