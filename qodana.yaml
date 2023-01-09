@@ -5,5 +5,3 @@ bootstrap: |
   pip install -r requirements.txt --quiet
 profile:
   name: qodana.recommended
-include:
-  - name: CheckDependencyLicenses
