@@ -1,11 +1,3 @@
----
-name: Bug Fix
-about: Resolve a bug, error, or other issue
-title: ''
-labels: bug
-assignees: ''
----
-
 ## Bug Fix
 
 ### Checklist

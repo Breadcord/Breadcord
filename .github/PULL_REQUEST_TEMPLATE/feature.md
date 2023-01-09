@@ -1,11 +1,3 @@
----
-name: New Feature
-about: Implement a new feature or enhancement
-title: ''
-labels: enhancement
-assignees: ''
----
-
 ## New Feature
 
 ### Checklist
