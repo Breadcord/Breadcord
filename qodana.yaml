@@ -1,9 +1,8 @@
 version: "1.0"
 linter: jetbrains/qodana-python:2022.3-eap
-bootstrap: >-
-  rm -rf .idea/misc.xml
-  && python -m venv /data/cache/venv
-  && /data/cache/venv/bin/pip install -r requirements.txt --quiet
+bootstrap: |
+  rm -rf .idea
+  pip install -r requirements.txt --quiet
 profile:
   name: qodana.recommended
 include:
