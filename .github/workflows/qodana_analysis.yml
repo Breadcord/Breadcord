@@ -30,7 +30,7 @@ jobs:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
         with:
           args: >
-            -v, ${{ github.workspace }}/pydantic:/opt/idea/plugins/pydantic
+            -v, ${{ github.workspace }}/Pydantic:/opt/idea/plugins/Pydantic
 
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v2
