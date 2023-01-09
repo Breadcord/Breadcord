@@ -2,8 +2,6 @@ version: 1.0
 linter: jetbrains/qodana-python:2022.3-eap
 bootstrap: |
   rm -rf .idea
-  curl -L -o /tmp/pydantic.zip "https://plugins.jetbrains.com/plugin/download?updateId=267613"
-  unzip -d /opt/idea/plugins /tmp/pydantic.zip
   pip install -r requirements.txt --quiet
 profile:
   name: qodana.recommended
