@@ -6,6 +6,7 @@ from os import PathLike
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable
 
+import discord
 import pydantic
 from discord.ext import commands
 from packaging.requirements import Requirement
@@ -133,6 +134,7 @@ class ModuleManifest(pydantic.BaseModel):
         max_length=32
     )] = []
     requirements: list[Requirement] = []
+    permissions: discord.Permissions = discord.Permissions.none()
 
     @pydantic.validator('version', pre=True)
     def parse_version(cls, value: str) -> Version:
@@ -141,6 +143,10 @@ class ModuleManifest(pydantic.BaseModel):
     @pydantic.validator('requirements', pre=True, each_item=True)
     def parse_requirement(cls, value: str) -> Requirement:
         return Requirement(value)
+
+    @pydantic.validator('permissions', pre=True)
+    def parse_permissions(cls, value: list[str]) -> discord.Permissions:
+        return discord.Permissions(**{permission: True for permission in value})
 
 
 def parse_manifest(manifest: dict[str, Any]) -> ModuleManifest:
