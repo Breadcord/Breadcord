@@ -67,6 +67,9 @@ class Modules:
     def __iter__(self) -> Generator[Module, None, None]:
         yield from self._modules.values()
 
+    def __contains__(self, item: Any) -> bool:
+        return item in self._modules
+
     def get(self, module_name: str) -> Module:
         return self._modules[module_name]
 
@@ -83,7 +86,7 @@ class Modules:
             path = Path(path)
             path.mkdir(exist_ok=True)
             for module_path in path.iterdir():
-                if not (module_path / 'manifest.toml').is_file() or module_path.name not in bot.settings.modules.value:
+                if not (module_path / 'manifest.toml').is_file():
                     continue
                 module = Module(bot, module_path)
                 self.add(module)

@@ -43,8 +43,11 @@ class Bot(commands.Bot):
 
     async def setup_hook(self) -> None:
         self.modules.discover(self, search_paths=('breadcord/core_modules', 'breadcord/modules'))
-        for module in self.modules:
-            await module.load()
+        for module in self.settings.modules.value:
+            if module not in self.modules:
+                _logger.warning(f'Module \'{module}\' enabled but not found')
+                continue
+            await self.modules.get(module).load()
 
     async def close(self) -> None:
         self.save_settings()
