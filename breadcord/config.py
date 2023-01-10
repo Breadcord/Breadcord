@@ -90,8 +90,15 @@ class Setting:
 class Settings:
     """A collection of :class:`Setting` instances."""
 
-    def __init__(self, settings: list[Setting] | None = None) -> None:
+    def __init__(
+        self,
+        settings: list[Setting] | None = None,
+        *,
+        schema_path: str | PathLike[str] | None = None
+    ) -> None:
         self._settings: dict[str, Setting] = {} if settings is None else {setting.key: setting for setting in settings}
+        if schema_path is not None:
+            self.set_schema(schema_path)
 
     def __repr__(self) -> str:
         return f'Settings({", ".join(repr(setting) for setting in self._settings.values())})'

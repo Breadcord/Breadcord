@@ -13,7 +13,7 @@ _logger = logging.getLogger('breadcord.bot')
 
 class Bot(commands.Bot):
     def __init__(self) -> None:
-        self.settings = config.Settings()
+        self.settings = config.Settings(schema_path='breadcord/settings_schema.toml')
         super().__init__(
             command_prefix=None,
             intents=discord.Intents.all()
@@ -51,8 +51,7 @@ class Bot(commands.Bot):
         await super().close()
 
     def reload_settings(self) -> None:
-        settings = config.Settings()
-        settings.set_schema('breadcord/settings_schema.toml')
+        settings = config.Settings(schema_path='breadcord/settings_schema.toml')
         settings.update_from_dict(config.load_settings('config/settings.toml'), strict=False)
         for module in self.modules:
             module.load_settings_schema()
