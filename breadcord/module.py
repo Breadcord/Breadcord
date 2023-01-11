@@ -81,7 +81,7 @@ class Modules:
             )
         self._modules[module.name] = module
 
-    def discover(self, bot: Bot, search_paths: Iterable[PathLike | str]) -> None:
+    def discover(self, bot: Bot, search_paths: Iterable[str | PathLike[str]]) -> None:
         self._modules = {}
         for path in search_paths:
             path = Path(path)

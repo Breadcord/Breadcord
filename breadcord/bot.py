@@ -55,12 +55,12 @@ class Bot(commands.Bot):
 
     def reload_settings(self, file_path: str | PathLike[str] = 'config/settings.toml') -> None:
         settings = config.Settings(schema_path='breadcord/settings_schema.toml')
-        settings.update_from_dict(config.load_settings('config/settings.toml'), strict=False)
+        settings.update_from_dict(config.load_settings(file_path), strict=False)
         for module in self.modules:
             module.load_settings_schema()
         self.settings = settings
 
-    def save_settings(self, file_path: PathLike | str = 'config/settings.toml') -> None:
+    def save_settings(self, file_path: str | PathLike[str] = 'config/settings.toml') -> None:
         path = Path(file_path)
         _logger.info(f'Saving settings to {path.as_posix()}')
         path.parent.mkdir(parents=True, exist_ok=True)
