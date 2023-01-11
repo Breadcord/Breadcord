@@ -53,7 +53,7 @@ class Bot(commands.Bot):
         self.save_settings()
         await super().close()
 
-    def reload_settings(self) -> None:
+    def reload_settings(self, file_path: str | PathLike[str] = 'config/settings.toml') -> None:
         settings = config.Settings(schema_path='breadcord/settings_schema.toml')
         settings.update_from_dict(config.load_settings('config/settings.toml'), strict=False)
         for module in self.modules:
