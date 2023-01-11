@@ -54,6 +54,7 @@ class Bot(commands.Bot):
         await super().close()
 
     def reload_settings(self, file_path: str | PathLike[str] = 'config/settings.toml') -> None:
+        _logger.info(f'Reloading settings from {Path(file_path).as_posix()}')
         settings = config.Settings(schema_path='breadcord/settings_schema.toml')
         settings.update_from_dict(config.load_settings(file_path), strict=False)
         for module in self.modules:
