@@ -95,13 +95,12 @@ class SettingsGroup:
         settings: list[Setting] | None = None,
         children: list[SettingsGroup] | None = None,
         *,
-        parent: SettingsGroup | None = None,
         in_schema: bool = False,
         schema_path: str | PathLike[str] | None = None
     ) -> None:
         self._settings: dict[str, Setting] = {setting.key: setting for setting in settings or ()}
         self._children: dict[str, SettingsGroup] = {child.path[-1]: child for child in children or ()}
-        self.parent = parent
+        self.parent: SettingsGroup | None = None
         self.in_schema = in_schema
         if schema_path is not None:
             self.set_schema(schema_path)
@@ -184,13 +183,14 @@ class SettingsGroup:
         """
 
         if allow_new and key not in self._children:
-            self.set_child(key, SettingsGroup(parent=self))
+            self.set_child(key, SettingsGroup())
         return self._children[key]
 
     def set_child(self, key: str, child: SettingsGroup) -> None:
         """Sets a child :class:`SettingsGroup` object with a specified key."""
 
         self._children[key] = child
+        child.parent = self
 
     def update_from_dict(self, data: dict, *, strict: bool = True) -> None:
         """Recursively sets settings from a provided :class:`dict` object.
