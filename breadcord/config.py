@@ -15,9 +15,12 @@ _logger = getLogger('breadcord.config')
 
 class Setting:
     # noinspection PyUnresolvedReferences
-    """A single setting key-value pair, and metadata such as the setting description.
+    """A single setting key-value pair, plus metadata such as the setting description.
 
-    The data type is enforced in subsequent writes to the value of this setting, inferring from the initial data type.
+    A :class:`Setting` instance is equivalent to a leaf node in a tree structure, or a file in a filesystem.
+
+    The data type of the setting is inferred from the initial value's data type, and it is enforced in subsequent
+    writes to the value of this setting.
 
     :ivar key: The setting identifier.
     :ivar value: The value held by the setting.
@@ -88,7 +91,15 @@ class Setting:
 
 
 class SettingsGroup:
-    """A collection of :class:`Setting` and child :class:`SettingsGroup` instances."""
+    """A collection of :class:`Setting` and child :class:`SettingsGroup` instances.
+
+    A :class:`SettingsGroup` instance is equivalent to a parent node in a tree structure, or a directory in a
+    filesystem.
+
+    :ivar parent: The parent node of the :class:`SettingsGroup` node in the settings tree.
+        Is ``None`` if the settings group doesn't have a parent node, i.e. it is the root node.
+    :ivar in_schema: Whether the setting is present in the settings schema.
+    """
 
     def __init__(
         self,
@@ -143,13 +154,8 @@ class SettingsGroup:
     def get(self, key: str) -> Setting:
         """Gets a :class:`Setting` object by its key.
 
-        If the setting is not of type :class:`SettingsGroup`, then the setting can be accessed by attribute as a
-        shortcut. For example, ``settings.debug`` can be used instead of ``settings.get('debug')``. If the setting is of
-        type :class:`SettingsGroup`, then the setting value will be returned instead.
-
-        Attributes can be accessed recursively to traverse a nested settings structure. For example,
-        ``settings.ModuleName.some_setting.value`` is equivalent to
-        ``settings.get('ModuleName').value.get('some_setting').value``. Phew!
+        :class:`SettingsGroup` implements ``__getattr__``, so a setting can be accessed by attribute as a shortcut.
+        For example, ``settings.debug`` can be used instead of ``settings.get('debug')``.
 
         :param key: The key for the setting (the identifier before the equals sign in a TOML document).
         """
@@ -178,6 +184,9 @@ class SettingsGroup:
     def get_child(self, key: str, allow_new: bool = False) -> SettingsGroup:
         """Gets a child :class:`SettingsGroup` object by its key.
 
+        :class:`SettingsGroup` implements ``__getattr__``, so a setting can be accessed by attribute as a shortcut.
+        For example, ``settings.ExampleModule`` can be used instead of ``settings.get_child('ExampleModule')``.
+
         :param key: The key for the child group.
         :param allow_new: Whether a new :class:`SettingsGroup` instance should be created if it doesn't exist.
         """
@@ -187,7 +196,11 @@ class SettingsGroup:
         return self._children[key]
 
     def set_child(self, key: str, child: SettingsGroup) -> None:
-        """Sets a child :class:`SettingsGroup` object with a specified key."""
+        """Sets a child :class:`SettingsGroup` object with a specified key.
+
+        :param key: The key for the child group.
+        :param child: The settings group to attach as a child node.
+        """
 
         self._children[key] = child
         child.parent = self
@@ -211,7 +224,7 @@ class SettingsGroup:
                 self.set(key, value, strict=strict)
 
     def as_toml(self, *, table: bool = False, warn_schema: bool = True) -> TOMLDocument | Table:
-        """Exports the settings as a :class:`TOMLDocument` or :class:`Table` instance.
+        """Exports the descendent settings as a :class:`TOMLDocument` or :class:`Table` instance.
 
         This method works recursively on any settings which have a value of a :class:`SettingsGroup` instance,
         adding them to the TOML document as tables.
