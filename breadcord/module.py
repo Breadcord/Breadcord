@@ -52,9 +52,8 @@ class Module:
     def load_settings_schema(self) -> None:
         if not (schema_path := self.path / 'settings_schema.toml').is_file():
             return
-        self.bot.settings.update_from_dict({self.name: {}})
-        setting = self.bot.settings.get(self.name)
-        setting.value.set_schema(schema_path)
+        setting = self.bot.settings.get_child(self.name, allow_new=True)
+        setting.set_schema(schema_path)
         setting.in_schema = True
 
 
@@ -101,8 +100,8 @@ class ModuleCog(commands.Cog):
         self.logger = self.module.logger
 
     @property
-    def settings(self) -> config.Settings:
-        if self.name not in self.bot.settings or self.bot.settings.get(self.name).type is not config.Settings:
+    def settings(self) -> config.SettingsGroup:
+        if self.name not in self.bot.settings or self.bot.settings.get(self.name).type is not config.SettingsGroup:
             raise AttributeError(f'module {self.name!r} does not have settings')
         return self.bot.settings.get(self.name).value
 

@@ -87,31 +87,35 @@ class Setting:
         return wrapper
 
 
-class Settings:
-    """A collection of :class:`Setting` instances."""
+class SettingsGroup:
+    """A collection of :class:`Setting` and child :class:`SettingsGroup` instances."""
 
     def __init__(
         self,
         settings: list[Setting] | None = None,
+        children: list[SettingsGroup] | None = None,
         *,
+        parent: SettingsGroup | None = None,
+        in_schema: bool = False,
         schema_path: str | PathLike[str] | None = None
     ) -> None:
-        self._settings: dict[str, Setting] = {} if settings is None else {setting.key: setting for setting in settings}
+        self._settings: dict[str, Setting] = {setting.key: setting for setting in settings or ()}
+        self._children: dict[str, SettingsGroup] = {child.path[-1]: child for child in children or ()}
+        self.parent = parent
+        self.in_schema = in_schema
         if schema_path is not None:
             self.set_schema(schema_path)
 
     def __repr__(self) -> str:
-        return f'Settings({", ".join(repr(setting) for setting in self._settings.values())})'
+        return f'SettingsGroup{tuple(self._settings.values())!r}'
 
-    def __getattr__(self, item: str) -> Setting | Settings:
-        setting = self.get(item)
-        return setting.value if setting.type is Settings else setting
+    def __getattr__(self, item: str) -> Setting | SettingsGroup:
+        if item in self._children:
+            return self.get_child(item)
+        return self.get(item)
 
     def __iter__(self) -> Generator[Setting, None, None]:
         yield from self._settings.values()
-
-    def __contains__(self, item: Any) -> bool:
-        return item in self._settings.keys()
 
     def set_schema(self, file_path: str | PathLike[str]) -> None:
         """Loads and deserialises a settings schema, for the settings to follow.
@@ -140,9 +144,9 @@ class Settings:
     def get(self, key: str) -> Setting:
         """Gets a :class:`Setting` object by its key.
 
-        If the setting is not of type :class:`Settings`, then the setting can be accessed by attribute as a shortcut.
-        For example, ``settings.debug`` can be used instead of ``settings.get('debug')``. If the setting is of type
-        :class:`Settings`, then the setting value will be returned instead.
+        If the setting is not of type :class:`SettingsGroup`, then the setting can be accessed by attribute as a
+        shortcut. For example, ``settings.debug`` can be used instead of ``settings.get('debug')``. If the setting is of
+        type :class:`SettingsGroup`, then the setting value will be returned instead.
 
         Attributes can be accessed recursively to traverse a nested settings structure. For example,
         ``settings.ModuleName.some_setting.value`` is equivalent to
@@ -172,10 +176,26 @@ class Settings:
 
         self._settings[key].value = value
 
+    def get_child(self, key: str, allow_new: bool = False) -> SettingsGroup:
+        """Gets a child :class:`SettingsGroup` object by its key.
+
+        :param key: The key for the child group.
+        :param allow_new: Whether a new :class:`SettingsGroup` instance should be created if it doesn't exist.
+        """
+
+        if allow_new and key not in self._children:
+            self.set_child(key, SettingsGroup(parent=self))
+        return self._children[key]
+
+    def set_child(self, key: str, child: SettingsGroup) -> None:
+        """Sets a child :class:`SettingsGroup` object with a specified key."""
+
+        self._children[key] = child
+
     def update_from_dict(self, data: dict, *, strict: bool = True) -> None:
         """Recursively sets settings from a provided :class:`dict` object.
 
-        Note that new :class:`Settings` instances will be created as necessary to match the structure of the
+        Note that new :class:`SettingsGroup` instances will be created as necessary to match the structure of the
         :class:`dict`, regardless of the value of ``strict``.
 
         :param data: A dict containing key-value pairs.
@@ -185,23 +205,15 @@ class Settings:
 
         for key, value in data.items():
             if isinstance(value, dict):
-                if key not in self._settings:
-                    self.set(key, settings := Settings(), strict=False)
-                elif (setting := self.get(key)).type is Settings:
-                    settings = setting.value
-                else:
-                    raise ValueError(
-                        f'cannot write to {setting.key!r} because it conflicts '
-                        f'with an existing setting of type {setting.type.__name__!r}'
-                    )
-                settings.update_from_dict(value, strict=strict)
+                child = self.get_child(key, allow_new=True)
+                child.update_from_dict(value, strict=strict)
             else:
                 self.set(key, value, strict=strict)
 
     def as_toml(self, *, table: bool = False, warn_schema: bool = True) -> TOMLDocument | Table:
         """Exports the settings as a :class:`TOMLDocument` or :class:`Table` instance.
 
-        This method works recursively on any settings which have a value of a :class:`Settings` instance,
+        This method works recursively on any settings which have a value of a :class:`SettingsGroup` instance,
         adding them to the TOML document as tables.
 
         :param table: Whether a table should be generated instead of a document.
@@ -209,12 +221,8 @@ class Settings:
         """
 
         document = tomlkit.table() if table else TOMLDocument()
-        top_level: list[Setting] = []
-        nested: list[Setting] = []
-        for setting in self:
-            (nested if isinstance(setting.value, Settings) else top_level).append(setting)
 
-        for setting in top_level:
+        for setting in self._settings.values():
             for line in setting.description.splitlines():
                 document.add(tomlkit.comment(line))
             document.add(setting.key, setting.value)
@@ -225,12 +233,12 @@ class Settings:
             else:
                 document.add(tomlkit.nl())
 
-        for setting in nested:
+        for key, child in self._children.items():
             document.add(tomlkit.nl())
-            table = setting.value.as_toml(table=True, warn_schema=setting.in_schema)
-            if not setting.in_schema:
+            table = child.as_toml(table=True, warn_schema=child.in_schema)
+            if not child.in_schema:
                 table.comment('🚫 Disabled')
-            document.append(setting.key, table)
+            document.append(key, table)
 
         return document
 
