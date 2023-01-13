@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Generator
 from functools import partial, wraps
 from logging import getLogger
@@ -13,7 +14,25 @@ from tomlkit.toml_file import TOMLDocument, TOMLFile
 _logger = getLogger('breadcord.config')
 
 
-class Setting:
+class SettingsNode:
+    def __init__(self, key: str, *, parent: SettingsGroup | None = None, in_schema: bool = False):
+        self._key = key
+
+        self.parent = parent
+        self.in_schema = in_schema
+
+    @property
+    def key(self) -> str:
+        return self._key
+
+    @property
+    def path(self) -> tuple[str, ...]:
+        if self.parent is None:
+            return self.key,
+        return self.parent.path + (self.key,)
+
+
+class Setting(SettingsNode):
     # noinspection PyUnresolvedReferences
     """A single setting key-value pair, plus metadata such as the setting description.
 
@@ -29,23 +48,34 @@ class Setting:
     :ivar in_schema: Whether the setting is present in the settings schema.
     """
 
-    def __init__(self, key: str, value: Any, description: str = '', *, in_schema: bool = False) -> None:
-        self.key = key
+    def __init__(
+        self,
+        key: str,
+        value: Any,
+        description: str = '',
+        *,
+        parent: SettingsGroup | None = None,
+        in_schema: bool = False
+    ) -> None:
+
+        super().__init__(key=key, parent=parent, in_schema=in_schema)
+
         self._value = value
+        self._observers: list[Callable[[Any, Any], None]] = []
+
         self.description = description
         self.type: type = type(value)
-        self.in_schema = in_schema
-        self._observers: list[Callable[[Any, Any], None]] = []
 
     def __repr__(self) -> str:
         return (
             f'Setting('
-            f'key={self.key!r}, '
+            f'key={self._key!r}, '
             f'value={self._value!r}, '
             f'description={self.description!r}, '
             f'in_schema={self.in_schema!r}'
             f')'
         )
+    # TODO: Improve repr string
 
     @property
     def value(self) -> Any:
@@ -90,34 +120,43 @@ class Setting:
         return wrapper
 
 
-class SettingsGroup:
+class SettingsGroup(SettingsNode):
+    # noinspection PyUnresolvedReferences
     """A collection of :class:`Setting` and child :class:`SettingsGroup` instances.
 
     A :class:`SettingsGroup` instance is equivalent to a parent node in a tree structure, or a directory in a
     filesystem.
 
+    :ivar key: The settings group identifier, used for identifying this node in the settings tree.
     :ivar parent: The parent node of the :class:`SettingsGroup` node in the settings tree.
         Is ``None`` if the settings group doesn't have a parent node, i.e. it is the root node.
+    :ivar path: A string representation of the path to the :class:`SettingsGroup` node from the root node.
     :ivar in_schema: Whether the setting is present in the settings schema.
     """
 
     def __init__(
         self,
+        key: str,
         settings: list[Setting] | None = None,
         children: list[SettingsGroup] | None = None,
         *,
+        parent: SettingsGroup | None = None,
         in_schema: bool = False,
         schema_path: str | PathLike[str] | None = None
     ) -> None:
+
         self._settings: dict[str, Setting] = {setting.key: setting for setting in settings or ()}
         self._children: dict[str, SettingsGroup] = {child.path[-1]: child for child in children or ()}
-        self.parent: SettingsGroup | None = None
-        self.in_schema = in_schema
+        self._observers: defaultdict[str, list[Callable[[Any, Any], None]]] = defaultdict(lambda: [])
+
+        super().__init__(key=key, parent=parent, in_schema=in_schema)
+
         if schema_path is not None:
             self.set_schema(schema_path)
 
     def __repr__(self) -> str:
         return f'SettingsGroup{tuple(self._settings.values())!r}'
+        # TODO: Improve repr string
 
     def __getattr__(self, item: str) -> Setting | SettingsGroup:
         if item in self._children:
@@ -143,12 +182,8 @@ class SettingsGroup:
                 continue
 
             setting = parse_schema_chunk(chunk)
-            self._settings[setting.key] = Setting(
-                key=setting.key,
-                value=self._settings[setting.key].value if setting.key in self else setting.value,
-                description=setting.description,
-                in_schema=True
-            )
+            setting.parent = self
+            self._settings[setting.key] = setting
             chunk = []
 
     def get(self, key: str) -> Setting:
@@ -174,10 +209,10 @@ class SettingsGroup:
             key not in self._settings
             or not self._settings[key].in_schema
         ):
-            raise ValueError(f'{key!r} is not defined in the schema')
+            raise ValueError(f'{".".join(self.path + (key,))} is not declared in the schema')
 
         if key not in self._settings:
-            self._settings[key] = Setting(key, value, in_schema=False)
+            self._settings[key] = Setting(key, value, parent=self, in_schema=False)
 
         self._settings[key].value = value
 
@@ -192,17 +227,16 @@ class SettingsGroup:
         """
 
         if allow_new and key not in self._children:
-            self.set_child(key, SettingsGroup())
+            self.add_child(SettingsGroup(key))
         return self._children[key]
 
-    def set_child(self, key: str, child: SettingsGroup) -> None:
-        """Sets a child :class:`SettingsGroup` object with a specified key.
+    def add_child(self, child: SettingsGroup) -> None:
+        """Sets a child :class:`SettingsGroup` object as a child node to the current node.
 
-        :param key: The key for the child group.
         :param child: The settings group to attach as a child node.
         """
 
-        self._children[key] = child
+        self._children[child.key] = child
         child.parent = self
 
     def update_from_dict(self, data: dict, *, strict: bool = True) -> None:
@@ -241,7 +275,7 @@ class SettingsGroup:
             document.add(setting.key, setting.value)
             if not setting.in_schema:
                 if warn_schema:
-                    _logger.warning(f'{setting.key!r} setting is not declared in schema')
+                    _logger.warning(f'{".".join(setting.path)} is not declared in the schema')
                     document.value[setting.key].comment('⚠️ Unrecognised setting')
             else:
                 document.add(tomlkit.nl())
