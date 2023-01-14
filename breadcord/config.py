@@ -15,6 +15,15 @@ _logger = getLogger('breadcord.config')
 
 
 class SettingsNode:
+    """A base class for :class:`Setting` and :class:`SettingsGroup`, representing a node in a settings tree structure.
+
+    :ivar parent: The parent node, or ``None`` if it is a root node.
+    :ivar in_schema: Whether the node is present in the settings schema.
+    :param key: The identifier used for this node by the parent node in the settings tree.
+    :param parent: The parent node, or ``None`` if it is a root node.
+    :param in_schema: Whether the node is present in the settings schema.
+    """
+
     def __init__(self, key: str, *, parent: SettingsGroup | None = None, in_schema: bool = False):
         self._key = key
 
@@ -23,17 +32,18 @@ class SettingsNode:
 
     @property
     def key(self) -> str:
+        """The identifier used for this node by the parent node in the settings tree."""
         return self._key
 
     @property
     def path(self) -> tuple[str, ...]:
+        """A list of node keys representing the path to this node from the root node."""
         if self.parent is None:
             return self.key,
         return self.parent.path + (self.key,)
 
 
 class Setting(SettingsNode):
-    # noinspection PyUnresolvedReferences
     """A single setting key-value pair, plus metadata such as the setting description.
 
     A :class:`Setting` instance is equivalent to a leaf node in a tree structure, or a file in a filesystem.
@@ -41,11 +51,13 @@ class Setting(SettingsNode):
     The data type of the setting is inferred from the initial value's data type, and it is enforced in subsequent
     writes to the value of this setting.
 
-    :ivar key: The setting identifier.
-    :ivar value: The value held by the setting.
     :ivar description: A description intended to explain the setting to a user, usually parsed from a settings schema.
     :ivar type: The data type held by the setting.
-    :ivar in_schema: Whether the setting is present in the settings schema.
+    :param key: The identifier used for this node by the parent node in the settings tree.
+    :param value: The value for the setting to hold.
+    :param description: A description of the setting, usually specified in the settings schema using TOML comments.
+    :param parent: The parent node, or ``None`` if it is a root node.
+    :param in_schema: Whether the setting is present in the settings schema.
     """
 
     def __init__(
@@ -79,10 +91,12 @@ class Setting(SettingsNode):
 
     @property
     def value(self) -> Any:
+        """The value held by the setting."""
         return self._value
 
     @value.setter
     def value(self, new_value: Any) -> None:
+        """Assigns a new value to the setting, validating the new value type and triggering necessary observers."""
         if not isinstance(new_value, self.type):
             raise TypeError(
                 f'Cannot assign type {type(new_value).__name__!r} to setting with type {self.type.__name__!r}'
@@ -121,17 +135,17 @@ class Setting(SettingsNode):
 
 
 class SettingsGroup(SettingsNode):
-    # noinspection PyUnresolvedReferences
     """A collection of :class:`Setting` and child :class:`SettingsGroup` instances.
 
     A :class:`SettingsGroup` instance is equivalent to a parent node in a tree structure, or a directory in a
     filesystem.
 
-    :ivar key: The settings group identifier, used for identifying this node in the settings tree.
-    :ivar parent: The parent node of the :class:`SettingsGroup` node in the settings tree.
-        Is ``None`` if the settings group doesn't have a parent node, i.e. it is the root node.
-    :ivar path: A string representation of the path to the :class:`SettingsGroup` node from the root node.
-    :ivar in_schema: Whether the setting is present in the settings schema.
+    :param key: The identifier used for this node by the parent node in the settings tree.
+    :param settings: A list of settings to add to this settings group.
+    :param children: A list of :class:`SettingsGroup` nodes to attach to this node as children.
+    :param parent: The parent node, or ``None`` if it is a root node.
+    :param in_schema: Whether the setting is present in the settings schema.
+    :param schema_path: The path to a settings schema to apply to this settings group.
     """
 
     def __init__(
@@ -219,7 +233,7 @@ class SettingsGroup(SettingsNode):
     def get_child(self, key: str, allow_new: bool = False) -> SettingsGroup:
         """Gets a child :class:`SettingsGroup` object by its key.
 
-        :class:`SettingsGroup` implements ``__getattr__``, so a setting can be accessed by attribute as a shortcut.
+        :class:`SettingsGroup` implements ``__getattr__``, so a child node can be accessed by attribute as a shortcut.
         For example, ``settings.ExampleModule`` can be used instead of ``settings.get_child('ExampleModule')``.
 
         :param key: The key for the child group.
