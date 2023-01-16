@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections import defaultdict
 from collections.abc import Generator
 from functools import partial, wraps
 from logging import getLogger
@@ -15,7 +14,9 @@ _logger = getLogger('breadcord.config')
 
 
 class SettingsNode:
-    """A base class for :class:`Setting` and :class:`SettingsGroup`, representing a node in a settings tree structure.
+    """An abstract base class representing a node in a settings tree structure.
+
+    This class is subclassed by :class:`Setting` and :class:`SettingsGroup`.
 
     :ivar parent: The parent node, or ``None`` if it is a root node.
     :ivar in_schema: Whether the node is present in the settings schema.
@@ -26,6 +27,7 @@ class SettingsNode:
 
     def __init__(self, key: str, *, parent: SettingsGroup | None = None, in_schema: bool = False):
         self._key = key
+        self._path = (self,)
 
         self.parent = parent
         self.in_schema = in_schema
@@ -35,12 +37,26 @@ class SettingsNode:
         """The identifier used for this node by the parent node in the settings tree."""
         return self._key
 
-    @property
-    def path(self) -> tuple[str, ...]:
-        """A list of node keys representing the path to this node from the root node."""
+    def path(self) -> tuple[SettingsNode | Setting | SettingsGroup, ...]:
+        """A series of node references representing the path to this node from the root node."""
         if self.parent is None:
-            return self.key,
-        return self.parent.path + (self.key,)
+            return self,
+        return self.parent.path() + (self,)
+
+    def path_id(self):
+        """Returns a string identifier representing the path to this node from the root node."""
+        return '.'.join(node.key for node in self.path())
+
+    def root(self) -> SettingsGroup:
+        """Returns the root node of the settings tree this node belongs to.
+
+        This method is equivalent to calling ``node.path()[0]``.
+        """
+
+        node = self
+        while node.parent is not None:
+            node = node.parent
+        return node
 
 
 class Setting(SettingsNode):
@@ -73,7 +89,6 @@ class Setting(SettingsNode):
         super().__init__(key=key, parent=parent, in_schema=in_schema)
 
         self._value = value
-        self._observers: list[Callable[[Any, Any], None]] = []
 
         self.description = description
         self.type: type = type(value)
@@ -104,16 +119,23 @@ class Setting(SettingsNode):
 
         old_value = self._value
         self._value = new_value
-        for observer in self._observers:
+
+        root_observers = self.root().observers
+        path_id = self.path_id()
+        if path_id not in root_observers:
+            return
+        for observer in root_observers[path_id]:
             observer(old_value, new_value)
 
-    def new_observer(
+    def observe(
         self,
         observer: Callable[[Any, Any], Any] | None = None,
         *,
         always_trigger: bool = False
     ) -> Callable[[Any, Any], None]:
         """Registers an observer function which is called whenever the setting value is updated.
+
+        This method can be used as a decorator, with optional parentheses for arguments.
 
         :param observer: The callback function. Takes two parameters ``old`` and ``new``, which correspond to the value
             of the setting before and after it is updateed respectively.
@@ -122,7 +144,7 @@ class Setting(SettingsNode):
         """
 
         if observer is None:
-            return partial(self.new_observer, always_trigger=always_trigger)
+            return partial(self.observe, always_trigger=always_trigger)
 
         @wraps(observer)
         def wrapper(old: Any, new: Any) -> None:
@@ -130,7 +152,12 @@ class Setting(SettingsNode):
                 return
             observer(old, new)
 
-        self._observers.append(wrapper)
+        observers = self.root().observers
+        path_id = self.path_id()
+        if path_id not in observers:
+            observers[path_id] = []
+        observers[path_id].append(wrapper)
+
         return wrapper
 
 
@@ -146,6 +173,7 @@ class SettingsGroup(SettingsNode):
     :param parent: The parent node, or ``None`` if it is a root node.
     :param in_schema: Whether the setting is present in the settings schema.
     :param schema_path: The path to a settings schema to apply to this settings group.
+    :param observers: The :class:`dict` of observers to assign the node. Should only be specified for root nodes.
     """
 
     def __init__(
@@ -156,12 +184,14 @@ class SettingsGroup(SettingsNode):
         *,
         parent: SettingsGroup | None = None,
         in_schema: bool = False,
-        schema_path: str | PathLike[str] | None = None
+        schema_path: str | PathLike[str] | None = None,
+        observers: dict[str, list[Callable[[Any, Any], None]]] | None = None
     ) -> None:
 
         self._settings: dict[str, Setting] = {setting.key: setting for setting in settings or ()}
-        self._children: dict[str, SettingsGroup] = {child.path[-1]: child for child in children or ()}
-        self._observers: defaultdict[str, list[Callable[[Any, Any], None]]] = defaultdict(lambda: [])
+        self._children: dict[str, SettingsGroup] = {child.key: child for child in children or ()}
+
+        self.observers = observers
 
         super().__init__(key=key, parent=parent, in_schema=in_schema)
 
@@ -223,7 +253,7 @@ class SettingsGroup(SettingsNode):
             key not in self._settings
             or not self._settings[key].in_schema
         ):
-            raise ValueError(f'{".".join(self.path + (key,))} is not declared in the schema')
+            raise ValueError(f'{self.path_id}.{key} is not declared in the schema')
 
         if key not in self._settings:
             self._settings[key] = Setting(key, value, parent=self, in_schema=False)
@@ -289,7 +319,7 @@ class SettingsGroup(SettingsNode):
             document.add(setting.key, setting.value)
             if not setting.in_schema:
                 if warn_schema:
-                    _logger.warning(f'{".".join(setting.path)} is not declared in the schema')
+                    _logger.warning(f'{setting.path_id} is not declared in the schema')
                     document.value[setting.key].comment('⚠️ Unrecognised setting')
             else:
                 document.add(tomlkit.nl())
