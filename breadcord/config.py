@@ -32,6 +32,9 @@ class SettingsNode:
         self.parent = parent
         self.in_schema = in_schema
 
+    def __repr__(self) -> str:
+        return f'<{self.__class__.__name__} {self.path_id()}>'
+
     @property
     def key(self) -> str:
         """The identifier used for this node by the parent node in the settings tree."""
@@ -92,17 +95,6 @@ class Setting(SettingsNode):
 
         self.description = description
         self.type: type = type(value)
-
-    def __repr__(self) -> str:
-        return (
-            f'Setting('
-            f'key={self._key!r}, '
-            f'value={self._value!r}, '
-            f'description={self.description!r}, '
-            f'in_schema={self.in_schema!r}'
-            f')'
-        )
-    # TODO: Improve repr string
 
     @property
     def value(self) -> Any:
@@ -199,8 +191,7 @@ class SettingsGroup(SettingsNode):
             self.set_schema(schema_path)
 
     def __repr__(self) -> str:
-        return f'SettingsGroup{tuple(self._settings.values())!r}'
-        # TODO: Improve repr string
+        return f'<SettingsGroup {self.path_id()} settings:{len(self._settings)} children:{len(self._children)}>'
 
     def __getattr__(self, item: str) -> Setting | SettingsGroup:
         if item in self._children:
