@@ -85,11 +85,12 @@ class Modules:
         for path in search_paths:
             path = Path(path)
             path.mkdir(exist_ok=True)
-            for module_path in path.iterdir():
+            for module_path in [path] + list(path.iterdir()):
                 if not (module_path / 'manifest.toml').is_file():
                     continue
-                module = Module(bot, module_path)
-                self.add(module)
+                self.add(Module(bot, module_path))
+                if module_path == path:
+                    return
 
 
 class ModuleCog(commands.Cog):

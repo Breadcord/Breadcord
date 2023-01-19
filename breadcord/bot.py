@@ -1,4 +1,5 @@
 import logging
+from argparse import Namespace
 from os import PathLike
 from pathlib import Path
 
@@ -12,7 +13,8 @@ _logger = logging.getLogger('breadcord.bot')
 
 
 class Bot(commands.Bot):
-    def __init__(self) -> None:
+    def __init__(self, args: Namespace) -> None:
+        self.args = args
         self.settings = config.SettingsGroup('settings', schema_path='breadcord/settings_schema.toml', observers={})
         super().__init__(
             command_prefix=None,
@@ -42,7 +44,12 @@ class Bot(commands.Bot):
         super().run(token=self.settings.token.value, log_handler=None, **kwargs)
 
     async def setup_hook(self) -> None:
-        self.modules.discover(self, search_paths=('breadcord/core_modules', 'breadcord/modules'))
+        search_paths = ['breadcord/core_modules']
+        if self.args.include is not None:
+            search_paths.extend(self.args.include)
+        search_paths.append('breadcord/modules')
+        self.modules.discover(self, search_paths=search_paths)
+
         for module in self.settings.modules.value:
             if module not in self.modules:
                 _logger.warning(f'Module \'{module}\' enabled but not found')
