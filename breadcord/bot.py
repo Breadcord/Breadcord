@@ -112,6 +112,6 @@ class Bot(commands.Bot):
         path = Path(file_path)
         _logger.info(f'Saving settings to {path.as_posix()}')
         path.parent.mkdir(parents=True, exist_ok=True)
+        output = self.settings.as_toml().as_string().rstrip() + '\n'
         with path.open('w+', encoding='utf-8') as file:
-            output = self.settings.as_toml().as_string().rstrip() + '\n'
             file.write(output)
