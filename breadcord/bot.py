@@ -6,10 +6,22 @@ from pathlib import Path
 import discord
 from discord.ext import commands
 
-from . import config
+from . import config, errors
 from .module import Modules, global_modules
 
 _logger = logging.getLogger('breadcord.bot')
+
+
+class CommandTree(discord.app_commands.CommandTree):
+    async def on_error(self, interaction: discord.Interaction, error: discord.app_commands.AppCommandError, /) -> None:
+        if isinstance(error, errors.NotAdministratorError):
+            await interaction.response.send_message(embed=discord.Embed(
+                colour=discord.Colour.red(),
+                title='Missing permissions!',
+                description='This operation is restricted to bot owners only.'
+            ))
+        else:
+            raise error
 
 
 class Bot(commands.Bot):
@@ -18,7 +30,8 @@ class Bot(commands.Bot):
         self.settings = config.SettingsGroup('settings', schema_path='breadcord/settings_schema.toml', observers={})
         super().__init__(
             command_prefix=None,
-            intents=discord.Intents.all()
+            intents=discord.Intents.all(),
+            tree_cls=CommandTree
         )
 
     @property
