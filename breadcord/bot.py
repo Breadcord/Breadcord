@@ -54,6 +54,7 @@ class Bot(commands.Bot):
             logging.getLogger('discord').setLevel(logging.INFO)
 
         self.command_prefix = commands.when_mentioned_or(self.settings.command_prefix.value)
+        self.owner_ids = set(self.settings.administrators.value)
         super().run(token=self.settings.token.value, log_handler=None, **kwargs)
 
     async def setup_hook(self) -> None:
@@ -69,9 +70,25 @@ class Bot(commands.Bot):
                 continue
             await self.modules.get(module).load()
 
+        @self.settings.administrators.observe
+        def on_administrators_changed(_, new: list[int]) -> None:
+            self.owner_ids = set(new)
+
     async def close(self) -> None:
         self.save_settings()
         await super().close()
+
+    async def is_owner(self, user: discord.User, /) -> bool:
+        if user.id == self.owner_id or user.id in self.owner_ids:
+            return True
+
+        app = await self.application_info()
+        if app.team:
+            self.owner_ids = ids = {member.id for member in app.team.members}
+            return user.id in ids
+        else:
+            self.owner_id = owner_id = app.owner.id
+            return user.id == owner_id
 
     def reload_settings(self, file_path: str | PathLike[str] = 'config/settings.toml') -> None:
         _logger.info(f'Reloading settings from {Path(file_path).as_posix()}')
