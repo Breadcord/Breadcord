@@ -70,6 +70,10 @@ class Bot(commands.Bot):
                 continue
             await self.modules.get(module).load()
 
+        @self.settings.command_prefix.observe
+        def on_command_prefix_changed(_, new: str) -> None:
+            self.command_prefix = new
+
         @self.settings.administrators.observe
         def on_administrators_changed(_, new: list[int]) -> None:
             self.owner_ids = set(new)
