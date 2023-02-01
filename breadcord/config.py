@@ -253,7 +253,7 @@ class SettingsGroup(SettingsNode):
             key not in self._settings
             or not self._settings[key].in_schema
         ):
-            raise ValueError(f'{self.path_id}.{key} is not declared in the schema')
+            raise ValueError(f'{self.path_id()}.{key} is not declared in the schema')
 
         if key not in self._settings:
             self._settings[key] = Setting(key, value, parent=self, in_schema=False)
@@ -319,7 +319,7 @@ class SettingsGroup(SettingsNode):
             document.add(setting.key, setting.value)
             if not setting.in_schema:
                 if warn_schema:
-                    _logger.warning(f'{setting.path_id} is not declared in the schema')
+                    _logger.warning(f'{setting.path_id()} is not declared in the schema')
                     document.value[setting.key].comment('⚠️ Unrecognised setting')
             else:
                 document.add(tomlkit.nl())
