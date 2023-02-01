@@ -4,7 +4,7 @@ from collections.abc import Generator
 from functools import partial, wraps
 from logging import getLogger
 from os import PathLike
-from typing import Optional, Any, Callable
+from typing import Optional, Any, Callable, KeysView
 
 import tomlkit
 from tomlkit.items import Key, Item, Comment, Whitespace, Table
@@ -198,8 +198,17 @@ class SettingsGroup(SettingsNode):
             return self.get_child(item)
         return self.get(item)
 
+    def __contains__(self, item: str) -> bool:
+        if not isinstance(item, str):
+            raise TypeError(f"'in <CommandGroup>' requires string as left operand, not {type(item).__name__!r}")
+
+        return item in self.keys()
+
     def __iter__(self) -> Generator[Setting, None, None]:
         yield from self._settings.values()
+
+    def keys(self) -> KeysView:
+        return self._settings.keys()
 
     def set_schema(self, file_path: str | PathLike[str]) -> None:
         """Loads and deserialises a settings schema, for the settings to follow.
