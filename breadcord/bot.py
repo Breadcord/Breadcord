@@ -79,8 +79,8 @@ class Bot(commands.Bot):
             self.owner_ids = set(new)
 
     async def close(self) -> None:
-        self.save_settings()
         await super().close()
+        self.save_settings()
 
     async def is_owner(self, user: discord.User, /) -> bool:
         if user.id == self.owner_id or user.id in self.owner_ids:
