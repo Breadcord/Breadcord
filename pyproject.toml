@@ -1,0 +1,36 @@
+[project]
+name = "breadcord"
+version = "0.1.0"
+description = "The modular self-hostable Discord bot framework with customisability that doesn't go against the grain"
+urls = { Homepage = "https://github.com/Breadcord/Breadcord" }
+authors = [
+    { name = "ThatOtherAndrew", email = "stroev.andrew@gmail.com" }
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+keywords = ["feed", "reader", "tutorial"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Communications :: Chat",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+dependencies = [
+    "feedparser >= 5.2.0",
+]
+requires-python = ">=3.11"
+
+[project.scripts]
+breadcord = "breadcord.__main__:bot.run"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["breadcord"]
