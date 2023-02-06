@@ -22,9 +22,7 @@ classifiers = [
 ]
 requires-python = ">=3.11"
 dynamic = ["dependencies"]
-
-[project.scripts]
-breadcord = "breadcord.__main__:bot.run"
+scripts.breadcord = "breadcord.__main__:bot.run"
 
 [build-system]
 requires = ["setuptools"]
@@ -32,6 +30,4 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = ["breadcord"]
-
-[tool.setuptools.dynamic]
-dependencies = { file = ["requirements.txt"] }
+dynamic.dependencies = { file = ["requirements.txt"] }
