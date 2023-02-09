@@ -13,7 +13,7 @@ jobs:
     name: Assign Members
     runs-on: ubuntu-latest
     steps:
-      - uses: wow-actions/auto-assign@v2
+      - uses: wow-actions/auto-assign@v3
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           addAssignees: author
