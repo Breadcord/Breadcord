@@ -4,20 +4,23 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
+      time: 07:00
     labels:
       - improvement
 
   - package-ecosystem: docker
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
+      time: 07:00
     labels:
       - improvement
 
   - package-ecosystem: pip
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
+      time: 07:00
     labels:
       - improvement
