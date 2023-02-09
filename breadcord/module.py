@@ -32,11 +32,13 @@ class Module:
             raise FileNotFoundError('manifest.toml file not found')
         self.manifest = parse_manifest(config.load_settings(self.path / 'manifest.toml'))
 
-        self.name = self.manifest.name
+        self.id = self.manifest.id
+        if self.id != self.path.name:
+            self.logger.warning(f"Module ID '{self.id}' does not match directory name")
 
     @property
     def storage_path(self) -> Path:
-        path = Path(f'storage/{self.name}').resolve()
+        path = Path(f'storage/{self.id}').resolve()
         path.mkdir(parents=True, exist_ok=True)
         return path
 
@@ -47,19 +49,19 @@ class Module:
         self.load_settings_schema()
         await self.bot.load_extension(self.import_string)
         self.loaded = True
-        self.logger.info(f'{self.name} module loaded')
+        self.logger.info('Module successfully loaded')
 
     def load_settings_schema(self) -> None:
         if not (schema_path := self.path / 'settings_schema.toml').is_file():
             return
-        setting = self.bot.settings.get_child(self.name, allow_new=True)
+        setting = self.bot.settings.get_child(self.id, allow_new=True)
         setting.set_schema(schema_path)
         setting.in_schema = True
 
 
 class Modules:
     def __init__(self, modules: list[Module] | None = None) -> None:
-        self._modules: dict[str, Module] = {} if modules is None else {module.name: module for module in modules}
+        self._modules: dict[str, Module] = {} if modules is None else {module.id: module for module in modules}
 
     def __repr__(self) -> str:
         return f'Modules({", ".join(self._modules.keys())})'
@@ -74,11 +76,11 @@ class Modules:
         return self._modules[module_name]
 
     def add(self, module: Module) -> None:
-        if module.name in self._modules:
-            module.logger.error(
-                f'module name conflicts with {self.get(module.name).import_string} so it will not be loaded'
+        if module.id in self._modules:
+            module.logger.warning(
+                f'Module ID conflicts with {self.get(module.id).import_string} so it will not be loaded'
             )
-        self._modules[module.name] = module
+        self._modules[module.id] = module
 
     def discover(self, bot: Bot, search_paths: Iterable[str | PathLike[str]]) -> None:
         self._modules = {}
@@ -94,28 +96,32 @@ class Modules:
 
 
 class ModuleCog(commands.Cog):
-    def __init__(self, name: str | None = None):
-        self.name: str = self.__class__.__name__ if name is None else name
-        self.module = global_modules.get(self.name)
+    def __init__(self, module_id: str):
+        self.module = global_modules.get(module_id)
         self.bot = self.module.bot
         self.logger = self.module.logger
 
     @property
     def settings(self) -> config.SettingsGroup:
-        if self.name not in self.bot.settings or self.bot.settings.get(self.name).type is not config.SettingsGroup:
-            raise AttributeError(f'module {self.name!r} does not have settings')
-        return self.bot.settings.get(self.name).value
+        if self.module.id not in self.bot.settings.child_keys():
+            raise AttributeError(f"module '{self.module.id}' does not have settings")
+        return self.bot.settings.get_child(self.module.id)
 
 
 class ModuleManifest(pydantic.BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    name: pydantic.constr(
+    id: pydantic.constr(
         strip_whitespace=True,
         min_length=1,
         max_length=32,
-        regex=r'^[\w\-]+$'
+        regex=r'^[a-z_]+$'
+    )
+    name: pydantic.constr(
+        strip_whitespace=True,
+        min_length=1,
+        max_length=64
     )
     description: pydantic.constr(
         strip_whitespace=True,

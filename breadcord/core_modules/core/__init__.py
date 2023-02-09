@@ -13,4 +13,4 @@ class Core(breadcord.module.ModuleCog):
 
 
 async def setup(bot: breadcord.Bot):
-    await bot.add_cog(Core())
+    await bot.add_cog(Core('core'))

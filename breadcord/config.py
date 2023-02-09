@@ -210,6 +210,9 @@ class SettingsGroup(SettingsNode):
     def keys(self) -> KeysView:
         return self._settings.keys()
 
+    def child_keys(self) -> KeysView:
+        return self._children.keys()
+
     def set_schema(self, file_path: str | PathLike[str]) -> None:
         """Loads and deserialises a settings schema, for the settings to follow.
 

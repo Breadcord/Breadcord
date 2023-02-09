@@ -1,6 +1,7 @@
 manifest_version = 1
 
 [module]
+id = "core"
 name = "Core"
 description = "A collection of preinstalled general-purpose commands and tools"
 version = "0.1.0-alpha"
