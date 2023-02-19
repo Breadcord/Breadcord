@@ -7,7 +7,7 @@ updates:
       interval: weekly
       time: "07:00"
     labels:
-      - improvement
+      - dependencies
 
   - package-ecosystem: docker
     directory: /
@@ -15,7 +15,7 @@ updates:
       interval: weekly
       time: "07:00"
     labels:
-      - improvement
+      - dependencies
 
   - package-ecosystem: pip
     directory: /
@@ -23,4 +23,4 @@ updates:
       interval: weekly
       time: "07:00"
     labels:
-      - improvement
+      - dependencies
