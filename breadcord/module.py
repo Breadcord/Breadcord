@@ -55,7 +55,7 @@ class Module:
         if not (schema_path := self.path / 'settings_schema.toml').is_file():
             return
         setting = self.bot.settings.get_child(self.id, allow_new=True)
-        setting.set_schema(schema_path)
+        setting.load_schema(file_path=schema_path)
         setting.in_schema = True
 
 

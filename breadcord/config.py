@@ -4,7 +4,7 @@ from collections.abc import Generator
 from functools import partial, wraps
 from logging import getLogger
 from os import PathLike
-from typing import Optional, Any, Callable, KeysView
+from typing import Any, Callable, KeysView
 
 import tomlkit
 from tomlkit.items import Key, Item, Comment, Whitespace, Table
@@ -188,7 +188,7 @@ class SettingsGroup(SettingsNode):
         super().__init__(key=key, parent=parent, in_schema=in_schema)
 
         if schema_path is not None:
-            self.set_schema(schema_path)
+            self.load_schema(file_path=schema_path)
 
     def __repr__(self) -> str:
         return f'<SettingsGroup {self.path_id()} settings:{len(self._settings)} children:{len(self._children)}>'
@@ -213,24 +213,39 @@ class SettingsGroup(SettingsNode):
     def child_keys(self) -> KeysView:
         return self._children.keys()
 
-    def set_schema(self, file_path: str | PathLike[str]) -> None:
+    def load_schema(
+        self,
+        *,
+        file_path: str | PathLike[str] | None = None,
+        body: list[tuple[Key | None, Item]] = None
+    ) -> None:
         """Loads and deserialises a settings schema, for the settings to follow.
 
         :param file_path: Path to the schema file.
+        :param body: The parsed TOML body data to interpret as. Overrides loading from ``file_path`` when present.
         """
 
-        body: list[tuple[Optional[Key], Item]] = TOMLFile(file_path).read().body
+        body: list[tuple[Key | None, Item]] = TOMLFile(file_path).read().body if body is None else body
+        if body is None:
+            raise ValueError('either file_path or body must be specified')
         body.append((None, Whitespace('')))
 
         chunk = []
         for item in body:
             chunk.append(item)
-            if item[0] is None or not chunk:
+            if item[0] is None:
                 continue
 
             setting = parse_schema_chunk(chunk)
-            setting.parent = self
-            self._settings[setting.key] = setting
+            if setting.type == dict:
+                group = SettingsGroup(setting.key, in_schema=True)
+                table_document = tomlkit.loads(chunk[-1][1].as_string())
+                group.load_schema(body=table_document.body)
+                self.add_child(group)
+            else:
+                setting.parent = self
+                self._settings[setting.key] = setting
+
             chunk = []
 
     def get(self, key: str) -> Setting:
@@ -337,7 +352,7 @@ class SettingsGroup(SettingsNode):
         return document
 
 
-def parse_schema_chunk(chunk: list[tuple[Optional[Key], Item]]) -> Setting:
+def parse_schema_chunk(chunk: list[tuple[Key | None, Item]]) -> Setting:
     """Converts a TOMLDocument.body chunk representing a single schema setting into a :class:`Setting` instance.
 
     Any comments located before the key-value pair will be used for the setting's description.
