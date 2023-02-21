@@ -331,19 +331,22 @@ class SettingsGroup(SettingsNode):
 
         document = tomlkit.table() if table else TOMLDocument()
 
-        for setting in self._settings.values():
+        previous_setting_in_schema = False
+        for setting in self:
+            if previous_setting_in_schema:
+                document.add(tomlkit.nl())
+                previous_setting_in_schema = False
             for line in setting.description.splitlines():
                 document.add(tomlkit.comment(line))
             document.add(setting.key, setting.value)
-            if not setting.in_schema:
-                if warn_schema:
-                    _logger.warning(f'{setting.path_id()} is not declared in the schema')
-                    document.value[setting.key].comment('⚠️ Unrecognised setting')
-            else:
-                document.add(tomlkit.nl())
+            if setting.in_schema:
+                previous_setting_in_schema = True
+            elif warn_schema:
+                _logger.warning(f'{setting.path_id()} is not declared in the schema')
+                document.value[setting.key].comment('⚠️ Unrecognised setting')
 
         for key, child in self._children.items():
-            document.add(tomlkit.nl())
+            document.add(tomlkit.ws('\n\n'))
             table = child.as_toml(table=True, warn_schema=child.in_schema)
             if not child.in_schema:
                 table.comment('🚫 Disabled')
