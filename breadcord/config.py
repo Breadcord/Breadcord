@@ -4,7 +4,7 @@ from collections.abc import Generator
 from functools import partial, wraps
 from logging import getLogger
 from os import PathLike
-from typing import Any, Callable, KeysView
+from typing import Any, Callable, KeysView, ValuesView
 
 import tomlkit
 from tomlkit.items import Key, Item, Comment, Whitespace, Table
@@ -207,11 +207,14 @@ class SettingsGroup(SettingsNode):
     def __iter__(self) -> Generator[Setting, None, None]:
         yield from self._settings.values()
 
-    def keys(self) -> KeysView:
+    def keys(self) -> KeysView[str]:
         return self._settings.keys()
 
-    def child_keys(self) -> KeysView:
+    def child_keys(self) -> KeysView[str]:
         return self._children.keys()
+
+    def children(self) -> ValuesView[SettingsGroup]:
+        return self._children.values()
 
     def load_schema(
         self,
