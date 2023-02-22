@@ -238,12 +238,15 @@ class SettingsGroup(SettingsNode):
 
             setting = parse_schema_chunk(chunk)
             if setting.type == dict:
-                group = SettingsGroup(setting.key, in_schema=True)
+                group = self.get_child(setting.key, allow_new=True)
+                group.in_schema = True
                 table_document = tomlkit.loads(chunk[-1][1].as_string())
                 group.load_schema(body=table_document.body)
                 self.add_child(group)
             else:
                 setting.parent = self
+                if setting.key in self:
+                    setting.value = self.get(setting.key).value
                 self._settings[setting.key] = setting
 
             chunk = []
