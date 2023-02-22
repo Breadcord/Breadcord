@@ -271,15 +271,15 @@ class SettingsGroup(SettingsNode):
         """
 
         if strict and (
-            key not in self._settings
-            or not self._settings[key].in_schema
+            key not in self
+            or not self.get(key).in_schema
         ):
             raise ValueError(f'{self.path_id()}.{key} is not declared in the schema')
 
-        if key not in self._settings:
+        if key not in self:
             self._settings[key] = Setting(key, value, parent=self, in_schema=False)
 
-        self._settings[key].value = value
+        self.get(key).value = value
 
     def get_child(self, key: str, allow_new: bool = False) -> SettingsGroup:
         """Gets a child :class:`SettingsGroup` object by its key.
