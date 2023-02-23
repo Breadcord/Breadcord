@@ -28,7 +28,7 @@ jobs:
     if: ${{ github.event.issue.state_reason == 'not_planned' || (github.event_name == 'pull_request' && !github.event.pull_request.merged) }}
     runs-on: ubuntu-latest
     steps:
-      - uses: github/update-project-action@2
+      - uses: github/update-project-action@v2
         with:
           github_token: ${{ secrets.ACTIONS_TOKEN }}
           organization: Breadcord
