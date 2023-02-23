@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import subprocess
+import sys
 from collections.abc import Generator
 from logging import getLogger
 from os import PathLike
@@ -36,6 +38,8 @@ class Module:
         if self.id != self.path.name:
             self.logger.warning(f"Module ID '{self.id}' does not match directory name")
 
+        self.install_requirements()
+
     @property
     def storage_path(self) -> Path:
         path = Path(f'storage/{self.id}').resolve()
@@ -57,6 +61,11 @@ class Module:
         settings = self.bot.settings.get_child(self.id, allow_new=True)
         settings.load_schema(file_path=schema_path)
         settings.in_schema = True
+
+    def install_requirements(self) -> None:
+        for requirement in self.manifest.requirements:
+            self.logger.info(f'Installing requirement: {requirement}')
+            subprocess.check_call([sys.executable, '-m', 'pip', 'install', str(requirement)])
 
 
 class Modules:
