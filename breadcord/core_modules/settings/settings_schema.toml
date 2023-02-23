@@ -1,0 +1,3 @@
+# Whether settings slash commands should be ephemeral
+# ⚠️ Note that if this is set to false, other members viewing the channel may see your settings!
+ephemeral = true
