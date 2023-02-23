@@ -38,8 +38,6 @@ class Module:
         if self.id != self.path.name:
             self.logger.warning(f"Module ID '{self.id}' does not match directory name")
 
-        self.install_requirements()
-
     @property
     def storage_path(self) -> Path:
         path = Path(f'storage/{self.id}').resolve()
@@ -51,6 +49,7 @@ class Module:
 
     async def load(self) -> None:
         self.load_settings_schema()
+        self.install_requirements()
         await self.bot.load_extension(self.import_string)
         self.loaded = True
         self.logger.info('Module successfully loaded')
