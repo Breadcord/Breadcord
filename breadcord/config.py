@@ -349,7 +349,7 @@ class SettingsGroup(SettingsNode):
                 previous_setting_in_schema = True
             elif warn_schema:
                 _logger.warning(f'{setting.path_id()} is not declared in the schema')
-                document.value[setting.key].comment('⚠️ Unrecognised setting')
+                document.value.item(setting.key).comment('⚠️ Unrecognised setting')
 
         for key, child in self._children.items():
             document.add(tomlkit.ws('\n\n'))
