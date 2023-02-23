@@ -159,7 +159,7 @@ class Settings(breadcord.module.ModuleCog):
         self.bot.save_settings()
         await interaction.response.send_message(
             'Settings saved to config file.',
-            ephemeral = self.bot.settings.settings.ephemeral.value
+            ephemeral=self.bot.settings.settings.ephemeral.value
         )
 
 
