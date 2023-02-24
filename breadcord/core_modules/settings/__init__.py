@@ -130,9 +130,8 @@ class Settings(breadcord.module.ModuleCog):
             if not booleans:
                 return [app_commands.Choice(name=f"⚠️ Invalid boolean '{current}'", value=current)]
 
-        else:
-            if current:
-                autocomplete.append(app_commands.Choice(name=current, value=current))
+        elif current:
+            autocomplete.append(app_commands.Choice(name=current, value=current))
 
         return autocomplete
 
