@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.metadata
 import subprocess
 import sys
 from collections.abc import Generator
@@ -62,9 +63,19 @@ class Module:
         settings.in_schema = True
 
     def install_requirements(self) -> None:
+        distributions = list(importlib.metadata.distributions())
+        missing_requirements = []
         for requirement in self.manifest.requirements:
-            self.logger.info(f'Installing requirement: {requirement}')
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', str(requirement)])
+            if not any(
+                requirement.name == distribution.name
+                and distribution.version in requirement.specifier
+                for distribution in distributions
+            ):
+                missing_requirements.append(str(requirement))
+
+        if missing_requirements:
+            self.logger.info(f'Installing missing requirements: {", ".join(missing_requirements)}')
+            subprocess.check_call([sys.executable, '-m', 'pip', 'install', *missing_requirements])
 
 
 class Modules:
