@@ -4,9 +4,10 @@ on:
   issues:
     types:
       - closed
-  pull_request:
-    types:
-      - closed
+  # Commented out due to action failing with PRs currently
+  # pull_request:
+  #   types:
+  #     - closed
 
 jobs:
   if_merged:
@@ -14,7 +15,7 @@ jobs:
     if: ${{ github.event.issue.state_reason == 'completed' || github.event.pull_request.merged }}
     runs-on: ubuntu-latest
     steps:
-      - uses: github/update-project-action@v2
+      - uses: Breadcord/update-project-action@v1.0.0
         with:
           github_token: ${{ secrets.ACTIONS_TOKEN }}
           organization: Breadcord
@@ -28,7 +29,7 @@ jobs:
     if: ${{ github.event.issue.state_reason == 'not_planned' || (github.event_name == 'pull_request' && !github.event.pull_request.merged) }}
     runs-on: ubuntu-latest
     steps:
-      - uses: github/update-project-action@v2
+      - uses: Breadcord/update-project-action@v1.0.0
         with:
           github_token: ${{ secrets.ACTIONS_TOKEN }}
           organization: Breadcord
