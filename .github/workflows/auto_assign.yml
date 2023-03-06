@@ -23,7 +23,7 @@ jobs:
     name: Assign Project
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/add-to-project@v0.4.0
+      - uses: actions/add-to-project@v0.4.1
         with:
           github-token: ${{ secrets.ACTIONS_TOKEN }}
           project-url: https://github.com/orgs/Breadcord/projects/1
