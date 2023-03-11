@@ -88,11 +88,11 @@ class Modules:
     def __iter__(self) -> Generator[Module, None, None]:
         yield from self._modules.values()
 
-    def __contains__(self, item: Any) -> bool:
+    def __contains__(self, item: str) -> bool:
         return item in self._modules
 
-    def get(self, module_name: str) -> Module:
-        return self._modules[module_name]
+    def get(self, module_id: str) -> Module:
+        return self._modules[module_id]
 
     def add(self, module: Module) -> None:
         if module.id in self._modules:
