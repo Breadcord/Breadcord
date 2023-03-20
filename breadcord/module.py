@@ -159,6 +159,7 @@ class ModuleManifest(pydantic.BaseModel):
         max_length=32
     )] = []
     requirements: list[Requirement] = []
+    required_modules: list[str] = []
     permissions: discord.Permissions = discord.Permissions.none()
 
     @pydantic.validator('version', pre=True)
