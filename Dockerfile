@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM python:3.11.2-slim-bullseye@sha256:d0e839882b87135b355361efeb9e9030c9d2a808da06434f4c99eb4009c15e64 as build
+FROM python:3.11.2-slim-bullseye@sha256:1d2b7101658e795e4d878d3f54f3354838630e1d16f5868ea18b338c12bb92c9 as build
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 
-FROM python:3.11.2-slim-bullseye@sha256:d0e839882b87135b355361efeb9e9030c9d2a808da06434f4c99eb4009c15e64
+FROM python:3.11.2-slim-bullseye@sha256:1d2b7101658e795e4d878d3f54f3354838630e1d16f5868ea18b338c12bb92c9
 
 WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
