@@ -64,7 +64,7 @@ class Bot(commands.Bot):
         search_paths.append('breadcord/modules')
         self.modules.discover(self, search_paths=search_paths)
 
-        modules = {**self.modules._modules}
+        modules = self.modules.to_json()
         removed = []
         for module in self.modules:
             module = self.modules.get(module.id)
@@ -73,15 +73,14 @@ class Bot(commands.Bot):
                     _logger.warning(f'Module \'{module.id}\' missing module requirement \'{required_module}\'')
                     modules.pop(module.id)
                     removed.append(module.id)
-        self.modules._modules = modules
+        self.modules.replace(modules)
 
         for module in self.settings.modules.value:
             if module not in self.modules:
                 if module not in removed:
                     _logger.warning(f'Module \'{module}\' enabled but not found')
                 continue
-            await self.modules.get(module).load()
-                    
+            await self.modules.get(module).load()                 
 
         @self.settings.command_prefix.observe
         def on_command_prefix_changed(_, new: str) -> None:

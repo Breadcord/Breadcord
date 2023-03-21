@@ -100,6 +100,15 @@ class Modules:
                 f'Module ID conflicts with {self.get(module.id).import_string} so it will not be loaded'
             )
         self._modules[module.id] = module
+    
+    def to_json(self) -> None:
+        return {**self._modules} 
+    
+    def remove(self, module: Module) -> None:
+        _modules.pop(module.id)
+    
+    def replace(self, modules_directory: dict) -> None:
+        self._modules = modules_directory
 
     def discover(self, bot: Bot, search_paths: Iterable[str | PathLike[str]]) -> None:
         self._modules = {}
