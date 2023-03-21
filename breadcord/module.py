@@ -101,11 +101,8 @@ class Modules:
             )
         self._modules[module.id] = module
     
-    def to_json(self) -> None:
+    def to_json(self) -> dict:
         return {**self._modules} 
-    
-    def remove(self, module: Module) -> None:
-        _modules.pop(module.id)
     
     def replace(self, modules_directory: dict) -> None:
         self._modules = modules_directory
