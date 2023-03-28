@@ -66,7 +66,7 @@ class Bot(commands.Bot):
 
         for module in self.settings.modules.value:
             if module not in self.modules:
-                _logger.warning(f'Module \'{module}\' enabled but not found')
+                _logger.warning(f"Module '{module}' enabled but not found")
                 continue
             await self.modules.get(module).load()
 
