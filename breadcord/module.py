@@ -100,6 +100,12 @@ class Modules:
                 f'Module ID conflicts with {self.get(module.id).import_string} so it will not be loaded'
             )
         self._modules[module.id] = module
+    
+    def to_json(self) -> dict:
+        return {**self._modules} 
+    
+    def replace(self, modules_directory: dict) -> None:
+        self._modules = modules_directory
 
     def discover(self, bot: Bot, search_paths: Iterable[str | PathLike[str]]) -> None:
         self._modules = {}
@@ -159,6 +165,7 @@ class ModuleManifest(pydantic.BaseModel):
         max_length=32
     )] = []
     requirements: list[Requirement] = []
+    required_modules: list[str] = []
     permissions: discord.Permissions = discord.Permissions.none()
 
     @pydantic.validator('version', pre=True)
