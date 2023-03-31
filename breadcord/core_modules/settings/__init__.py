@@ -32,10 +32,8 @@ class Settings(breadcord.module.ModuleCog):
     group = app_commands.Group(name='settings', description='Manage bot settings')
 
     @group.command()
+    @app_commands.check(breadcord.commands.administrator_check)
     async def get(self, interaction: discord.Interaction, key: str):
-        if not await self.bot.is_owner(interaction.user):
-            raise breadcord.errors.NotAdministratorError
-
         setting = self.bot.settings.get(key)
 
         await interaction.response.send_message(
@@ -58,10 +56,8 @@ class Settings(breadcord.module.ModuleCog):
         )
 
     @group.command()
+    @app_commands.check(breadcord.commands.administrator_check)
     async def set(self, interaction: discord.Interaction, key: str, value: str):
-        if not await self.bot.is_owner(interaction.user):
-            raise breadcord.errors.NotAdministratorError
-
         setting = self.bot.settings.get(key)
         parsed_value = tomlkit.value(value).unwrap()
         old_value = setting.value
@@ -86,7 +82,7 @@ class Settings(breadcord.module.ModuleCog):
     @get.autocomplete('key')
     @set.autocomplete('key')
     async def autocomplete_key(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice]:
-        if not await self.bot.is_owner(interaction.user):
+        if not await breadcord.commands.administrator_check(interaction):
             return [app_commands.Choice(name='⚠️ Missing permissions!', value=current)]
 
         return [
@@ -97,7 +93,7 @@ class Settings(breadcord.module.ModuleCog):
 
     @set.autocomplete('value')
     async def autocomplete_value(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice]:
-        if not await self.bot.is_owner(interaction.user):
+        if not await breadcord.commands.administrator_check(interaction):
             return [app_commands.Choice(name='Missing permissions!', value=current)]
         if interaction.namespace.key not in self.bot.settings:
             return [app_commands.Choice(name=f"⚠️ Invalid key '{interaction.namespace.key}'", value=current)]
@@ -136,15 +132,13 @@ class Settings(breadcord.module.ModuleCog):
         return autocomplete
 
     @group.command()
+    @app_commands.check(breadcord.commands.administrator_check)
     async def edit(self, interaction: discord.Interaction):
-        if not await self.bot.is_owner(interaction.user):
-            raise breadcord.errors.NotAdministratorError
         await interaction.response.send_modal(SettingsFileEditor(self.bot))
 
     @group.command()
+    @app_commands.check(breadcord.commands.administrator_check)
     async def reload(self, interaction: discord.Interaction):
-        if not await self.bot.is_owner(interaction.user):
-            raise breadcord.errors.NotAdministratorError
         self.bot.reload_settings()
         await interaction.response.send_message(
             'Settings reloaded from config file.',
@@ -152,9 +146,8 @@ class Settings(breadcord.module.ModuleCog):
         )
 
     @group.command()
+    @app_commands.check(breadcord.commands.administrator_check)
     async def save(self, interaction: discord.Interaction):
-        if not await self.bot.is_owner(interaction.user):
-            raise breadcord.errors.NotAdministratorError
         self.bot.save_settings()
         await interaction.response.send_message(
             'Settings saved to config file.',
