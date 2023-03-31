@@ -29,7 +29,7 @@ class Bot(commands.Bot):
         self.args = args
         self.settings = config.SettingsGroup('settings', schema_path='breadcord/settings_schema.toml', observers={})
         super().__init__(
-            command_prefix=None,
+            command_prefix=[],
             intents=discord.Intents.all(),
             tree_cls=CommandTree
         )
