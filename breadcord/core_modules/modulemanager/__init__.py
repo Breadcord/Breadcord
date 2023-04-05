@@ -142,10 +142,10 @@ class Modules(breadcord.module.ModuleCog):
 
         requirements_str = ", ".join(f'`{req}`' for req in manifest.requirements) or 'No requirements specified'
         permissions = []
-        for permission in zip(manifest.permissions, interaction.app_permissions):
-            if permission[0][1]:
-                emoji = '✅' if permission[1][1] else '⚠️'
-                permissions.append(f'{emoji} {permission[0][0]}')
+        for manifest_permission, bot_permission in zip(manifest.permissions, interaction.app_permissions):
+            if manifest_permission[1]:
+                emoji = '✅' if bot_permission[1] else '⚠️'
+                permissions.append(f'{emoji} {manifest_permission[0]}')
 
         await interaction.response.send_message(
             embed=discord.Embed(
