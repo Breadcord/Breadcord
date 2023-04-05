@@ -14,12 +14,16 @@ _logger = logging.getLogger('breadcord.bot')
 
 class CommandTree(discord.app_commands.CommandTree):
     async def on_error(self, interaction: discord.Interaction, error: discord.app_commands.AppCommandError, /) -> None:
+        if 'error_handled' in interaction.extras and interaction.extras['error_handled']:
+            return
+
         if isinstance(error, errors.NotAdministratorError):
             await interaction.response.send_message(embed=discord.Embed(
                 colour=discord.Colour.red(),
                 title='Missing permissions!',
                 description='This operation is restricted to bot owners only.'
             ))
+
         else:
             raise error
 
