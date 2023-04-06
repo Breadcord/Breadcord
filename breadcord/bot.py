@@ -31,7 +31,7 @@ class CommandTree(discord.app_commands.CommandTree):
 class Bot(commands.Bot):
     def __init__(self, args: Namespace) -> None:
         self.args = args
-        self.settings = config.SettingsGroup('settings', schema_path='breadcord/settings_schema.toml', observers={})
+        self.settings = config.SettingsGroup('settings', observers={})
         super().__init__(
             command_prefix=[],
             intents=discord.Intents.all(),
@@ -47,6 +47,7 @@ class Bot(commands.Bot):
 
         if not Path('config/settings.toml').is_file():
             _logger.info('Generating missing config/settings.toml file'),
+            self.settings = config.SettingsGroup('settings', schema_path='breadcord/settings_schema.toml')
             self.save_settings()
             _logger.warning('Bot token must be supplied to start the bot')
             return
