@@ -17,6 +17,7 @@ from discord import app_commands
 from discord.utils import escape_markdown
 
 import breadcord
+from breadcord.helpers import search_for
 from breadcord.module import Module, ModuleManifest, parse_manifest
 
 REPO_PATH = re.compile(r'[\w.-]+/[\w.-]+')
@@ -36,6 +37,19 @@ def nested_zip_extractor(zip_path: Path) -> Callable[[], None]:
 class ModuleTransformer(app_commands.Transformer):
     def transform(self, interaction: discord.Interaction, value: str, /) -> breadcord.module.Module:
         return interaction.client.modules.get(value)
+
+    async def autocomplete(self, interaction: discord.Interaction, value: str, /) -> list[app_commands.Choice[str]]:
+        return [
+            app_commands.Choice(
+                name=f'{module.id} ({"enabled" if module.loaded else "disabled"})',
+                value=module.id
+            )
+            for module in search_for(
+                query=value,
+                objects=list(interaction.client.modules),
+                key=lambda module: '\n'.join((module.id, module.manifest.name, module.manifest.description))
+            )
+        ]
 
 
 class ModuleInstallView(discord.ui.View):
