@@ -18,6 +18,7 @@ class SettingsNode:
 
     This class is subclassed by :class:`Setting` and :class:`SettingsGroup`.
 
+    :ivar description: A description of the node, usually specified in the settings schema using TOML comments.
     :ivar parent: The parent node, or ``None`` if it is a root node.
     :ivar in_schema: Whether the node is present in the settings schema.
     :param key: The identifier used for this node by the parent node in the settings tree.
@@ -25,10 +26,18 @@ class SettingsNode:
     :param in_schema: Whether the node is present in the settings schema.
     """
 
-    def __init__(self, key: str, *, parent: SettingsGroup | None = None, in_schema: bool = False):
+    def __init__(
+        self,
+        key: str,
+        *,
+        description: str = '',
+        parent: SettingsGroup | None = None,
+        in_schema: bool = False
+    ):
         self._key = key
         self._path = (self,)
 
+        self.description = description
         self.parent = parent
         self.in_schema = in_schema
 
@@ -70,7 +79,6 @@ class Setting(SettingsNode):
     The data type of the setting is inferred from the initial value's data type, and it is enforced in subsequent
     writes to the value of this setting.
 
-    :ivar description: A description intended to explain the setting to a user, usually parsed from a settings schema.
     :ivar type: The data type held by the setting.
     :param key: The identifier used for this node by the parent node in the settings tree.
     :param value: The value for the setting to hold.
@@ -83,17 +91,16 @@ class Setting(SettingsNode):
         self,
         key: str,
         value: Any,
-        description: str = '',
         *,
+        description: str = '',
         parent: SettingsGroup | None = None,
         in_schema: bool = False
     ) -> None:
 
-        super().__init__(key=key, parent=parent, in_schema=in_schema)
+        super().__init__(key=key, description=description, parent=parent, in_schema=in_schema)
 
         self._value = value
 
-        self.description = description
         self.type: type = type(value)
 
     @property
@@ -242,6 +249,7 @@ class SettingsGroup(SettingsNode):
             setting = parse_schema_chunk(chunk)
             if setting.type == dict:
                 group = self.get_child(setting.key, allow_new=True)
+                group.description = setting.description
                 group.in_schema = True
                 table_document = tomlkit.loads(chunk[-1][1].as_string())
                 group.load_schema(body=table_document.body)
@@ -252,7 +260,16 @@ class SettingsGroup(SettingsNode):
                     setting.value = self.get(setting.key).value
                 self._settings[setting.key] = setting
 
-            chunk = []
+            next_chunk: list[tuple[Key | None, Item]] = []
+            # This is required as comments after a table are considered a child of the table
+            if isinstance(chunk[-1][1], tomlkit.items.Table):
+                for line in reversed(chunk[-1][1].as_string().splitlines()):
+                    if line.startswith('#'):
+                        next_chunk.append((None, tomlkit.comment(line.lstrip('# '))))
+                    elif line.strip():
+                        break
+                next_chunk.reverse()
+            chunk = next_chunk
 
     def get(self, key: str) -> Setting:
         """Gets a :class:`Setting` object by its key.
@@ -351,12 +368,15 @@ class SettingsGroup(SettingsNode):
                 _logger.warning(f'{setting.path_id()} is not declared in the schema')
                 document.value.item(setting.key).comment('⚠️ Unrecognised setting')
 
-        for key, child in self._children.items():
+        for child in self.children():
             document.add(tomlkit.ws('\n\n'))
             table = child.as_toml(table=True, warn_schema=child.in_schema)
             if not child.in_schema:
                 table.comment('🚫 Disabled')
-            document.append(key, table)
+            for line in child.description.splitlines():
+                document.add(tomlkit.comment(line))
+            document.append(child.key, table)
+            table.trivia.indent = ''
 
         return document
 
@@ -377,7 +397,7 @@ def parse_schema_chunk(chunk: list[tuple[Key | None, Item]]) -> Setting:
             description += chunk[0][1].indent(0).as_string().lstrip('# ')
         chunk.pop(0)
 
-    return Setting(chunk[0][0].key, chunk[0][1].unwrap(), description.rstrip(), in_schema=True)
+    return Setting(chunk[0][0].key, chunk[0][1].unwrap(), description=description.rstrip(), in_schema=True)
 
 
 def load_settings(file_path: str | PathLike[str]) -> dict[str, Any]:
