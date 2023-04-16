@@ -75,6 +75,7 @@ class ModuleInstallView(discord.ui.View):
         for button in self.children:
             button.disabled = True
         await interaction.response.edit_message(embed=embed, view=self)
+        self.cog.logger.info(f"Installing module with ID: {self.manifest.id}")
 
         zip_path = Path(f'breadcord/modules/{self.manifest.id}.zip').resolve()
         async with self.cog.session.get(self.zip_url) as response:
@@ -83,6 +84,7 @@ class ModuleInstallView(discord.ui.View):
                     await file.write(chunk)
         await to_thread(nested_zip_extractor(zip_path))
         self.cog.bot.modules.add(Module(self.cog.bot, zip_path.parent / zip_path.stem))
+        self.cog.logger.info(f"Installed module with ID: {self.manifest.id}")
 
         embed.title = 'Module installed!'
         embed.colour = discord.Colour.green()
