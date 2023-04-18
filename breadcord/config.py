@@ -198,7 +198,7 @@ class SettingsGroup(SettingsNode):
             self.load_schema(file_path=schema_path)
 
     def __repr__(self) -> str:
-        return f'<SettingsGroup {self.path_id()} settings:{len(self._settings)} children:{len(self._children)}>'
+        return f'<{self.__class__.__name__} {self.path_id()} settings:{len(self._settings)} children:{len(self._children)}>'
 
     def __getattr__(self, item: str) -> Setting | SettingsGroup:
         if item in self._children:
