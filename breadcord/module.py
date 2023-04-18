@@ -46,7 +46,7 @@ class Module:
         return path
 
     def __repr__(self) -> str:
-        return f'Module({self.import_string})'
+        return f'{self.__class__.__name__}({self.import_string})'
 
     async def load(self) -> None:
         self.load_settings_schema()
@@ -88,7 +88,7 @@ class Modules:
         self._modules: dict[str, Module] = {} if modules is None else {module.id: module for module in modules}
 
     def __repr__(self) -> str:
-        return f'Modules({", ".join(self._modules.keys())})'
+        return f'{self.__class__.__name__}({", ".join(self._modules.keys())})'
 
     def __iter__(self) -> Generator[Module, None, None]:
         yield from self._modules.values()
