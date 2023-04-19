@@ -11,7 +11,7 @@ def _search_with_key(
     *,
     key: Callable[[_T], str],
     threshold: float,
-    max_results: int
+    max_results: int | None
 ) -> list[_T]:
     query = query.strip().lower()
     scored_objs: defaultdict[tuple[float, int], list[_T]] = defaultdict(list)
@@ -40,7 +40,7 @@ def search_for(
     objects: list[str],
     *,
     threshold: float = 80,
-    max_results: int = 25
+    max_results: int | None = 25
 ) -> list[str]:
     ...
 
@@ -52,7 +52,7 @@ def search_for(
     *,
     key: Callable[[_T], str],
     threshold: float = 80,
-    max_results: int = 25
+    max_results: int | None = 25
 ) -> list[_T]:
     ...
 
@@ -63,7 +63,7 @@ def search_for(
     *,
     key: Callable[[_T], str] | None = None,
     threshold: float = 80,
-    max_results: int = 25
+    max_results: int | None = 25
 ) -> list[_T]:
     if key is None:
         def dummy_key(item: _T) -> _T:
