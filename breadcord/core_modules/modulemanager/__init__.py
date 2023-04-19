@@ -4,13 +4,13 @@ import re
 from asyncio import to_thread
 from base64 import b64decode
 from pathlib import Path
+from shutil import rmtree
 from typing import Callable
 from zipfile import ZipFile
 
-# noinspection PyPackageRequirements
-import aiofiles
-# noinspection PyPackageRequirements
-import aiohttp
+import aiofiles  # noqa
+import aiofiles.os  # noqa
+import aiohttp  # noqa
 import discord
 import tomlkit
 from discord import app_commands
@@ -105,6 +105,60 @@ class ModuleInstallView(discord.ui.View):
         await interaction.message.edit(embed=embed, view=None)
 
 
+class ModuleUninstallView(discord.ui.View):
+    def __init__(self, cog: Modules, module: Module, user_id: int):
+        super().__init__()
+        self.cog = cog
+        self.module = module
+        self.user_id = user_id
+
+    @discord.ui.button(emoji='🗑️', label='Uninstall Module', style=discord.ButtonStyle.red)
+    async def uninstall_module(self, interaction: discord.Interaction, _):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message(
+                f'Only <@{self.user_id}> can perform this action!',
+                ephemeral=True
+            )
+            return
+
+        if self.module.path.parent.name == 'core_modules':
+            await interaction.response.send_message(embed=discord.Embed(
+                colour=discord.Colour.red(),
+                title='Cannot uninstall core modules!',
+                description=f'If you know what you are doing, this module can be disabled instead.'
+            ))
+
+        embed = interaction.message.embeds[0]
+        embed.title = 'Module uninstalling...'
+        embed.colour = discord.Colour.yellow()
+        for button in self.children:
+            button.disabled = True
+        await interaction.response.edit_message(embed=embed, view=self)
+
+        if self.module.loaded:
+            await self.module.unload()
+            self.cog.bot.settings.modules.value.remove(self.module.id)
+        await to_thread(lambda: rmtree(self.module.path))
+
+        embed.title = 'Module uninstalled!'
+        embed.colour = discord.Colour.green()
+        await interaction.message.edit(embed=embed)
+
+    @discord.ui.button(emoji='🛑', label='Cancel', style=discord.ButtonStyle.blurple)
+    async def cancel(self, interaction: discord.Interaction, _):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message(
+                f'Only <@{self.user_id}> can perform this action!',
+                ephemeral=True
+            )
+            return
+
+        embed = interaction.message.embeds[0]
+        embed.title = 'Uninstallation cancelled'
+        embed.colour = discord.Colour.red()
+        await interaction.message.edit(embed=embed, view=None)
+
+
 class Modules(breadcord.module.ModuleCog):
     group = app_commands.Group(name='module', description='Manage Breadcord modules')
 
@@ -187,6 +241,36 @@ class Modules(breadcord.module.ModuleCog):
                 manifest=manifest,
                 user_id=interaction.user.id,
                 zipfile_url=f'https://api.github.com/repos/{module}/zipball'
+            )
+        )
+
+    @group.command()
+    @app_commands.rename(module='module_id')
+    @app_commands.check(breadcord.commands.administrator_check)
+    async def uninstall(
+        self,
+        interaction: discord.Interaction,
+        module: app_commands.Transform[breadcord.module.Module, ModuleTransformer]
+    ):
+        requirements_str = ", ".join(f'`{req}`' for req in module.manifest.requirements) or 'No requirements specified'
+        await interaction.response.send_message(
+            embed=discord.Embed(
+                colour=discord.Colour.blurple(),
+                title='Uninstall this module?',
+                description=module.manifest.description
+            ).add_field(
+                name=module.manifest.name,
+                value=f'**Authors:** {escape_markdown(", ".join(module.manifest.authors))}\n'
+                      f'**License:** {escape_markdown(module.manifest.license)}\n'
+                      f'**Requirements:** {escape_markdown(requirements_str)}',
+                inline=False
+            ).set_footer(
+                text=f'{module.manifest.id} v{module.manifest.version}'
+            ),
+            view=ModuleUninstallView(
+                cog=self,
+                module=module,
+                user_id=interaction.user.id
             )
         )
 
