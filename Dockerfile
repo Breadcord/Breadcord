@@ -4,13 +4,13 @@ FROM python:3.11.3-slim-bullseye as build
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential
+RUN apt update && apt install -y --no-install-recommends build-essential
 ENV PYTHONDONTWRITEBYTECODE=1
 RUN python -m venv venv
 ENV PATH="/app/venv/bin:$PATH"
 
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt --upgrade pip
 
 
 FROM python:3.11.3-slim-bullseye
