@@ -96,7 +96,7 @@ class Modules:
     def __contains__(self, item: str) -> bool:
         if not isinstance(item, str):
             raise TypeError(
-                f"'in <{self.__class__.__name__}>' requires string as left operand, not {type(item).__name__!r}"
+                f"'in <{self.__class__.__name__}>' requires string as left operand, not '{type(item).__name__}'"
             )
         return item in self._modules
 

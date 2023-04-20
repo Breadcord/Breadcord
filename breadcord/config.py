@@ -113,7 +113,7 @@ class Setting(SettingsNode):
         """Assigns a new value to the setting, validating the new value type and triggering necessary observers."""
         if not isinstance(new_value, self.type):
             raise TypeError(
-                f'Cannot assign type {type(new_value).__name__!r} to setting with type {self.type.__name__!r}'
+                f"Cannot assign type '{type(new_value).__name__}' to setting with type '{self.type.__name__}'"
             )
 
         old_value = self._value
@@ -211,7 +211,7 @@ class SettingsGroup(SettingsNode):
     def __contains__(self, item: str) -> bool:
         if not isinstance(item, str):
             raise TypeError(
-                f"'in <{self.__class__.__name__}>' requires string as left operand, not {type(item).__name__!r}"
+                f"'in <{self.__class__.__name__}>' requires string as left operand, not '{type(item).__name__}'"
             )
         return item in self.keys()
 
