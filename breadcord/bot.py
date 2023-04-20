@@ -33,7 +33,7 @@ class Bot(commands.Bot):
         self.args = args
         self.settings = config.SettingsGroup('settings', observers={})
 
-        data_dir = Path('data')
+        data_dir = self.args.data or Path('data')
         data_dir.mkdir(exist_ok=True)
         self.data_dir = data_dir.resolve()
         self.modules_dir = self.data_dir / 'modules'
@@ -73,11 +73,7 @@ class Bot(commands.Bot):
         super().run(token=self.settings.token.value, log_handler=None, **kwargs)
 
     async def setup_hook(self) -> None:
-        search_paths = [Path('breadcord/core_modules')]
-        if self.args.include is not None:
-            search_paths.extend(self.args.include)
-        search_paths.append(self.modules_dir)
-        self.modules.discover(self, search_paths=search_paths)
+        self.modules.discover(self, search_paths=[Path('breadcord/core_modules'), self.modules_dir])
 
         for module in self.settings.modules.value:
             if module not in self.modules:

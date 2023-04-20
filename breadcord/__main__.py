@@ -3,13 +3,12 @@ from pathlib import Path
 
 from breadcord import Bot
 
-parser = argparse.ArgumentParser(prog='Breadcord')
+parser = argparse.ArgumentParser(prog='breadcord')
 parser.add_argument(
-    '-i', '--include',
-    nargs='+',
+    '-d', '--data',
     type=Path,
-    help='include additional modules to discover and load from',
-    metavar='<module_path>'
+    help='specify an alternative data directory to load from',
+    metavar='<path>'
 )
 
 bot = Bot(args=parser.parse_args())
