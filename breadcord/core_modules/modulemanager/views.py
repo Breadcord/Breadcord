@@ -94,13 +94,6 @@ class ModuleUninstallView(discord.ui.View):
             )
             return
 
-        if self.module.path.parent.name == 'core_modules':
-            await interaction.response.send_message(embed=discord.Embed(
-                colour=discord.Colour.red(),
-                title='Cannot uninstall core modules!',
-                description=f'If you know what you are doing, this module can be disabled instead.'
-            ))
-
         embed = interaction.message.embeds[0]
         embed.title = 'Module uninstalling...'
         embed.colour = discord.Colour.yellow()

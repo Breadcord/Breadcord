@@ -129,6 +129,15 @@ class ModuleManager(breadcord.module.ModuleCog):
         interaction: discord.Interaction,
         module: app_commands.Transform[breadcord.module.Module, ModuleTransformer]
     ):
+        if self.module.path.parent.name == 'core_modules':
+            await interaction.response.send_message(embed=discord.Embed(
+                colour=discord.Colour.red(),
+                title='Cannot uninstall core modules!',
+                description=f'If you know what you are doing, this module can be disabled instead using\n'
+                            f'`/module disable module_id:{module.id}`.'
+            ))
+            return
+
         requirements_str = ", ".join(f'`{req}`' for req in module.manifest.requirements) or 'No requirements specified'
         await interaction.response.send_message(
             embed=discord.Embed(
