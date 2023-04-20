@@ -11,14 +11,14 @@ class SettingsFileEditor(discord.ui.Modal, title='Settings File Editor'):
 
     def __init__(self, bot: breadcord.Bot):
         self.bot = bot
-        with open('config/settings.toml', 'r', encoding='utf-8') as file:
+        with open(self.bot.settings_file, 'r', encoding='utf-8') as file:
             self.editor.default = file.read()
         super().__init__()
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
-        with open('config/settings.toml', 'w', encoding='utf-8') as file:
+        with open(self.bot.settings_file, 'w', encoding='utf-8') as file:
             file.write(self.editor.value)
-        self.bot.reload_settings()
+        self.bot.load_settings()
         await interaction.response.send_message(
             embed=discord.Embed(
                 title='Settings saved!',
@@ -139,7 +139,7 @@ class Settings(breadcord.module.ModuleCog):
     @group.command()
     @app_commands.check(breadcord.commands.administrator_check)
     async def reload(self, interaction: discord.Interaction):
-        self.bot.reload_settings()
+        self.bot.load_settings()
         await interaction.response.send_message(
             'Settings reloaded from config file.',
             ephemeral=self.bot.settings.settings.ephemeral.value

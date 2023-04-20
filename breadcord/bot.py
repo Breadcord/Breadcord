@@ -32,6 +32,16 @@ class Bot(commands.Bot):
     def __init__(self, args: Namespace) -> None:
         self.args = args
         self.settings = config.SettingsGroup('settings', observers={})
+
+        data_dir = Path('data')
+        data_dir.mkdir(exist_ok=True)
+        self.data_dir = data_dir.resolve()
+        self.modules_dir = self.data_dir / 'modules'
+        self.modules_dir.mkdir(exist_ok=True)
+        self.storage_dir = self.data_dir / 'storage'
+        self.storage_dir.mkdir(exist_ok=True)
+        self.settings_file = self.data_dir / 'settings.toml'
+
         super().__init__(
             command_prefix=[],
             intents=discord.Intents.all(),
@@ -45,14 +55,14 @@ class Bot(commands.Bot):
     def run(self, **kwargs) -> None:
         discord.utils.setup_logging()
 
-        if not Path('config/settings.toml').is_file():
-            _logger.info('Generating missing config/settings.toml file'),
+        if not self.settings_file.is_file():
+            _logger.info('Generating missing settings.toml file'),
             self.settings = config.SettingsGroup('settings', schema_path='breadcord/settings_schema.toml')
             self.save_settings()
             _logger.warning('Bot token must be supplied to start the bot')
             return
 
-        self.reload_settings()
+        self.load_settings()
         if self.settings.debug.value:
             logging.getLogger().setLevel(logging.DEBUG)
             _logger.debug('Debug mode enabled')
@@ -63,10 +73,10 @@ class Bot(commands.Bot):
         super().run(token=self.settings.token.value, log_handler=None, **kwargs)
 
     async def setup_hook(self) -> None:
-        search_paths = ['breadcord/core_modules']
+        search_paths = [Path('breadcord/core_modules')]
         if self.args.include is not None:
             search_paths.extend(self.args.include)
-        search_paths.append('breadcord/modules')
+        search_paths.append(self.modules_dir)
         self.modules.discover(self, search_paths=search_paths)
 
         for module in self.settings.modules.value:
@@ -99,8 +109,10 @@ class Bot(commands.Bot):
             self.owner_id = owner_id = app.owner.id
             return user.id == owner_id
 
-    def reload_settings(self, file_path: str | PathLike[str] = 'config/settings.toml') -> None:
-        _logger.info(f'Reloading settings from {Path(file_path).as_posix()}')
+    def load_settings(self, file_path: str | PathLike[str] | None = None) -> None:
+        if file_path is None:
+            file_path = self.settings_file
+        _logger.info(f'Loading settings from {Path(file_path).as_posix()}')
 
         settings = config.SettingsGroup(
             'settings',
@@ -113,8 +125,11 @@ class Bot(commands.Bot):
 
         self.settings = settings
 
-    def save_settings(self, file_path: str | PathLike[str] = 'config/settings.toml') -> None:
-        path = Path(file_path)
+    def save_settings(self, file_path: str | PathLike[str] | None = None) -> None:
+        if file_path is None:
+            path = self.settings_file
+        else:
+            path = Path(file_path)
         _logger.info(f'Saving settings to {path.as_posix()}')
         path.parent.mkdir(parents=True, exist_ok=True)
         output = self.settings.as_toml().as_string().rstrip() + '\n'

@@ -7,5 +7,4 @@ services:
     restart: on-failure
     network_mode: host
     volumes:
-      - ./config:/app/config
-      - ./storage:/app/storage
+      - ./data:/app/data

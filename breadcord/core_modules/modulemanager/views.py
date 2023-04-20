@@ -50,7 +50,7 @@ class ModuleInstallView(discord.ui.View):
         await interaction.response.edit_message(embed=embed, view=self)
         self.cog.logger.info(f"Installing module with ID: {self.manifest.id}")
 
-        zip_path = Path(f'breadcord/modules/{self.manifest.id}.zip').resolve()
+        zip_path = self.cog.bot.modules_dir / f'{self.manifest.id}.zip'
         async with self.cog.session.get(self.zip_url) as response:
             async with aiofiles.open(zip_path, 'wb') as file:
                 async for chunk in response.content:

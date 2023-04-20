@@ -41,8 +41,8 @@ class Module:
 
     @property
     def storage_path(self) -> Path:
-        path = Path(f'storage/{self.id}').resolve()
-        path.mkdir(parents=True, exist_ok=True)
+        path = self.bot.storage_dir / self.id
+        path.mkdir(exist_ok=True)
         return path
 
     def __repr__(self) -> str:

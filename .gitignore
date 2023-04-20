@@ -1,7 +1,5 @@
 .idea/
-config/
-storage/
-breadcord/modules/
+data/
 
 ### Python template
 # Byte-compiled / optimized / DLL files
