@@ -110,6 +110,9 @@ class Modules:
             )
         self._modules[module.id] = module
 
+    def remove(self, module_id: str) -> None:
+        del self._modules[module_id]
+
     def discover(self, bot: Bot, search_paths: Iterable[str | PathLike[str]]) -> None:
         self._modules = {}
         for path in search_paths:

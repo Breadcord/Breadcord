@@ -112,6 +112,7 @@ class ModuleUninstallView(discord.ui.View):
             await self.module.unload()
             self.cog.bot.settings.modules.value.remove(self.module.id)
         await to_thread(lambda: rmtree(self.module.path))
+        self.cog.bot.modules.remove(self.module.id)
 
         embed.title = 'Module uninstalled!'
         embed.colour = discord.Colour.green()
