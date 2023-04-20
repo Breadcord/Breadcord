@@ -210,8 +210,9 @@ class SettingsGroup(SettingsNode):
 
     def __contains__(self, item: str) -> bool:
         if not isinstance(item, str):
-            raise TypeError(f"'in <CommandGroup>' requires string as left operand, not {type(item).__name__!r}")
-
+            raise TypeError(
+                f"'in <{self.__class__.__name__}>' requires string as left operand, not {type(item).__name__!r}"
+            )
         return item in self.keys()
 
     def __iter__(self) -> Generator[Setting, None, None]:
