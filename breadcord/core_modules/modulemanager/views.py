@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from asyncio import to_thread
 from pathlib import Path
 from shutil import rmtree
