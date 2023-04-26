@@ -78,8 +78,8 @@ class ModuleManager(breadcord.module.ModuleCog):
             if response.status != 200:
                 await interaction.response.send_message(embed=discord.Embed(
                     colour=discord.Colour.red(),
-                    title='Invalid module!',
-                    description='The repository specified does not contain a `manifest.toml` file.'
+                    title='Module not found!',
+                    description="The repository specified does not exist, can't be reached or isn't a Breadcord module."
                 ))
                 return
 
