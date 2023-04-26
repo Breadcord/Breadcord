@@ -75,6 +75,14 @@ class ModuleManager(breadcord.module.ModuleCog):
             return
 
         async with self.session.get(f'https://api.github.com/repos/{module}/contents/manifest.toml') as response:
+            if response.status != 200:
+                await interaction.response.send_message(embed=discord.Embed(
+                    colour=discord.Colour.red(),
+                    title='Module not found!',
+                    description="The repository specified does not exist, can't be reached or isn't a Breadcord module."
+                ))
+                return
+
             content = (await response.json())['content']
             manifest_str = b64decode(content).decode()
             manifest = parse_manifest(tomlkit.loads(manifest_str).unwrap())
