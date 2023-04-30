@@ -1,5 +1,6 @@
 import logging
 from argparse import Namespace
+from datetime import datetime
 from os import PathLike
 from pathlib import Path
 
@@ -36,6 +37,8 @@ class Bot(commands.Bot):
         data_dir = self.args.data or Path('data')
         data_dir.mkdir(exist_ok=True)
         self.data_dir = data_dir.resolve()
+        self.logs_dir = self.data_dir / 'logs'
+        self.logs_dir.mkdir(exist_ok=True)
         self.modules_dir = self.data_dir / 'modules'
         self.modules_dir.mkdir(exist_ok=True)
         self.storage_dir = self.data_dir / 'storage'
@@ -52,8 +55,29 @@ class Bot(commands.Bot):
     def modules(self) -> Modules:
         return global_modules
 
-    def run(self, **kwargs) -> None:
+    def _init_logging(self) -> None:
+        log_file = self.logs_dir / 'breadcord_latest.log'
+        if log_file.is_file():
+            with log_file.open('r') as file:
+                timestamp = datetime.strptime(file.read(10), '%Y-%m-%d')
+            base_filename = timestamp.strftime('%Y-%m-%d') + '.{}.log'
+            log_number = 1
+            while (rename_path := self.logs_dir / base_filename.format(log_number)).is_file():
+                log_number += 1
+            log_file.rename(rename_path)
+
         discord.utils.setup_logging()
+        discord.utils.setup_logging(
+            handler=logging.FileHandler(log_file, 'w', encoding='utf-8'),
+            formatter=logging.Formatter(
+                fmt='{asctime} [{levelname}] {name}: {message}',
+                datefmt='%Y-%m-%d %H:%M:%S',
+                style='{'
+            )
+        )
+
+    def run(self, **kwargs) -> None:
+        self._init_logging()
 
         if not self.settings_file.is_file():
             _logger.info('Generating missing settings.toml file'),
