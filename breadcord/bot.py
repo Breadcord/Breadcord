@@ -33,7 +33,7 @@ class CommandTree(discord.app_commands.CommandTree):
             ))
 
         else:
-            raise error
+            _logger.exception(f'{error.__class__.__name__}: {error}')
 
 
 class Bot(commands.Bot):
