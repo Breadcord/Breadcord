@@ -59,8 +59,12 @@ class Bot(commands.Bot):
         log_file = self.logs_dir / 'breadcord_latest.log'
         if log_file.is_file():
             with log_file.open('r') as file:
-                timestamp = datetime.strptime(file.read(10), '%Y-%m-%d')
-            base_filename = timestamp.strftime('%Y-%m-%d') + '.{}.log'
+                timestamp = file.read(10)
+            try:
+                datetime.strptime(timestamp, '%Y-%m-%d')
+            except ValueError:
+                timestamp = '0000-00-00'
+            base_filename = timestamp + '.{}.log'
             log_number = 1
             while (rename_path := self.logs_dir / base_filename.format(log_number)).is_file():
                 log_number += 1
