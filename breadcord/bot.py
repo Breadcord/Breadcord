@@ -1,14 +1,21 @@
+from __future__ import annotations
+
 import logging
+import sys
 from argparse import Namespace
 from datetime import datetime
 from os import PathLike
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands
 
 from . import config, errors
 from .module import Modules, global_modules
+
+if TYPE_CHECKING:
+    from types import TracebackType
 
 _logger = logging.getLogger('breadcord.bot')
 
@@ -56,6 +63,9 @@ class Bot(commands.Bot):
         return global_modules
 
     def _init_logging(self) -> None:
+        def handle_exception(exc_type: type[BaseException], value: BaseException, traceback: TracebackType) -> None:
+            _logger.critical(f'Uncaught {exc_type.__name__}: {value}', exc_info=(exc_type, value, traceback))
+
         log_file = self.logs_dir / 'breadcord_latest.log'
         if log_file.is_file():
             with log_file.open('r') as file:
@@ -79,6 +89,8 @@ class Bot(commands.Bot):
                 style='{'
             )
         )
+
+        sys.excepthook = handle_exception
 
     def run(self, **kwargs) -> None:
         self._init_logging()
