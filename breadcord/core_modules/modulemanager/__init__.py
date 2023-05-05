@@ -30,7 +30,7 @@ class ModuleTransformer(app_commands.Transformer):
             for module in breadcord.helpers.search_for(
                 query=value,
                 objects=list(interaction.client.modules),
-                key=lambda module: '\n'.join((module.id, module.manifest.name, module.manifest.description))
+                key=lambda module: '\n'.join(filter((module.id, module.manifest.name, module.manifest.description)))
             )
         ]
 

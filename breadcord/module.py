@@ -159,7 +159,7 @@ class ModuleManifest(pydantic.BaseModel):
         strip_whitespace=True,
         min_length=1,
         max_length=128
-    ) = 'No description provided'
+    ) = ''
     version: Version | None
     license: pydantic.constr(
         strip_whitespace=True,
