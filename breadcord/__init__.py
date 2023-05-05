@@ -1,2 +1,2 @@
-from . import commands, config, errors, helpers, module  # noqa
+from . import config, errors, helpers, module
 from .bot import Bot

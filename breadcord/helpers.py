@@ -1,8 +1,18 @@
 from collections import defaultdict
 from typing import TypeVar, Callable, overload
+
+import discord
 from rapidfuzz.fuzz import partial_ratio_alignment
 
+import breadcord
+
 _T = TypeVar('_T')
+
+
+async def administrator_check(interaction: discord.Interaction) -> bool:
+    if not await interaction.client.is_owner(interaction.user):
+        raise breadcord.errors.NotAdministratorError
+    return True
 
 
 def _search_with_key(

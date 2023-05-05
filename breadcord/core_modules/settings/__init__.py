@@ -32,7 +32,7 @@ class Settings(breadcord.module.ModuleCog):
     group = app_commands.Group(name='settings', description='Manage bot settings')
 
     @group.command()
-    @app_commands.check(breadcord.commands.administrator_check)
+    @app_commands.check(breadcord.helpers.administrator_check)
     async def get(self, interaction: discord.Interaction, key: str):
         setting = self.bot.settings.get(key)
 
@@ -56,7 +56,7 @@ class Settings(breadcord.module.ModuleCog):
         )
 
     @group.command()
-    @app_commands.check(breadcord.commands.administrator_check)
+    @app_commands.check(breadcord.helpers.administrator_check)
     async def set(self, interaction: discord.Interaction, key: str, value: str):
         setting = self.bot.settings.get(key)
         parsed_value = tomlkit.value(value).unwrap()
@@ -82,7 +82,7 @@ class Settings(breadcord.module.ModuleCog):
     @get.autocomplete('key')
     @set.autocomplete('key')
     async def autocomplete_key(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice]:
-        if not await breadcord.commands.administrator_check(interaction):
+        if not await breadcord.helpers.administrator_check(interaction):
             return [app_commands.Choice(name='⚠️ Missing permissions!', value=current)]
 
         return [
@@ -93,7 +93,7 @@ class Settings(breadcord.module.ModuleCog):
 
     @set.autocomplete('value')
     async def autocomplete_value(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice]:
-        if not await breadcord.commands.administrator_check(interaction):
+        if not await breadcord.helpers.administrator_check(interaction):
             return [app_commands.Choice(name='Missing permissions!', value=current)]
         if interaction.namespace.key not in self.bot.settings:
             return [app_commands.Choice(name=f"⚠️ Invalid key '{interaction.namespace.key}'", value=current)]
@@ -132,12 +132,12 @@ class Settings(breadcord.module.ModuleCog):
         return autocomplete
 
     @group.command()
-    @app_commands.check(breadcord.commands.administrator_check)
+    @app_commands.check(breadcord.helpers.administrator_check)
     async def edit(self, interaction: discord.Interaction):
         await interaction.response.send_modal(SettingsFileEditor(self.bot))
 
     @group.command()
-    @app_commands.check(breadcord.commands.administrator_check)
+    @app_commands.check(breadcord.helpers.administrator_check)
     async def reload(self, interaction: discord.Interaction):
         self.bot.load_settings()
         await interaction.response.send_message(
@@ -146,7 +146,7 @@ class Settings(breadcord.module.ModuleCog):
         )
 
     @group.command()
-    @app_commands.check(breadcord.commands.administrator_check)
+    @app_commands.check(breadcord.helpers.administrator_check)
     async def save(self, interaction: discord.Interaction):
         self.bot.save_settings()
         await interaction.response.send_message(

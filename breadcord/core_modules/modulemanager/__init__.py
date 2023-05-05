@@ -10,7 +10,6 @@ from discord import app_commands
 from discord.utils import escape_markdown
 
 import breadcord
-from breadcord.helpers import search_for
 from breadcord.module import parse_manifest
 from . import views
 
@@ -28,7 +27,7 @@ class ModuleTransformer(app_commands.Transformer):
                 name=f'{module.id} ({"enabled" if module.loaded else "disabled"})',
                 value=module.id
             )
-            for module in search_for(
+            for module in breadcord.helpers.search_for(
                 query=value,
                 objects=list(interaction.client.modules),
                 key=lambda module: '\n'.join((module.id, module.manifest.name, module.manifest.description))
@@ -63,7 +62,7 @@ class ModuleManager(breadcord.module.ModuleCog):
             ))
 
     @group.command()
-    @app_commands.check(breadcord.commands.administrator_check)
+    @app_commands.check(breadcord.helpers.administrator_check)
     async def install(self, interaction: discord.Interaction, module: str):
         module = GH_BASE_URL.sub('', module)
         if not REPO_PATH.match(module):
@@ -131,7 +130,7 @@ class ModuleManager(breadcord.module.ModuleCog):
 
     @group.command()
     @app_commands.rename(module='module_id')
-    @app_commands.check(breadcord.commands.administrator_check)
+    @app_commands.check(breadcord.helpers.administrator_check)
     async def uninstall(
         self,
         interaction: discord.Interaction,
@@ -170,7 +169,7 @@ class ModuleManager(breadcord.module.ModuleCog):
 
     @group.command()
     @app_commands.rename(module='module_id')
-    @app_commands.check(breadcord.commands.administrator_check)
+    @app_commands.check(breadcord.helpers.administrator_check)
     async def enable(
         self,
         interaction: discord.Interaction,
@@ -188,7 +187,7 @@ class ModuleManager(breadcord.module.ModuleCog):
 
     @group.command()
     @app_commands.rename(module='module_id')
-    @app_commands.check(breadcord.commands.administrator_check)
+    @app_commands.check(breadcord.helpers.administrator_check)
     async def disable(
         self,
         interaction: discord.Interaction,
