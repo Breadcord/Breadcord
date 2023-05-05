@@ -1,9 +1,4 @@
-manifest_version = 1
-
-[module]
+[core_module]
 id = "settings"
 name = "Settings"
 description = "Commands to get, set and edit the bot's settings directly from Discord"
-version = "0.1.0"
-license = "GNU LGPLv3"
-authors = ["ThatOtherAndrew"]

@@ -143,6 +143,7 @@ class ModuleManifest(pydantic.BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
+    is_core_module: bool = False
     id: pydantic.constr(
         strip_whitespace=True,
         min_length=1,
@@ -159,7 +160,7 @@ class ModuleManifest(pydantic.BaseModel):
         min_length=1,
         max_length=128
     ) = 'No description provided'
-    version: Version
+    version: Version | None
     license: pydantic.constr(
         strip_whitespace=True,
         min_length=1,
@@ -172,6 +173,16 @@ class ModuleManifest(pydantic.BaseModel):
     )] = []
     requirements: list[Requirement] = []
     permissions: discord.Permissions = discord.Permissions.none()
+
+    @pydantic.root_validator
+    def validate_core_module(cls, values: dict[str, Any]) -> dict[str, Any]:
+        if values['is_core_module']:
+            values['license'] = values['license'] or 'GNU LGPLv3'
+            values['authors'] = values['authors'] or ['Breadcord Team']
+        else:
+            if values['version'] is None:
+                raise ValueError('field required: version')
+        return values
 
     @pydantic.validator('version', pre=True)
     def parse_version(cls, value: str) -> Version:
@@ -188,6 +199,8 @@ class ModuleManifest(pydantic.BaseModel):
 
 def parse_manifest(manifest: dict[str, Any]) -> ModuleManifest:
     match manifest:
+        case {'core_module': data}:
+            return ModuleManifest(**data, is_core_module=True)
         case {'manifest_version': 1, **data}:
             flattened_data: dict[str, Any] = data['module']
             return ModuleManifest(**flattened_data)

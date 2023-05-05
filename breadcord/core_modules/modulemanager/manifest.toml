@@ -1,13 +1,5 @@
-manifest_version = 1
-
-[module]
+[core_module]
 id = "modulemanager"
 name = "Module Manager"
 description = "Provides commands for installing, removing and managing Breadcord modules"
-version = "0.1.0"
 license = "GNU LGPLv3"
-authors = ["ThatOtherAndrew"]
-requirements = [
-    "aiofiles==23.1.0",
-    "aiohttp"
-]

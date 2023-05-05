@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from base64 import b64decode
 
-import aiohttp  # noqa
+import aiohttp
 import discord
 import tomlkit
 from discord import app_commands

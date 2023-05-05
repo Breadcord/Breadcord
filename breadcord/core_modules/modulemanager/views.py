@@ -6,7 +6,7 @@ from shutil import rmtree
 from typing import TYPE_CHECKING, Callable
 from zipfile import ZipFile
 
-import aiofiles  # noqa
+import aiofiles
 import discord
 
 from breadcord.module import Module, ModuleManifest
