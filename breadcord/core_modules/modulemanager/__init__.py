@@ -67,7 +67,7 @@ class ModuleManager(breadcord.module.ModuleCog):
     @group.command()
     @app_commands.check(breadcord.helpers.administrator_check)
     async def install(self, interaction: discord.Interaction, module: str):
-        module = GH_BASE_URL.sub('', module)
+        module = GH_BASE_URL.sub('', module).removesuffix('.git')
         if not REPO_PATH.match(module):
             await interaction.response.send_message(embed=discord.Embed(
                 colour=discord.Colour.red(),
