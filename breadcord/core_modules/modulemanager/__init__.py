@@ -65,6 +65,7 @@ class ModuleManager(breadcord.module.ModuleCog):
             ))
 
     @group.command(description="Install a module from github")
+    @app_commands.describe(module="A github url or repo path")
     @app_commands.check(breadcord.helpers.administrator_check)
     async def install(self, interaction: discord.Interaction, module: str):
         module = GH_BASE_URL.sub('', module).removesuffix('.git')
@@ -131,7 +132,8 @@ class ModuleManager(breadcord.module.ModuleCog):
             )
         )
 
-    @group.command(description="uninstall an installed module")
+    @group.command(description="Uninstall an installed module")
+    @app_commands.describe(module="The id of the module to be uninstalled")
     @app_commands.rename(module='module_id')
     @app_commands.check(breadcord.helpers.administrator_check)
     async def uninstall(
@@ -171,6 +173,7 @@ class ModuleManager(breadcord.module.ModuleCog):
         )
 
     @group.command(description="Enable an installed module")
+    @app_commands.describe(module="The id of the module to be enabled")
     @app_commands.rename(module='module_id')
     @app_commands.check(breadcord.helpers.administrator_check)
     async def enable(
@@ -189,6 +192,7 @@ class ModuleManager(breadcord.module.ModuleCog):
         ))
 
     @group.command(description="Disable an installed module")
+    @app_commands.describe(module="The id of the module to be disabled")
     @app_commands.rename(module='module_id')
     @app_commands.check(breadcord.helpers.administrator_check)
     async def disable(

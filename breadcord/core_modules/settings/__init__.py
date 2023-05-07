@@ -32,6 +32,7 @@ class Settings(breadcord.module.ModuleCog):
     group = app_commands.Group(name='settings', description='Manage bot settings')
 
     @group.command(description="Get the value of a setting")
+    @app_commands.describe(key="The key of the setting you want to get")
     @app_commands.check(breadcord.helpers.administrator_check)
     async def get(self, interaction: discord.Interaction, key: str):
         setting = self.bot.settings.get(key)
@@ -56,6 +57,7 @@ class Settings(breadcord.module.ModuleCog):
         )
 
     @group.command(description="Set the value of a setting")
+    @app_commands.describe(key="The key of the setting you want to change")
     @app_commands.check(breadcord.helpers.administrator_check)
     async def set(self, interaction: discord.Interaction, key: str, value: str):
         setting = self.bot.settings.get(key)
