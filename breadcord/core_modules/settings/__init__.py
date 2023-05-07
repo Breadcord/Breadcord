@@ -133,7 +133,7 @@ class Settings(breadcord.module.ModuleCog):
 
         return autocomplete
 
-    @group.command(description="Manually edit the bot settings")
+    @group.command(description="Directly edit the bot settings file on disk")
     @app_commands.check(breadcord.helpers.administrator_check)
     async def edit(self, interaction: discord.Interaction):
         await interaction.response.send_modal(SettingsFileEditor(self.bot))
