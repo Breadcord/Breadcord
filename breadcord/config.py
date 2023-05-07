@@ -227,6 +227,20 @@ class SettingsGroup(SettingsNode):
     def children(self) -> ValuesView[SettingsGroup]:
         return self._children.values()
 
+    def walk(self, *, skip_groups: bool = False, skip_settings: bool = False) -> list[SettingsNode]:
+        """Recursively traverses all child nodes and returns them as a flat list.
+
+        :param skip_groups: Whether :cls:`SettingsGroup` objects should be skipped
+        :param skip_settings: Whether :cls:`Setting` objects should be skipped
+        """
+
+        discovered: list[SettingsNode] = [] if skip_groups else [self]
+        if not skip_settings:
+            discovered.extend(self)
+        for child in self.children():
+            discovered.extend(child.walk(skip_groups=skip_groups, skip_settings=skip_settings))
+        return discovered
+
     def load_schema(
         self,
         *,
