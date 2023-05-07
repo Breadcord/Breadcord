@@ -64,7 +64,7 @@ class ModuleManager(breadcord.module.ModuleCog):
                 description=f'No module with the ID `{error.value}` was found.'
             ))
 
-    @group.command()
+    @group.command(description="Install a module from github")
     @app_commands.check(breadcord.helpers.administrator_check)
     async def install(self, interaction: discord.Interaction, module: str):
         module = GH_BASE_URL.sub('', module).removesuffix('.git')
@@ -131,7 +131,7 @@ class ModuleManager(breadcord.module.ModuleCog):
             )
         )
 
-    @group.command()
+    @group.command(description="uninstall an installed module")
     @app_commands.rename(module='module_id')
     @app_commands.check(breadcord.helpers.administrator_check)
     async def uninstall(
@@ -170,7 +170,7 @@ class ModuleManager(breadcord.module.ModuleCog):
             )
         )
 
-    @group.command()
+    @group.command(description="Enable an installed module")
     @app_commands.rename(module='module_id')
     @app_commands.check(breadcord.helpers.administrator_check)
     async def enable(
@@ -188,7 +188,7 @@ class ModuleManager(breadcord.module.ModuleCog):
             text=f'{module.manifest.id} v{module.manifest.version}'
         ))
 
-    @group.command()
+    @group.command(description="Disable an installed module")
     @app_commands.rename(module='module_id')
     @app_commands.check(breadcord.helpers.administrator_check)
     async def disable(

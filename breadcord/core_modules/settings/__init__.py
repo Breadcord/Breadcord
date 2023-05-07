@@ -31,7 +31,7 @@ class SettingsFileEditor(discord.ui.Modal, title='Settings File Editor'):
 class Settings(breadcord.module.ModuleCog):
     group = app_commands.Group(name='settings', description='Manage bot settings')
 
-    @group.command()
+    @group.command(description="Get the value of a setting")
     @app_commands.check(breadcord.helpers.administrator_check)
     async def get(self, interaction: discord.Interaction, key: str):
         setting = self.bot.settings.get(key)
@@ -55,7 +55,7 @@ class Settings(breadcord.module.ModuleCog):
             ephemeral=self.bot.settings.settings.ephemeral.value
         )
 
-    @group.command()
+    @group.command(description="Set the value of a setting")
     @app_commands.check(breadcord.helpers.administrator_check)
     async def set(self, interaction: discord.Interaction, key: str, value: str):
         setting = self.bot.settings.get(key)
@@ -131,12 +131,12 @@ class Settings(breadcord.module.ModuleCog):
 
         return autocomplete
 
-    @group.command()
+    @group.command(description="Manually edit the bot settings")
     @app_commands.check(breadcord.helpers.administrator_check)
     async def edit(self, interaction: discord.Interaction):
         await interaction.response.send_modal(SettingsFileEditor(self.bot))
 
-    @group.command()
+    @group.command(description="Reload bot settings from disk")
     @app_commands.check(breadcord.helpers.administrator_check)
     async def reload(self, interaction: discord.Interaction):
         self.bot.load_settings()
@@ -145,7 +145,7 @@ class Settings(breadcord.module.ModuleCog):
             ephemeral=self.bot.settings.settings.ephemeral.value
         )
 
-    @group.command()
+    @group.command(description="Save bot settings to disk")
     @app_commands.check(breadcord.helpers.administrator_check)
     async def save(self, interaction: discord.Interaction):
         self.bot.save_settings()

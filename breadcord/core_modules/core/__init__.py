@@ -5,7 +5,7 @@ import breadcord
 
 
 class Core(breadcord.module.ModuleCog):
-    @app_commands.command()
+    @app_commands.command(description="Sync bot slash commands")
     async def sync(self, interaction: discord.Interaction):
         self.bot.tree.copy_global_to(guild=interaction.guild)
         await self.bot.tree.sync(guild=interaction.guild)
