@@ -6,6 +6,34 @@ from discord import app_commands
 import breadcord
 
 
+class SettingTransformer(app_commands.Transformer):
+    def transform(self, interaction: discord.Interaction, value: str, /) -> breadcord.config.Setting:
+        setting: breadcord.config.SettingsGroup = interaction.client.settings
+        path = value.split('.')
+        for child in path[:-1]:
+            setting = setting.get_child(child)
+        return setting.get(path[-1])
+
+    async def autocomplete(self, interaction: discord.Interaction, value: str, /) -> list[app_commands.Choice[str]]:
+        if not await breadcord.helpers.administrator_check(interaction):
+            return [app_commands.Choice(name='⚠️ Missing permissions!', value=value)]
+
+        return [
+            app_commands.Choice(name=(path := setting.path_id().removeprefix('settings.')), value=path)
+            for setting in breadcord.helpers.search_for(
+                query=value,
+                objects=interaction.client.settings.walk(skip_groups=True),
+                key=lambda setting: '\n'.join(filter(
+                    bool,
+                    (setting.key, setting.path_id(), setting.description)
+                ))
+            )
+        ]
+
+
+SettingTransformer = app_commands.Transform[breadcord.config.Setting, SettingTransformer]
+
+
 class SettingsFileEditor(discord.ui.Modal, title='Settings File Editor'):
     editor = discord.ui.TextInput(label='settings.toml', style=discord.TextStyle.paragraph)
 
@@ -32,11 +60,9 @@ class Settings(breadcord.module.ModuleCog):
     group = app_commands.Group(name='settings', description='Manage bot settings')
 
     @group.command(description="Get the value of a setting")
-    @app_commands.describe(key="The key of the setting you want to get")
+    @app_commands.describe(setting="The key of the setting you want to get")
     @app_commands.check(breadcord.helpers.administrator_check)
-    async def get(self, interaction: discord.Interaction, key: str):
-        setting = self.bot.settings.get(key)
-
+    async def get(self, interaction: discord.Interaction, setting: SettingTransformer):
         await interaction.response.send_message(
             embed=discord.Embed(
                 colour=discord.Colour.blurple(),
@@ -57,10 +83,9 @@ class Settings(breadcord.module.ModuleCog):
         )
 
     @group.command(description="Set the value of a setting")
-    @app_commands.describe(key="The key of the setting you want to change")
+    @app_commands.describe(setting="The key of the setting you want to change")
     @app_commands.check(breadcord.helpers.administrator_check)
-    async def set(self, interaction: discord.Interaction, key: str, value: str):
-        setting = self.bot.settings.get(key)
+    async def set(self, interaction: discord.Interaction, setting: SettingTransformer, value: str):
         parsed_value = tomlkit.value(value).unwrap()
         old_value = setting.value
         setting.value = parsed_value
@@ -68,7 +93,7 @@ class Settings(breadcord.module.ModuleCog):
         await interaction.response.send_message(
             embed=discord.Embed(
                 colour=discord.Colour.green(),
-                title=f'Updated setting: `{key}`'
+                title=f'Updated setting: `{setting}`'
             ).add_field(
                 name='Old value',
                 value=f'```diff\n- {old_value!r}\n```',
@@ -80,18 +105,6 @@ class Settings(breadcord.module.ModuleCog):
             ),
             ephemeral=self.bot.settings.settings.ephemeral.value
         )
-
-    @get.autocomplete('key')
-    @set.autocomplete('key')
-    async def autocomplete_key(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice]:
-        if not await breadcord.helpers.administrator_check(interaction):
-            return [app_commands.Choice(name='⚠️ Missing permissions!', value=current)]
-
-        return [
-            app_commands.Choice(name=setting.key, value=setting.key)
-            for setting in self.bot.settings
-            if current in setting.key
-        ]
 
     @set.autocomplete('value')
     async def autocomplete_value(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice]:
@@ -158,4 +171,4 @@ class Settings(breadcord.module.ModuleCog):
 
 
 async def setup(bot: breadcord.Bot):
-    await bot.add_cog(Settings('settings'))
+    await bot.add_cog(Settings('settingsmanager'))
