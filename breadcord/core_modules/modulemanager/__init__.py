@@ -7,6 +7,7 @@ import aiohttp
 import discord
 import tomlkit
 from discord import app_commands
+from discord.ext import commands
 from discord.utils import escape_markdown
 
 import breadcord
@@ -38,9 +39,12 @@ class ModuleTransformer(app_commands.Transformer):
         ]
 
 
-class ModuleManager(breadcord.module.ModuleCog):
-    group = app_commands.Group(name='module', description='Manage Breadcord modules')
-
+class ModuleManager(
+    breadcord.module.ModuleCog,
+    commands.GroupCog,
+    group_name="module",
+    group_Description="Manage Breadcord modules"
+):
     def __init__(self, module_id: str):
         super().__init__(module_id)
         self.session: aiohttp.ClientSession | None = None
@@ -64,7 +68,7 @@ class ModuleManager(breadcord.module.ModuleCog):
                 description=f'No module with the ID `{error.value}` was found.'
             ))
 
-    @group.command(description="Install a module from github")
+    @app_commands.command(description="Install a module from github")
     @app_commands.describe(module="A github url or repo path")
     @app_commands.check(breadcord.helpers.administrator_check)
     async def install(self, interaction: discord.Interaction, module: str):
@@ -132,7 +136,7 @@ class ModuleManager(breadcord.module.ModuleCog):
             )
         )
 
-    @group.command(description="Uninstall an installed module")
+    @app_commands.command(description="Uninstall an installed module")
     @app_commands.describe(module="The id of the module to be uninstalled")
     @app_commands.rename(module='module_id')
     @app_commands.check(breadcord.helpers.administrator_check)
@@ -172,7 +176,7 @@ class ModuleManager(breadcord.module.ModuleCog):
             )
         )
 
-    @group.command(description="Enable an installed module")
+    @app_commands.command(description="Enable an installed module")
     @app_commands.describe(module="The id of the module to be enabled")
     @app_commands.rename(module='module_id')
     @app_commands.check(breadcord.helpers.administrator_check)
@@ -191,7 +195,7 @@ class ModuleManager(breadcord.module.ModuleCog):
             text=f'{module.manifest.id} v{module.manifest.version}'
         ))
 
-    @group.command(description="Disable an installed module")
+    @app_commands.command(description="Disable an installed module")
     @app_commands.describe(module="The id of the module to be disabled")
     @app_commands.rename(module='module_id')
     @app_commands.check(breadcord.helpers.administrator_check)
