@@ -7,6 +7,7 @@ import aiohttp
 import discord
 import tomlkit
 from discord import app_commands
+from discord.ext import commands
 from discord.utils import escape_markdown
 
 import breadcord
@@ -38,9 +39,12 @@ class ModuleTransformer(app_commands.Transformer):
         ]
 
 
-class ModuleManager(breadcord.module.ModuleCog, group_name="module", group_Description="Manage Breadcord modules"):
-    __cog_is_app_commands_group__ = True
-
+class ModuleManager(
+    breadcord.module.ModuleCog,
+    commands.GroupCog,
+    group_name="module",
+    group_Description="Manage Breadcord modules"
+):
     def __init__(self, module_id: str):
         super().__init__(module_id)
         self.session: aiohttp.ClientSession | None = None

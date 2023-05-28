@@ -2,6 +2,7 @@ import discord
 import tomlkit
 import tomlkit.exceptions
 from discord import app_commands
+from discord.ext import commands
 
 import breadcord
 
@@ -56,9 +57,12 @@ class SettingsFileEditor(discord.ui.Modal, title='Settings File Editor'):
         )
 
 
-class Settings(breadcord.module.ModuleCog, group_name="settings", group_Description="Manage bot settings"):
-    __cog_is_app_commands_group__ = True
-
+class Settings(
+    breadcord.module.ModuleCog,
+    commands.GroupCog,
+    group_name="settings",
+    group_Description="Manage bot settings"
+):
     @app_commands.command(description="Get the value of a setting")
     @app_commands.describe(setting="The key of the setting you want to get")
     @app_commands.check(breadcord.helpers.administrator_check)
