@@ -43,7 +43,7 @@ class ModuleManager(
     breadcord.module.ModuleCog,
     commands.GroupCog,
     group_name="module",
-    group_Description="Manage Breadcord modules"
+    group_description="Manage Breadcord modules"
 ):
     def __init__(self, module_id: str):
         super().__init__(module_id)

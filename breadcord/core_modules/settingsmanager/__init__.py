@@ -61,7 +61,7 @@ class Settings(
     breadcord.module.ModuleCog,
     commands.GroupCog,
     group_name="settings",
-    group_Description="Manage bot settings"
+    group_description="Manage bot settings"
 ):
     @app_commands.command(description="Get the value of a setting")
     @app_commands.describe(setting="The key of the setting you want to get")
