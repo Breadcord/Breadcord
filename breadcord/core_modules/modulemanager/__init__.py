@@ -145,7 +145,7 @@ class ModuleManager(
         interaction: discord.Interaction,
         module: app_commands.Transform[breadcord.module.Module, ModuleTransformer]
     ):
-        if self.module.path.parent.name == 'core_modules':
+        if self.module.manifest.is_core_module:
             await interaction.response.send_message(embed=discord.Embed(
                 colour=discord.Colour.red(),
                 title='Cannot uninstall core modules!',
