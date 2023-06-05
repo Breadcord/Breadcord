@@ -26,12 +26,23 @@ def nested_zip_extractor(zip_path: Path) -> Callable[[], None]:
     return callback
 
 
-class ModuleInstallView(discord.ui.View):
-    def __init__(self, cog: ModuleManager, manifest: ModuleManifest, user_id: int, zipfile_url: str):
-        super().__init__()
+class BaseView(discord.ui.View):
+    def __init__(self, *, cog: ModuleManager, user_id: int):
+        super().__init__(timeout=10)
         self.cog = cog
-        self.manifest = manifest
         self.user_id = user_id
+        self.message: discord.InteractionMessage | None = None
+
+    async def on_timeout(self) -> None:
+        for item in self.children:
+            item.disabled = True
+        await self.message.edit(view=self)
+
+
+class ModuleInstallView(BaseView):
+    def __init__(self, *, manifest: ModuleManifest, zipfile_url: str, **kwargs):
+        super().__init__(**kwargs)
+        self.manifest = manifest
         self.zip_url = zipfile_url
 
     @button(emoji='📥', label='Install Module', style=discord.ButtonStyle.green)
@@ -79,12 +90,10 @@ class ModuleInstallView(discord.ui.View):
         await interaction.message.edit(embed=embed, view=None)
 
 
-class ModuleUninstallView(discord.ui.View):
-    def __init__(self, cog: ModuleManager, module: Module, user_id: int):
-        super().__init__()
-        self.cog = cog
+class ModuleUninstallView(BaseView):
+    def __init__(self, *, module: Module, **kwargs):
+        super().__init__(**kwargs)
         self.module = module
-        self.user_id = user_id
 
     @button(emoji='🗑️', label='Uninstall Module', style=discord.ButtonStyle.red)
     async def uninstall_module(self, interaction: discord.Interaction, _):

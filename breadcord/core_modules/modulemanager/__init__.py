@@ -108,6 +108,12 @@ class ModuleManager(
             if manifest_permission[1]:
                 emoji = '✅' if bot_permission[1] else '⚠️'
                 permissions.append(f'{emoji} {manifest_permission[0]}')
+        view = views.ModuleInstallView(
+            cog=self,
+            manifest=manifest,
+            user_id=interaction.user.id,
+            zipfile_url=f'https://api.github.com/repos/{module}/zipball'
+        )
 
         await interaction.response.send_message(
             embed=discord.Embed(
@@ -128,13 +134,9 @@ class ModuleManager(
             ).set_footer(
                 text=f'{manifest.id} v{manifest.version}'
             ),
-            view=views.ModuleInstallView(
-                cog=self,
-                manifest=manifest,
-                user_id=interaction.user.id,
-                zipfile_url=f'https://api.github.com/repos/{module}/zipball'
-            )
+            view=view
         )
+        view.message = await interaction.original_response()
 
     @app_commands.command(description="Uninstall an installed module")
     @app_commands.describe(module="The id of the module to be uninstalled")
@@ -155,6 +157,8 @@ class ModuleManager(
             return
 
         requirements_str = ", ".join(f'`{req}`' for req in module.manifest.requirements) or 'No requirements specified'
+        view = views.ModuleUninstallView(cog=self, module=module, user_id=interaction.user.id)
+
         await interaction.response.send_message(
             embed=discord.Embed(
                 colour=discord.Colour.blurple(),
@@ -169,12 +173,9 @@ class ModuleManager(
             ).set_footer(
                 text=f'{module.manifest.id} v{module.manifest.version}'
             ),
-            view=views.ModuleUninstallView(
-                cog=self,
-                module=module,
-                user_id=interaction.user.id
-            )
+            view=view
         )
+        view.message = await interaction.original_response()
 
     @app_commands.command(description="Enable an installed module")
     @app_commands.describe(module="The id of the module to be enabled")
