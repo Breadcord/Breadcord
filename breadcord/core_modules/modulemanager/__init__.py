@@ -110,8 +110,8 @@ class ModuleManager(
                 permissions.append(f'{emoji} {manifest_permission[0]}')
         view = views.ModuleInstallView(
             cog=self,
-            manifest=manifest,
             user_id=interaction.user.id,
+            manifest=manifest,
             zipfile_url=f'https://api.github.com/repos/{module}/zipball'
         )
 
@@ -157,7 +157,7 @@ class ModuleManager(
             return
 
         requirements_str = ", ".join(f'`{req}`' for req in module.manifest.requirements) or 'No requirements specified'
-        view = views.ModuleUninstallView(cog=self, module=module, user_id=interaction.user.id)
+        view = views.ModuleUninstallView(cog=self, user_id=interaction.user.id, module=module)
 
         await interaction.response.send_message(
             embed=discord.Embed(
