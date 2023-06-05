@@ -1,10 +1,20 @@
+from __future__ import annotations
+
+import inspect
 from collections import defaultdict
-from typing import TypeVar, Callable, overload
+from typing import TYPE_CHECKING, TypeVar, Callable, overload
 
 import discord
 from rapidfuzz.fuzz import partial_ratio_alignment
 
 import breadcord
+
+if TYPE_CHECKING:
+    # noinspection PyProtectedMember
+    from discord.ui.button import V, Button
+    # noinspection PyProtectedMember
+    from discord.ui.item import ItemCallbackType
+
 
 _T = TypeVar('_T')
 
@@ -81,3 +91,34 @@ def search_for(
         key = dummy_key
 
     return _search_with_key(query=query, objects=objects, key=key, threshold=threshold, max_results=max_results)
+
+
+def button(
+    label: str | None = None,
+    disabled: bool = False,
+    style: discord.ButtonStyle = discord.ButtonStyle.grey,
+    emoji: str | discord.Emoji | discord.PartialEmoji | None = None,
+    row: int | None = None,
+):
+    def decorator(func: ItemCallbackType[V, Button[V]]) -> ItemCallbackType[V, Button[V]]:
+        if not inspect.iscoroutinefunction(func):
+            raise TypeError('button function must be a coroutine function')
+
+        custom_id = f'{func.__module__}:{func.__qualname__}'.removeprefix('breadcord.')
+        if len(custom_id) > 100:
+            raise RuntimeError(f'decorated function path exceeds 100 characters: {custom_id}')
+
+        func.__discord_ui_model_type__ = discord.ui.Button
+        func.__discord_ui_model_kwargs__ = {
+            'style': style,
+            'custom_id': custom_id,
+            'url': None,
+            'disabled': disabled,
+            'label': label,
+            'emoji': emoji,
+            'row': row,
+        }
+
+        return func
+
+    return decorator

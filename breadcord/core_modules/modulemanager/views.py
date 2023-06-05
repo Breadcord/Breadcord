@@ -9,6 +9,7 @@ from zipfile import ZipFile
 import aiofiles
 import discord
 
+from breadcord.helpers import button
 from breadcord.module import Module, ModuleManifest
 
 if TYPE_CHECKING:
@@ -33,7 +34,7 @@ class ModuleInstallView(discord.ui.View):
         self.user_id = user_id
         self.zip_url = zipfile_url
 
-    @discord.ui.button(emoji='📥', label='Install Module', style=discord.ButtonStyle.green)
+    @button(emoji='📥', label='Install Module', style=discord.ButtonStyle.green)
     async def install_module(self, interaction: discord.Interaction, _):
         if interaction.user.id != self.user_id:
             await interaction.response.send_message(
@@ -45,8 +46,8 @@ class ModuleInstallView(discord.ui.View):
         embed = interaction.message.embeds[0]
         embed.title = 'Module installing...'
         embed.colour = discord.Colour.yellow()
-        for button in self.children:
-            button.disabled = True
+        for item in self.children:
+            item.disabled = True
         await interaction.response.edit_message(embed=embed, view=self)
         self.cog.logger.info(f"Installing module '{self.manifest.id}' from source {self.zip_url}")
 
@@ -63,7 +64,7 @@ class ModuleInstallView(discord.ui.View):
         embed.colour = discord.Colour.green()
         await interaction.message.edit(embed=embed)
 
-    @discord.ui.button(emoji='🛑', label='Cancel', style=discord.ButtonStyle.red)
+    @button(emoji='🛑', label='Cancel', style=discord.ButtonStyle.red)
     async def cancel(self, interaction: discord.Interaction, _):
         if interaction.user.id != self.user_id:
             await interaction.response.send_message(
@@ -85,7 +86,7 @@ class ModuleUninstallView(discord.ui.View):
         self.module = module
         self.user_id = user_id
 
-    @discord.ui.button(emoji='🗑️', label='Uninstall Module', style=discord.ButtonStyle.red)
+    @button(emoji='🗑️', label='Uninstall Module', style=discord.ButtonStyle.red)
     async def uninstall_module(self, interaction: discord.Interaction, _):
         if interaction.user.id != self.user_id:
             await interaction.response.send_message(
@@ -97,8 +98,8 @@ class ModuleUninstallView(discord.ui.View):
         embed = interaction.message.embeds[0]
         embed.title = 'Module uninstalling...'
         embed.colour = discord.Colour.yellow()
-        for button in self.children:
-            button.disabled = True
+        for item in self.children:
+            item.disabled = True
         await interaction.response.edit_message(embed=embed, view=self)
 
         if self.module.loaded:
@@ -111,7 +112,7 @@ class ModuleUninstallView(discord.ui.View):
         embed.colour = discord.Colour.green()
         await interaction.message.edit(embed=embed)
 
-    @discord.ui.button(emoji='🛑', label='Cancel', style=discord.ButtonStyle.blurple)
+    @button(emoji='🛑', label='Cancel', style=discord.ButtonStyle.blurple)
     async def cancel(self, interaction: discord.Interaction, _):
         if interaction.user.id != self.user_id:
             await interaction.response.send_message(
