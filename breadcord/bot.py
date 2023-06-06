@@ -68,7 +68,7 @@ class Bot(commands.Bot):
 
         log_file = self.logs_dir / 'breadcord_latest.log'
         if log_file.is_file():
-            with log_file.open('r') as file:
+            with log_file.open('r', encoding='utf-8') as file:
                 timestamp = file.read(10)
             try:
                 datetime.strptime(timestamp, '%Y-%m-%d')
