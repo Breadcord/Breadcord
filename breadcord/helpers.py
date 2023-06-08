@@ -94,7 +94,7 @@ def search_for(
     return _search_with_key(query=query, objects=objects, key=key, threshold=threshold, max_results=max_results)
 
 
-def button(
+def simple_button(
     label: str | None = None,
     disabled: bool = False,
     style: discord.ButtonStyle = discord.ButtonStyle.grey,
@@ -105,6 +105,7 @@ def button(
         if not inspect.iscoroutinefunction(func):
             raise TypeError('button function must be a coroutine function')
 
+        # noinspection PyUnresolvedReferences
         custom_id = f'{func.__module__}:{func.__qualname__}'.removeprefix('breadcord.')
         if len(custom_id) > 100:
             raise RuntimeError(f'decorated function path exceeds 100 characters: {custom_id}')
