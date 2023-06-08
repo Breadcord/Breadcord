@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 
 _T = TypeVar('_T')
+_Transformer = TypeVar('_Transformer', bound=discord.app_commands.Transformer)
 
 
 async def administrator_check(interaction: discord.Interaction) -> bool:
@@ -120,5 +121,12 @@ def button(
         }
 
         return func
+
+    return decorator
+
+
+def simple_transformer(to: type[_T]) -> Callable[[type[_Transformer]], _Transformer]:
+    def decorator(cls: type[_Transformer]) -> _Transformer:
+        return discord.app_commands.Transform.__class_getitem__((to, cls))
 
     return decorator
