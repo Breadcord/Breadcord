@@ -9,7 +9,7 @@ from zipfile import ZipFile
 import aiofiles
 import discord
 
-from breadcord.helpers import button
+from breadcord.helpers import simple_button
 from breadcord.module import Module, ModuleManifest
 
 if TYPE_CHECKING:
@@ -45,7 +45,7 @@ class ModuleInstallView(BaseView):
         self.manifest = manifest
         self.zip_url = zipfile_url
 
-    @button(emoji='📥', label='Install Module', style=discord.ButtonStyle.green)
+    @simple_button(label='Install Module', style=discord.ButtonStyle.green, emoji='📥')
     async def install_module(self, interaction: discord.Interaction, _):
         if interaction.user.id != self.user_id:
             await interaction.response.send_message(
@@ -75,7 +75,7 @@ class ModuleInstallView(BaseView):
         embed.colour = discord.Colour.green()
         await interaction.message.edit(embed=embed)
 
-    @button(emoji='🛑', label='Cancel', style=discord.ButtonStyle.red)
+    @simple_button(label='Cancel', style=discord.ButtonStyle.red, emoji='🛑')
     async def cancel(self, interaction: discord.Interaction, _):
         if interaction.user.id != self.user_id:
             await interaction.response.send_message(
@@ -95,7 +95,7 @@ class ModuleUninstallView(BaseView):
         super().__init__(**kwargs)
         self.module = module
 
-    @button(emoji='🗑️', label='Uninstall Module', style=discord.ButtonStyle.red)
+    @simple_button(label='Uninstall Module', style=discord.ButtonStyle.red, emoji='🗑️')
     async def uninstall_module(self, interaction: discord.Interaction, _):
         if interaction.user.id != self.user_id:
             await interaction.response.send_message(
@@ -121,7 +121,7 @@ class ModuleUninstallView(BaseView):
         embed.colour = discord.Colour.green()
         await interaction.message.edit(embed=embed)
 
-    @button(emoji='🛑', label='Cancel', style=discord.ButtonStyle.blurple)
+    @simple_button(label='Cancel', style=discord.ButtonStyle.blurple, emoji='🛑')
     async def cancel(self, interaction: discord.Interaction, _):
         if interaction.user.id != self.user_id:
             await interaction.response.send_message(
