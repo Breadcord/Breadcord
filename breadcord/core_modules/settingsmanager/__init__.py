@@ -7,6 +7,7 @@ from discord.ext import commands
 import breadcord
 
 
+@breadcord.helpers.simple_transformer(breadcord.config.Setting)
 class SettingTransformer(app_commands.Transformer):
     def transform(self, interaction: discord.Interaction, value: str, /) -> breadcord.config.Setting:
         setting: breadcord.config.SettingsGroup = interaction.client.settings
@@ -30,9 +31,6 @@ class SettingTransformer(app_commands.Transformer):
                 ))
             )
         ]
-
-
-SettingTransformer = app_commands.Transform[breadcord.config.Setting, SettingTransformer]
 
 
 class SettingsFileEditor(discord.ui.Modal, title='Settings File Editor'):
@@ -114,10 +112,12 @@ class Settings(
     async def autocomplete_value(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice]:
         if not await breadcord.helpers.administrator_check(interaction):
             return [app_commands.Choice(name='Missing permissions!', value=current)]
-        if interaction.namespace.key not in self.bot.settings:
-            return [app_commands.Choice(name=f"⚠️ Invalid key '{interaction.namespace.key}'", value=current)]
 
-        setting = self.bot.settings.get(interaction.namespace.key)
+        try:
+            setting = SettingTransformer.transform(interaction, interaction.namespace.setting)
+        except KeyError:
+            return [app_commands.Choice(name=f"⚠️ Invalid key '{interaction.namespace.setting}'", value=current)]
+
         current_str = tomlkit.item(setting.value).as_string()
         autocomplete = [app_commands.Choice(name=current_str, value=current_str)]
 
