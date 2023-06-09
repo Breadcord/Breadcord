@@ -1,4 +1,0 @@
-[core_module]
-id = "core"
-name = "Core"
-description = "A collection of preinstalled general-purpose commands and tools"
