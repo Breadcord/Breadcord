@@ -69,10 +69,11 @@ class ModuleManager(
             ))
 
     @app_commands.command(description="Install a module from github")
-    @app_commands.describe(module="A github url or repo path")
+    @app_commands.describe(module="A github url or repo path", branch="A branch of the repo")
     @app_commands.check(breadcord.helpers.administrator_check)
-    async def install(self, interaction: discord.Interaction, module: str):
-        module = GH_BASE_URL.sub('', module).removesuffix('.git')
+    async def install(self, interaction: discord.Interaction, module: str, branch: str | None = None):
+        module = GH_BASE_URL.sub('', module).removesuffix('.git').replace(" ", "-")
+        branch = branch.replace(' ', '-') if branch else None
         if not REPO_PATH.match(module):
             await interaction.response.send_message(embed=discord.Embed(
                 colour=discord.Colour.red(),
@@ -81,12 +82,17 @@ class ModuleManager(
             ))
             return
 
-        async with self.session.get(f'https://api.github.com/repos/{module}/contents/manifest.toml') as response:
+        async with self.session.get(
+            f'https://api.github.com/repos/{module}/contents/manifest.toml' + (f'?ref={branch}' if branch else '')
+        ) as response:
             if response.status != 200:
                 await interaction.response.send_message(embed=discord.Embed(
                     colour=discord.Colour.red(),
                     title='Module not found!',
-                    description="The repository specified does not exist, can't be reached or isn't a Breadcord module."
+                    description=(
+                        "The repository or branch specified does not exist, "
+                        "can't be reached or isn't a Breadcord module."
+                    )
                 ))
                 return
 
@@ -112,7 +118,7 @@ class ModuleManager(
             cog=self,
             user_id=interaction.user.id,
             manifest=manifest,
-            zipfile_url=f'https://api.github.com/repos/{module}/zipball'
+            zipfile_url=f'https://api.github.com/repos/{module}/zipball/{branch or ""}'
         )
 
         await interaction.response.send_message(
@@ -120,7 +126,7 @@ class ModuleManager(
                 colour=discord.Colour.blurple(),
                 title='Install this module?',
                 description=manifest.description,
-                url=f'https://github.com/{module}'
+                url=f'https://github.com/{module}/{f"tree/{branch}" if branch else ""}'
             ).add_field(
                 name=manifest.name,
                 value=f'**Authors:** {escape_markdown(", ".join(manifest.authors))}\n'
