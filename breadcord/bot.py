@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands
+# noinspection PyProtectedMember
+from discord.utils import _ColourFormatter
 
 from . import config, errors
 from .module import Modules, global_modules
@@ -80,7 +82,7 @@ class Bot(commands.Bot):
                 log_number += 1
             log_file.rename(rename_path)
 
-        discord.utils.setup_logging()
+        discord.utils.setup_logging(formatter=_ColourFormatter())
         discord.utils.setup_logging(
             handler=logging.FileHandler(log_file, 'w', encoding='utf-8'),
             formatter=logging.Formatter(
