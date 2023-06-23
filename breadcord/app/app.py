@@ -5,7 +5,7 @@ import sys
 from typing import TYPE_CHECKING
 
 from rich.text import Text
-from textual import app, binding, containers, widgets
+from textual import app, binding, containers, widgets, work, worker
 
 from breadcord.app.widgets import BetterHeader, TableLog
 from breadcord.bot import Bot
@@ -35,14 +35,16 @@ class TUIHandler(logging.Handler):
 class Breadcord(app.App):
     CSS_PATH = 'app.tcss'
     BINDINGS = [
-        binding.Binding(key='ctrl+c', action='quit', description='Quit', priority=True)
+        binding.Binding(key='ctrl+c', action='quit', description='Quit', priority=True),
+        binding.Binding(key='ctrl+p', action='toggle_bot', description='Toggle Bot On/Off')
     ]
 
     def __init__(self, args: Namespace) -> None:
         super().__init__()
-        self.bot = Bot(tui_app=self, args=args)
+        self.args = args
         self.handler = TUIHandler(self)
         self.output_log: TableLog | None = None
+        self.bot_worker: worker.Worker | None = None
         self._online = False
 
     def compose(self) -> app.ComposeResult:
@@ -63,15 +65,7 @@ class Breadcord(app.App):
     def on_mount(self) -> None:
         self.online = False
         self.query_one('#input').focus()
-
-        async def start_bot() -> None:
-            # noinspection PyBroadException
-            try:
-                await self.bot.start()
-            except Exception:
-                sys.excepthook(*sys.exc_info())
-
-        self.run_worker(start_bot(), exclusive=True)
+        self.bot_worker = self.start_bot()
 
     @property
     def online(self) -> bool:
@@ -85,6 +79,26 @@ class Breadcord(app.App):
             sub_text = Text('Offline', self.get_css_variables()['error'])
         self.query_one('HeaderTitle').sub_text = sub_text
         self._online = value
+
+    @work(exclusive=True)
+    async def start_bot(self) -> None:
+        try:
+            await Bot(tui_app=self, args=self.args).start()
+        except:  # noqa
+            sys.excepthook(*sys.exc_info())
+
+    def on_worker_state_changed(self, event: worker.Worker.StateChanged) -> None:
+        if event.worker is not self.bot_worker:
+            return
+
+        if event.state is not worker.WorkerState.RUNNING:
+            self.online = False
+
+    def action_toggle_bot(self) -> None:
+        if self.bot_worker.state is worker.WorkerState.RUNNING:
+            self.bot_worker.cancel()
+        else:
+            self.bot_worker = self.start_bot()
 
     async def on_input_submitted(self, message: widgets.Input.Submitted) -> None:
         # TODO: Implement console commands

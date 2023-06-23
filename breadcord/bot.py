@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import sys
 from argparse import Namespace
@@ -123,7 +124,10 @@ class Bot(commands.Bot):
 
         self.command_prefix = commands.when_mentioned_or(self.settings.command_prefix.value)
         self.owner_ids = set(self.settings.administrators.value)
-        await super().start(token=self.settings.token.value)
+        try:
+            await super().start(token=self.settings.token.value)
+        except asyncio.CancelledError:
+            await self.close()
 
     def run(self, **kwargs) -> None:
         super().run(token='', log_handler=None, **kwargs)
@@ -159,8 +163,13 @@ class Bot(commands.Bot):
             self.tui.online = True
 
     async def close(self) -> None:
+        _logger.info('Shutting down bot')
         await super().close()
         self.save_settings()
+        root_logger = logging.getLogger()
+        for handler in root_logger.handlers:
+            handler.close()
+        root_logger.handlers.clear()
 
     async def is_owner(self, user: discord.User, /) -> bool:
         if user.id == self.owner_id or user.id in self.owner_ids:
