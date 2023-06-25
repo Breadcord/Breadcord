@@ -73,11 +73,6 @@ class Bot(commands.Bot):
             _logger.critical(f'Uncaught {exc_type.__name__}: {value}', exc_info=(exc_type, value, traceback))
         sys.excepthook = handle_exception
 
-        # Monkey patch to fix PyCharm debugger not calling excepthook
-        breakpoints = sys.modules.get('_pydevd_bundle.pydevd_breakpoints')
-        if breakpoints is not None:
-            breakpoints.original_excepthook = handle_exception
-
         if self.tui is None:
             discord.utils.setup_logging(formatter=_ColourFormatter())
         else:
@@ -112,8 +107,9 @@ class Bot(commands.Bot):
         if not self.settings_file.is_file():
             _logger.info('Generating missing settings.toml file'),
             self.settings = config.SettingsGroup('settings', schema_path='breadcord/settings_schema.toml')
-            self.save_settings()
             _logger.warning('Bot token must be supplied to start the bot')
+            self.ready = True
+            await self.close()
             return
 
         self.load_settings()
@@ -126,7 +122,11 @@ class Bot(commands.Bot):
         self.owner_ids = set(self.settings.administrators.value)
         try:
             await super().start(token=self.settings.token.value)
-        except asyncio.CancelledError:
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            _logger.info('Interrupt received')
+        except:  # noqa
+            sys.excepthook(*sys.exc_info())
+        finally:
             await self.close()
 
     def run(self, **kwargs) -> None:
@@ -165,7 +165,10 @@ class Bot(commands.Bot):
     async def close(self) -> None:
         _logger.info('Shutting down bot')
         await super().close()
-        self.save_settings()
+        if self.ready:
+            self.save_settings()
+        else:
+            _logger.warning('Bot not ready, settings have not been saved')
         root_logger = logging.getLogger()
         for handler in root_logger.handlers:
             handler.close()
@@ -200,10 +203,6 @@ class Bot(commands.Bot):
         self.settings = settings
 
     def save_settings(self, file_path: str | PathLike[str] | None = None) -> None:
-        if not self.ready:
-            _logger.warning('Bot not ready, settings have not been saved')
-            return
-
         if file_path is None:
             path = self.settings_file
         else:
