@@ -10,11 +10,11 @@ import breadcord
 @breadcord.helpers.simple_transformer(breadcord.config.Setting)
 class SettingTransformer(app_commands.Transformer):
     def transform(self, interaction: discord.Interaction, value: str, /) -> breadcord.config.Setting:
-        setting: breadcord.config.SettingsGroup = interaction.client.settings
+        settings: breadcord.config.SettingsGroup = interaction.client.settings
         path = value.split('.')
         for child in path[:-1]:
-            setting = setting.get_child(child)
-        return setting.get(path[-1])
+            settings = settings.get_child(child)
+        return settings.get(path[-1])
 
     async def autocomplete(self, interaction: discord.Interaction, value: str, /) -> list[app_commands.Choice[str]]:
         if not await breadcord.helpers.administrator_check(interaction):
