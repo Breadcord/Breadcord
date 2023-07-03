@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import sys
 from argparse import Namespace
@@ -18,6 +19,7 @@ from .module import Modules, global_modules
 
 if TYPE_CHECKING:
     from types import TracebackType
+    from . import app
 
 _logger = logging.getLogger('breadcord.bot')
 
@@ -39,9 +41,11 @@ class CommandTree(discord.app_commands.CommandTree):
 
 
 class Bot(commands.Bot):
-    def __init__(self, args: Namespace) -> None:
+    def __init__(self, *, tui_app: app.Breadcord | None = None, args: Namespace) -> None:
+        self.tui = tui_app
         self.args = args
         self.settings = config.SettingsGroup('settings', observers={})
+        self.ready = False
 
         data_dir = self.args.data or Path('data')
         data_dir.mkdir(exist_ok=True)
@@ -67,6 +71,12 @@ class Bot(commands.Bot):
     def _init_logging(self) -> None:
         def handle_exception(exc_type: type[BaseException], value: BaseException, traceback: TracebackType) -> None:
             _logger.critical(f'Uncaught {exc_type.__name__}: {value}', exc_info=(exc_type, value, traceback))
+        sys.excepthook = handle_exception
+
+        if self.tui is None:
+            discord.utils.setup_logging(formatter=_ColourFormatter())
+        else:
+            discord.utils.setup_logging(handler=self.tui.handler)
 
         log_file = self.logs_dir / 'breadcord_latest.log'
         if log_file.is_file():
@@ -82,7 +92,6 @@ class Bot(commands.Bot):
                 log_number += 1
             log_file.rename(rename_path)
 
-        discord.utils.setup_logging(formatter=_ColourFormatter())
         discord.utils.setup_logging(
             handler=logging.FileHandler(log_file, 'w', encoding='utf-8'),
             formatter=logging.Formatter(
@@ -92,16 +101,15 @@ class Bot(commands.Bot):
             )
         )
 
-        sys.excepthook = handle_exception
-
-    def run(self, **kwargs) -> None:
+    async def start(self, *_, **kwargs) -> None:
         self._init_logging()
 
         if not self.settings_file.is_file():
             _logger.info('Generating missing settings.toml file'),
             self.settings = config.SettingsGroup('settings', schema_path='breadcord/settings_schema.toml')
-            self.save_settings()
             _logger.warning('Bot token must be supplied to start the bot')
+            self.ready = True
+            await self.close()
             return
 
         self.load_settings()
@@ -112,7 +120,17 @@ class Bot(commands.Bot):
 
         self.command_prefix = commands.when_mentioned_or(self.settings.command_prefix.value)
         self.owner_ids = set(self.settings.administrators.value)
-        super().run(token=self.settings.token.value, log_handler=None, **kwargs)
+        try:
+            await super().start(token=self.settings.token.value)
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            _logger.info('Interrupt received')
+        except:  # noqa
+            sys.excepthook(*sys.exc_info())
+        finally:
+            await self.close()
+
+    def run(self, **kwargs) -> None:
+        super().run(token='', log_handler=None, **kwargs)
 
     async def setup_hook(self) -> None:
         self.modules.discover(self, search_paths=[Path('breadcord/core_modules'), self.modules_dir])
@@ -131,20 +149,41 @@ class Bot(commands.Bot):
         def on_administrators_changed(_, new: list[int]) -> None:
             self.owner_ids = set(new)
 
+    async def on_connect(self) -> None:
+        if self.tui is not None:
+            self.tui.online = True
+        self.ready = True
+
+    async def on_disconnect(self) -> None:
+        if self.tui is not None:
+            self.tui.online = False
+
+    async def on_resumed(self) -> None:
+        if self.tui is not None:
+            self.tui.online = True
+
     async def close(self) -> None:
+        _logger.info('Shutting down bot')
         await super().close()
-        self.save_settings()
+        if self.ready:
+            self.save_settings()
+        else:
+            _logger.warning('Bot not ready, settings have not been saved')
+        root_logger = logging.getLogger()
+        for handler in root_logger.handlers:
+            handler.close()
+        root_logger.handlers.clear()
 
     async def is_owner(self, user: discord.User, /) -> bool:
         if user.id == self.owner_id or user.id in self.owner_ids:
             return True
 
-        app = await self.application_info()
-        if app.team:
-            self.owner_ids = ids = {member.id for member in app.team.members}
+        app_info = await self.application_info()
+        if app_info.team:
+            self.owner_ids = ids = {member.id for member in app_info.team.members}
             return user.id in ids
         else:
-            self.owner_id = owner_id = app.owner.id
+            self.owner_id = owner_id = app_info.owner.id
             return user.id == owner_id
 
     def load_settings(self, file_path: str | PathLike[str] | None = None) -> None:

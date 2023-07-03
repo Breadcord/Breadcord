@@ -1,0 +1,36 @@
+* {
+  scrollbar-color: $primary-lighten-1;
+  scrollbar-color-hover: $secondary-darken-2;
+  scrollbar-color-active: $secondary;
+  scrollbar-background: $background-darken-3;
+  scrollbar-background-hover: $background;
+  scrollbar-background-active: $background;
+  scrollbar-corner-color: $background-darken-3;
+}
+
+Input {
+  padding: 0 1;
+  border: none;
+}
+
+Tooltip {
+  padding: 0;
+}
+
+#output_log {
+  height: 1fr;
+  margin-bottom: 1;
+}
+
+#input_container {
+  height: 1;
+  dock: bottom;
+  offset: 0 -1;
+  background: $panel;
+}
+
+#input_prompt {
+  width: 3;
+  padding: 0 1;
+  background: $panel-lighten-3;
+}

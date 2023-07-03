@@ -29,7 +29,7 @@ class Module:
         self.bot = bot
         self.path = Path(module_path).resolve()
         self.import_string = self.path.relative_to(Path().resolve()).as_posix().replace('/', '.')
-        self.logger = getLogger(self.import_string)
+        self.logger = getLogger(self.import_string.removeprefix('breadcord.'))
         self.loaded = False
 
         if not (self.path / 'manifest.toml').is_file():
