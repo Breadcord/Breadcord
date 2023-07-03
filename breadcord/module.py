@@ -175,15 +175,14 @@ class ModuleManifest(pydantic.BaseModel):
     requirements: Annotated[list[Requirement], BeforeValidator(Requirement)] = []
     permissions: discord.Permissions = discord.Permissions.none()
 
-    @classmethod
     @pydantic.model_validator(mode="after")
-    def validate_core_module(cls, values: dict[str, Any]) -> dict[str, Any]:
-        if values['is_core_module']:
-            values['license'] = values['license'] or 'GNU LGPLv3'
-            values['authors'] = values['authors'] or ['Breadcord Team']
-        elif values['version'] is None:
+    def validate_core_module(cls, model: ModuleManifest) -> ModuleManifest:
+        if model.is_core_module:
+            model.license = model.license or 'GNU LGPLv3'
+            model.authors = model.authors or ['Breadcord Team']
+        elif model.version is None:
             raise ValueError('field required: version')
-        return values
+        return model
 
     @pydantic.field_validator('version', mode="before")
     def parse_version(cls, value: str) -> Version:
