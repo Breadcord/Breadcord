@@ -7,14 +7,13 @@ from collections.abc import Generator
 from logging import getLogger
 from os import PathLike
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterable, Annotated
+from typing import TYPE_CHECKING, Any, Iterable
 
 import discord
 import pydantic
 from discord.ext import commands
 from packaging.requirements import Requirement
 from packaging.version import Version
-from pydantic.functional_validators import BeforeValidator, AfterValidator
 
 from breadcord import config
 
