@@ -14,7 +14,7 @@ import pydantic
 from discord.ext import commands
 from packaging.requirements import Requirement
 from packaging.version import Version
-from pydantic.functional_validators import BeforeValidator
+from pydantic.functional_validators import BeforeValidator, AfterValidator
 
 from breadcord import config
 
@@ -172,7 +172,7 @@ class ModuleManifest(pydantic.BaseModel):
         min_length=1,
         max_length=32
     )] = []
-    requirements: Annotated[list[Requirement], BeforeValidator(Requirement)] = []
+    requirements: list[Requirement] = []
     permissions: discord.Permissions = discord.Permissions.none()
 
     @pydantic.model_validator(mode="after")
@@ -189,8 +189,8 @@ class ModuleManifest(pydantic.BaseModel):
         return Version(value)
 
     @pydantic.field_validator('requirements', mode="before")
-    def parse_requirement(cls, value: str) -> Requirement:
-        return Requirement(value)
+    def parse_requirement(cls, values: list) -> list[Requirement]:
+        return [Requirement(value) for value in values]
 
     @pydantic.field_validator('permissions', mode="before")
     def parse_permissions(cls, value: list[str]) -> discord.Permissions:
