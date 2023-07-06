@@ -5,7 +5,7 @@ import sys
 from typing import TYPE_CHECKING
 
 from rich.text import Text
-from textual import app, binding, containers, widgets, work, worker
+from textual import app, binding, widgets, work, worker
 
 from breadcord.app.widgets import BetterHeader, TableLog
 from breadcord.bot import Bot
@@ -54,17 +54,10 @@ class Breadcord(app.App):
         self.output_log = TableLog(id='output_log')
         yield self.output_log
 
-        yield containers.Horizontal(
-            widgets.Static('❯', id='input_prompt'),
-            widgets.Input(id='input', placeholder='Type your command here...'),
-            id='input_container'
-        )
-
         yield widgets.Footer()
 
     def on_mount(self) -> None:
         self.online = False
-        self.query_one('#input').focus()
         self.bot_worker = self.start_bot()
 
     @property
@@ -99,7 +92,3 @@ class Breadcord(app.App):
             self.bot_worker.cancel()
         else:
             self.bot_worker = self.start_bot()
-
-    async def on_input_submitted(self, message: widgets.Input.Submitted) -> None:
-        # TODO: Implement console commands
-        ...
