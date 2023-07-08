@@ -152,6 +152,10 @@ def simple_button(
 ):
     """A substitute for ``discord.ui.button`` which generates a custom ID for you.
 
+    The custom ID is generated based off the qualified name of the decorated method, which should ensure that the ID is
+    both unique and idempotent. However, since custom IDs cannot exceed 100 characters in length, this may fail for
+    exceptionally long names.
+
     :param label: The label of the button, if any.
     :param style: The style of the button. Defaults to :attr:`discord.ButtonStyle.grey`.
     :param disabled: Whether the button is disabled or not. Defaults to ``False``.
