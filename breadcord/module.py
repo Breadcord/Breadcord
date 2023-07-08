@@ -148,7 +148,7 @@ class ModuleManifest(pydantic.BaseModel):
         strip_whitespace=True,
         min_length=1,
         max_length=32,
-        regex=r'^[a-z_]+$'
+        pattern=r'^[a-z_]+$'
     )
     name: pydantic.constr(
         strip_whitespace=True,
@@ -160,7 +160,7 @@ class ModuleManifest(pydantic.BaseModel):
         min_length=1,
         max_length=128
     ) = ''
-    version: Version | None
+    version: Version | None = None
     license: pydantic.constr(
         strip_whitespace=True,
         min_length=1,
@@ -174,25 +174,24 @@ class ModuleManifest(pydantic.BaseModel):
     requirements: list[Requirement] = []
     permissions: discord.Permissions = discord.Permissions.none()
 
-    @pydantic.root_validator
-    def validate_core_module(cls, values: dict[str, Any]) -> dict[str, Any]:
-        if values['is_core_module']:
-            values['license'] = values['license'] or 'GNU LGPLv3'
-            values['authors'] = values['authors'] or ['Breadcord Team']
-        else:
-            if values['version'] is None:
-                raise ValueError('field required: version')
-        return values
+    @pydantic.model_validator(mode="after")
+    def validate_core_module(cls, model: ModuleManifest) -> ModuleManifest:
+        if model.is_core_module:
+            model.license = model.license or 'GNU LGPLv3'
+            model.authors = model.authors or ['Breadcord Team']
+        elif model.version is None:
+            raise ValueError('field required: version')
+        return model
 
-    @pydantic.validator('version', pre=True)
+    @pydantic.field_validator('version', mode="before")
     def parse_version(cls, value: str) -> Version:
         return Version(value)
 
-    @pydantic.validator('requirements', pre=True, each_item=True)
-    def parse_requirement(cls, value: str) -> Requirement:
-        return Requirement(value)
+    @pydantic.field_validator('requirements', mode="before")
+    def parse_requirement(cls, values: list) -> list[Requirement]:
+        return [Requirement(value) for value in values]
 
-    @pydantic.validator('permissions', pre=True)
+    @pydantic.field_validator('permissions', mode="before")
     def parse_permissions(cls, value: list[str]) -> discord.Permissions:
         return discord.Permissions(**{permission: True for permission in value})
 
