@@ -108,7 +108,10 @@ class ModuleManager(
             ))
             return
 
-        requirements_str = ", ".join(req.name for req in manifest.requirements) or 'No requirements specified'
+        requirements_str = ', '.join(
+            escape_markdown(f'`{req}`')
+            for req in manifest.requirements
+        ) or 'No requirements specified'
         permissions = []
         for manifest_permission, bot_permission in zip(manifest.permissions, interaction.app_permissions):
             if manifest_permission[1]:
@@ -131,7 +134,7 @@ class ModuleManager(
                 name=manifest.name,
                 value=f'**Authors:** {escape_markdown(", ".join(manifest.authors))}\n'
                       f'**License:** {escape_markdown(manifest.license)}\n'
-                      f'**Requirements:** {escape_markdown(requirements_str)}',
+                      f'**Requirements:** {requirements_str}',
                 inline=False
             ).add_field(
                 name='Required permissions',
@@ -162,7 +165,6 @@ class ModuleManager(
             ))
             return
 
-        requirements_str = ", ".join(f'`{req}`' for req in module.manifest.requirements) or 'No requirements specified'
         view = views.ModuleUninstallView(cog=self, user_id=interaction.user.id, module=module)
 
         await interaction.response.send_message(
@@ -172,9 +174,7 @@ class ModuleManager(
                 description=module.manifest.description
             ).add_field(
                 name=module.manifest.name,
-                value=f'**Authors:** {escape_markdown(", ".join(module.manifest.authors))}\n'
-                      f'**License:** {escape_markdown(module.manifest.license)}\n'
-                      f'**Requirements:** {escape_markdown(requirements_str)}',
+                value=f'**Authors:** {escape_markdown(", ".join(module.manifest.authors))}\n',
                 inline=False
             ).set_footer(
                 text=f'{module.manifest.id} v{module.manifest.version}'
