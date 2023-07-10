@@ -18,13 +18,11 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-bot = Bot(args=args)
+if args.ui:
+    from breadcord.app import Breadcord
+    app = Breadcord(args=args)
+else:
+    app = Bot(args=args)
 
 if __name__ == '__main__':
-    if args.ui:
-        from breadcord.app import Breadcord
-
-        app = Breadcord(args=args)
-        app.run()
-    else:
-        bot.run()
+    app.run()
