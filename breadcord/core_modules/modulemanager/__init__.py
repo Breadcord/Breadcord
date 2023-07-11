@@ -109,7 +109,7 @@ class ModuleManager(
             return
 
         requirements_str = ', '.join(
-            escape_markdown(f'`{req}`')
+            f'`{escape_markdown(str(req))}`'
             for req in manifest.requirements
         ) or 'No requirements specified'
         permissions = []
