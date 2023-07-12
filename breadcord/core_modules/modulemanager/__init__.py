@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from base64 import b64decode
 
 import aiohttp
 import discord
@@ -83,7 +82,8 @@ class ModuleManager(
             return
 
         async with self.session.get(
-            f'https://api.github.com/repos/{module}/contents/manifest.toml' + (f'?ref={branch}' if branch else '')
+            f'https://api.github.com/repos/{module}/contents/manifest.toml' + (f'?ref={branch}' if branch else ''),
+            headers={'Accept': 'application/vnd.github.raw'}
         ) as response:
             if response.status != 200:
                 await interaction.response.send_message(embed=discord.Embed(
@@ -96,9 +96,8 @@ class ModuleManager(
                 ))
                 return
 
-            content = (await response.json())['content']
-            manifest_str = b64decode(content).decode()
-            manifest = parse_manifest(tomlkit.loads(manifest_str).unwrap())
+            content = await response.text()
+            manifest = parse_manifest(tomlkit.loads(content).unwrap())
 
         if manifest.id in self.bot.modules:
             await interaction.response.send_message(embed=discord.Embed(
