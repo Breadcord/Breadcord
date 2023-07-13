@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import inspect
 from collections import defaultdict
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, TypeVar, Callable, overload
 
 import discord
@@ -46,12 +47,12 @@ async def administrator_check(interaction: discord.Interaction) -> bool:
 
 def _search_with_key(
     query: str,
-    objects: list[_T],
+    objects: Sequence[_T],
     *,
     key: Callable[[_T], str],
     threshold: float,
     max_results: int | None
-) -> list[_T]:
+) -> Sequence[_T]:
     """Internal function which implements an algorithm for fuzzy searching.
 
     The algorithm works by assigning each string a two-part score: The partial ratio score (a metric for similarity),
@@ -94,34 +95,34 @@ def _search_with_key(
 @overload
 def search_for(
     query: str,
-    objects: list[str],
+    objects: Sequence[str],
     *,
     threshold: float = 80,
     max_results: int | None = 25
-) -> list[str]:
+) -> Sequence[str]:
     ...
 
 
 @overload
 def search_for(
     query: str,
-    objects: list[_T],
+    objects: Sequence[_T],
     *,
     key: Callable[[_T], str],
     threshold: float = 80,
     max_results: int | None = 25
-) -> list[_T]:
+) -> Sequence[_T]:
     ...
 
 
 def search_for(
     query: str,
-    objects: list[_T],
+    objects: Sequence[_T],
     *,
     key: Callable[[_T], str] | None = None,
     threshold: float = 80,
     max_results: int | None = 25
-) -> list[_T]:
+) -> Sequence[_T]:
     """A custom implementation of a fuzzy search algorithm.
 
     :param query: The string to search for.
