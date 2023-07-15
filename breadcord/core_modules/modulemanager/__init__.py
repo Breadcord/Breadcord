@@ -107,10 +107,7 @@ class ModuleManager(
             ))
             return
 
-        requirements_str = ', '.join(
-            f'`{escape_markdown(str(req))}`'
-            for req in manifest.requirements
-        ) or 'No requirements specified'
+        requirements_str = ', '.join(f'`{req}`' for req in manifest.requirements) or 'No requirements specified'
         permissions = []
         for manifest_permission, bot_permission in zip(manifest.permissions, interaction.app_permissions):
             if manifest_permission[1]:
