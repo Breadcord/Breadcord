@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from asyncio import CancelledError
 from typing import TYPE_CHECKING
 
 from rich.text import Text
@@ -75,10 +76,16 @@ class Breadcord(app.App):
 
     @work(exclusive=True)
     async def start_bot(self) -> None:
+        bot = Bot(tui_app=self, args=self.args)
         try:
-            await Bot(tui_app=self, args=self.args).start()
+            await bot.start()
+        except CancelledError:
+            _logger.info('Interrupt received')
         except:  # noqa
             sys.excepthook(*sys.exc_info())
+        finally:
+            if not bot.is_closed():
+                await bot.close()
 
     def on_worker_state_changed(self, event: worker.Worker.StateChanged) -> None:
         if event.worker is not self.bot_worker:

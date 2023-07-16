@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 import sys
 from argparse import Namespace
@@ -117,17 +116,10 @@ class Bot(commands.Bot):
             logging.getLogger().setLevel(logging.DEBUG)
             _logger.debug('Debug mode enabled')
             logging.getLogger('discord').setLevel(logging.INFO)
-
         self.command_prefix = commands.when_mentioned_or(self.settings.command_prefix.value)
         self.owner_ids = set(self.settings.administrators.value)
-        try:
-            await super().start(token=self.settings.token.value)
-        except (KeyboardInterrupt, asyncio.CancelledError):
-            _logger.info('Interrupt received')
-        except:  # noqa
-            sys.excepthook(*sys.exc_info())
-        finally:
-            await self.close()
+
+        await super().start(token=self.settings.token.value)
 
     def run(self, **kwargs) -> None:
         super().run(token='', log_handler=None, **kwargs)
