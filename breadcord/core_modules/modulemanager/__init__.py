@@ -191,12 +191,17 @@ class ModuleManager(
         await module.load()
         self.bot.settings.modules.value.append(module.id)
 
-        await interaction.response.send_message(embed=discord.Embed(
-            colour=discord.Colour.green(),
-            title='Module enabled!'
-        ).set_footer(
-            text=f'{module.manifest.id} v{module.manifest.version}'
-        ))
+        view = views.SyncSlashCommandsView(cog=self, user_id=interaction.user.id)
+        await interaction.response.send_message(
+            embed=discord.Embed(
+                colour=discord.Colour.green(),
+                title='Module enabled!'
+            ).set_footer(
+                text=f'{module.manifest.id} v{module.manifest.version}'
+            ),
+            view=view
+        )
+        view.message = await interaction.original_response()
 
     @app_commands.command(description="Disable an installed module")
     @app_commands.describe(module="The id of the module to be disabled")
@@ -210,12 +215,17 @@ class ModuleManager(
         await module.unload()
         self.bot.settings.modules.value.remove(module.id)
 
-        await interaction.response.send_message(embed=discord.Embed(
-            colour=discord.Colour.green(),
-            title='Module disabled!'
-        ).set_footer(
-            text=f'{module.manifest.id} v{module.manifest.version}'
-        ))
+        view = views.SyncSlashCommandsView(cog=self, user_id=interaction.user.id)
+        await interaction.response.send_message(
+            embed=discord.Embed(
+                colour=discord.Colour.green(),
+                title='Module disabled!'
+            ).set_footer(
+                text=f'{module.manifest.id} v{module.manifest.version}'
+            ),
+            view=view
+        )
+        view.message = await interaction.original_response()
 
 
 async def setup(bot: breadcord.Bot):

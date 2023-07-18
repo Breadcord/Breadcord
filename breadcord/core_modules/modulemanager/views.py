@@ -26,12 +26,35 @@ def nested_zip_extractor(zip_path: Path) -> Callable[[], None]:
     return callback
 
 
+@simple_button(label='Sync Slash Commands', style=discord.ButtonStyle.blurple, emoji='🔁')
+async def sync_slash_commands(self: BaseView, interaction: discord.Interaction, button: discord.ui.Button):
+    button.label = 'Syncing...'
+    button.style = discord.ButtonStyle.grey
+    button.disabled = True
+    await interaction.response.edit_message(view=self)
+
+    await self.cog.bot.tree.sync()
+
+    button.label = 'Synced successfully!'
+    await interaction.edit_original_response(view=self)
+
+
 class BaseView(discord.ui.View):
     def __init__(self, *, cog: ModuleManager, user_id: int):
-        super().__init__(timeout=10)
+        super().__init__()
         self.cog = cog
         self.user_id = user_id
         self.message: discord.InteractionMessage | None = None
+
+    async def interaction_check(self, interaction: discord.Interaction, /) -> bool:
+        if interaction.user.id == self.user_id:
+            return True
+
+        await interaction.response.send_message(
+            f'Only <@{self.user_id}> can perform this action!',
+            ephemeral=True
+        )
+        return False
 
     async def on_timeout(self) -> None:
         for item in self.children:
@@ -47,13 +70,6 @@ class ModuleInstallView(BaseView):
 
     @simple_button(label='Install Module', style=discord.ButtonStyle.green, emoji='📥')
     async def install_module(self, interaction: discord.Interaction, _):
-        if interaction.user.id != self.user_id:
-            await interaction.response.send_message(
-                f'Only <@{self.user_id}> can perform this action!',
-                ephemeral=True
-            )
-            return
-
         embed = interaction.message.embeds[0]
         embed.title = 'Module installing...'
         embed.colour = discord.Colour.yellow()
@@ -73,21 +89,22 @@ class ModuleInstallView(BaseView):
 
         embed.title = 'Module installed!'
         embed.colour = discord.Colour.green()
-        await interaction.message.edit(embed=embed)
+        view = ModulePostInstallView(
+            cog=self.cog,
+            user_id=self.user_id,
+            module=self.cog.bot.modules.get(self.manifest.id)
+        )
+        await interaction.message.edit(embed=embed, view=view)
+        view.message = await interaction.original_response()
+        self.stop()
 
     @simple_button(label='Cancel', style=discord.ButtonStyle.red, emoji='🛑')
     async def cancel(self, interaction: discord.Interaction, _):
-        if interaction.user.id != self.user_id:
-            await interaction.response.send_message(
-                f'Only <@{self.user_id}> can perform this action!',
-                ephemeral=True
-            )
-            return
-
         embed = interaction.message.embeds[0]
         embed.title = 'Installation cancelled'
         embed.colour = discord.Colour.red()
         await interaction.message.edit(embed=embed, view=None)
+        self.stop()
 
 
 class ModuleUninstallView(BaseView):
@@ -97,13 +114,6 @@ class ModuleUninstallView(BaseView):
 
     @simple_button(label='Uninstall Module', style=discord.ButtonStyle.red, emoji='🗑️')
     async def uninstall_module(self, interaction: discord.Interaction, _):
-        if interaction.user.id != self.user_id:
-            await interaction.response.send_message(
-                f'Only <@{self.user_id}> can perform this action!',
-                ephemeral=True
-            )
-            return
-
         embed = interaction.message.embeds[0]
         embed.title = 'Module uninstalling...'
         embed.colour = discord.Colour.yellow()
@@ -119,18 +129,57 @@ class ModuleUninstallView(BaseView):
 
         embed.title = 'Module uninstalled!'
         embed.colour = discord.Colour.green()
-        await interaction.message.edit(embed=embed)
+        view = SyncSlashCommandsView(cog=self.cog, user_id=self.user_id)
+        await interaction.message.edit(embed=embed, view=view)
+        view.message = await interaction.original_response()
+        self.stop()
 
     @simple_button(label='Cancel', style=discord.ButtonStyle.blurple, emoji='🛑')
     async def cancel(self, interaction: discord.Interaction, _):
-        if interaction.user.id != self.user_id:
-            await interaction.response.send_message(
-                f'Only <@{self.user_id}> can perform this action!',
-                ephemeral=True
-            )
-            return
-
         embed = interaction.message.embeds[0]
         embed.title = 'Uninstallation cancelled'
         embed.colour = discord.Colour.red()
         await interaction.message.edit(embed=embed, view=None)
+        self.stop()
+
+
+class ModulePostInstallView(BaseView):
+    def __init__(self, *, module: Module, **kwargs):
+        super().__init__(**kwargs)
+        self.module = module
+        self.sync_slash_commands.disabled = True
+
+    @simple_button(label='Enable Module', style=discord.ButtonStyle.green, emoji='⚡')
+    async def toggle_module(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer()
+
+        for item in self.children:
+            item.disabled = True
+
+        if button.label == 'Enable Module':
+            button.label = 'Enabling module...'
+            await interaction.edit_original_response(view=self)
+            await self.module.load()
+            self.cog.bot.settings.modules.value.append(self.module.id)
+            button.label = 'Disable Module'
+            button.style = discord.ButtonStyle.red
+        else:
+            button.label = 'Disabling module...'
+            await interaction.edit_original_response(view=self)
+            await self.module.unload()
+            self.cog.bot.settings.modules.value.remove(self.module.id)
+            button.label = 'Enable Module'
+            button.style = discord.ButtonStyle.green
+
+        self.sync_slash_commands.label = 'Sync Slash Commands'
+        self.sync_slash_commands.style = discord.ButtonStyle.blurple
+        for item in self.children:
+            item.disabled = False
+
+        await interaction.edit_original_response(view=self)
+
+    sync_slash_commands = sync_slash_commands
+
+
+class SyncSlashCommandsView(BaseView):
+    sync_slash_commands = sync_slash_commands
