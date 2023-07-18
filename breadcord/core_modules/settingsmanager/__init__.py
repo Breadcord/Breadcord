@@ -175,4 +175,4 @@ class Settings(
 
 
 async def setup(bot: breadcord.Bot):
-    await bot.add_cog(Settings('settingsmanager'))
+    await bot.add_cog(Settings('settings_manager'))

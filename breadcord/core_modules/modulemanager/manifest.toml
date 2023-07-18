@@ -1,5 +1,5 @@
 [core_module]
-id = "modulemanager"
+id = "module_manager"
 name = "Module Manager"
 description = "Provides commands for installing, removing and managing Breadcord modules"
 license = "GNU LGPLv3"

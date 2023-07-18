@@ -229,4 +229,4 @@ class ModuleManager(
 
 
 async def setup(bot: breadcord.Bot):
-    await bot.add_cog(ModuleManager('modulemanager'))
+    await bot.add_cog(ModuleManager('module_manager'))

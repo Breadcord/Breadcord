@@ -14,4 +14,4 @@ command_prefix = "!"
 administrators = []
 
 # Enabled modules
-modules = ["core"]
+modules = ["module_manager", "settings_manager"]
