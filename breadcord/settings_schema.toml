@@ -6,8 +6,8 @@ debug = false
 # ⚠️ Make sure this is kept secret!
 token = ""
 
-# Bot command prefix
-command_prefix = "!"
+# List of bot command prefixes
+command_prefixes = ["!"]
 
 # Bot administrator user IDs
 # ⚠️ Specified users, as well as bot owners, will be granted full access to the bot!
