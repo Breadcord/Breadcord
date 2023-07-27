@@ -6,10 +6,11 @@ from argparse import Namespace
 from datetime import datetime
 from os import PathLike
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Type, Any
 
 import discord
 from discord.ext import commands
+from discord.ext.commands.view import StringView
 # noinspection PyProtectedMember
 from discord.utils import _ColourFormatter
 
@@ -177,6 +178,47 @@ class Bot(commands.Bot):
         else:
             self.owner_id = owner_id = app_info.owner.id
             return user.id == owner_id
+
+    async def get_context(
+        self,
+        origin: discord.Message | discord.Interaction,
+        /,
+        *,
+        cls: Type[commands.Context[Any]] = discord.utils.MISSING,
+    ) -> Any:
+        if cls is discord.utils.MISSING:
+            cls = commands.Context
+
+        if isinstance(origin, discord.Interaction):
+            return await cls.from_interaction(origin)
+
+        view = StringView(origin.content)
+        ctx = cls(view=view, bot=self, message=origin)
+        if origin.author.id == self.user.id:
+            return ctx
+
+        if origin.content.lower().startswith(tuple(map(
+            lambda p: p.lower(),
+            prefix := await self.get_prefix(origin)
+        ))):
+            # Upon success `skip_string` will remove the prefix from the view
+            invoked_prefix = discord.utils.find(
+                StringView(origin.content.lower()).skip_string,
+                prefix
+            )
+            view = StringView(origin.content[len(invoked_prefix):])
+            ctx = cls(view=view, bot=self, message=origin)
+        else:
+            return ctx
+
+        if self.strip_after_prefix:
+            view.skip_ws()
+
+        invoker = view.get_word()
+        ctx.invoked_with = invoker
+        ctx.prefix = invoked_prefix
+        ctx.command = self.all_commands.get(invoker)
+        return ctx
 
     def load_settings(self, file_path: str | PathLike[str] | None = None) -> None:
         if file_path is None:
