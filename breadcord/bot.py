@@ -135,7 +135,7 @@ class Bot(commands.Bot):
 
         @self.settings.command_prefixes.observe
         def on_command_prefixes_changed(_, new: list[str]) -> None:
-            self.command_prefix = new
+            self.command_prefix = commands.when_mentioned_or(*new)
 
         @self.settings.administrators.observe
         def on_administrators_changed(_, new: list[int]) -> None:
