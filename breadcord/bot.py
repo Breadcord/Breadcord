@@ -116,7 +116,7 @@ class Bot(commands.Bot):
             logging.getLogger().setLevel(logging.DEBUG)
             _logger.debug('Debug mode enabled')
             logging.getLogger('discord').setLevel(logging.INFO)
-        self.command_prefix = commands.when_mentioned_or(self.settings.command_prefixes.value)
+        self.command_prefix = commands.when_mentioned_or(*self.settings.command_prefixes.value)
         self.owner_ids = set(self.settings.administrators.value)
 
         await super().start(token=self.settings.token.value)
