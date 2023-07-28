@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from rich.text import Text
 from textual import app, binding, widgets, work, worker
 
-from breadcord.app.widgets import BetterHeader, TableLog
+from breadcord.app.widgets import BetterHeader, TableLog, ColouredHeaderTitle
 from breadcord.bot import Bot
 
 if TYPE_CHECKING:
@@ -67,11 +67,20 @@ class Breadcord(app.App):
 
     @online.setter
     def online(self, value: bool) -> None:
+        # noinspection PyTypeChecker
+        header_title = self.query_one('HeaderTitle', expect_type=ColouredHeaderTitle)
+        previous = 'Offline' if isinstance(header_title.sub_text, str) else header_title.sub_text.plain
+
         if value:
-            sub_text = Text('Online ', self.get_css_variables()['success'])
+            sub_text = Text(current := 'Online ', self.get_css_variables()['success'])
+            if previous != current:
+                self.notify('Bot is online!', severity='information')
         else:
-            sub_text = Text('Offline', self.get_css_variables()['error'])
-        self.query_one('HeaderTitle').sub_text = sub_text
+            sub_text = Text(current := 'Offline', self.get_css_variables()['error'])
+            if previous != current:
+                self.notify('Bot is offline!', severity='error')
+
+        header_title.sub_text = sub_text
         self._online = value
 
     @work(exclusive=True)
