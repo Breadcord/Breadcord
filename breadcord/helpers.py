@@ -45,53 +45,6 @@ async def administrator_check(interaction: discord.Interaction) -> bool:
     return True
 
 
-def _search_with_key(
-    query: str,
-    objects: Sequence[_T],
-    *,
-    key: Callable[[_T], str],
-    threshold: float,
-    max_results: int | None
-) -> Sequence[_T]:
-    """Internal function which implements an algorithm for fuzzy searching.
-
-    The algorithm works by assigning each string a two-part score: The partial ratio score (a metric for similarity),
-    and how far from the start of the string the optimal alignment is. Results are then sorted by highest partial ratio
-    score first, with a secondary sort of earliest alignment to ensure that matches near the start of the string are
-    shown earlier.
-
-    :param query: The string to search for.
-    :param objects: The list of strings, or other objects if using a key, to search through.
-    :param key: An optional function which is called for each object, taking it as a parameter and returning a string to
-    be used in the search process.
-    :param threshold: A number between 0 and 100 inclusive which determines the cutoff point for the similarity score.
-        A threshold of 0 means that every object will be returned in the results, whereas a threshold of 100 means that
-        only exact matches will be returned.
-    :param max_results: The maximum number of results to be returned from the search. This can be set to ``None`` to
-        return all results which pass the threshold.
-    """
-
-    query = query.strip().lower()
-    scored_objs: defaultdict[tuple[float, int], list[_T]] = defaultdict(list)
-    strings = objects if key is None else map(key, objects)
-
-    if not query:
-        return objects[:max_results]
-
-    for i, string in enumerate(strings):
-        alignment = partial_ratio_alignment(query, string)
-        score = (alignment.score, -alignment.dest_start)
-        scored_objs[score].append(objects[i])
-
-    results = []
-    for score, objs in sorted(scored_objs.items(), key=lambda item: item[0], reverse=True):
-        if score[0] < threshold:
-            break
-        results.extend(objs)
-
-    return results[:max_results]
-
-
 @overload
 def search_for(
     query: str,
@@ -125,8 +78,13 @@ def search_for(
 ) -> Sequence[_T]:
     """A custom implementation of a fuzzy search algorithm.
 
+    The algorithm works by assigning each string a two-part score: The partial ratio score (a metric for similarity),
+    and how far from the start of the string the optimal alignment is. Results are then sorted by highest partial ratio
+    score first, with a secondary sort of earliest alignment to ensure that matches near the start of the string are
+    shown earlier.
+
     :param query: The string to search for.
-    :param objects: The list of strings, or other objects if using a key, to search through.
+    :param objects: The sequence of strings, or other objects if using a key, to search through.
     :param key: An optional function which is called for each object, taking it as a parameter and returning a string to
     be used in the search process.
     :param threshold: A number between 0 and 100 inclusive which determines the cutoff point for the similarity score.
@@ -135,13 +93,25 @@ def search_for(
     :param max_results: The maximum number of results to be returned from the search. This can be set to ``None`` to
         return all results which pass the threshold.
     """
+    if not query:
+        return objects[:max_results]
 
-    if key is None:
-        def dummy_key(item: _T) -> _T:
-            return item
-        key = dummy_key
+    query = query.strip().lower()
+    scored_objs: defaultdict[tuple[float, int], list[_T]] = defaultdict(list)
+    strings = objects if key is None else map(key, objects)
 
-    return _search_with_key(query=query, objects=objects, key=key, threshold=threshold, max_results=max_results)
+    for i, string in enumerate(strings):
+        alignment = partial_ratio_alignment(query, string)
+        score = (alignment.score, -alignment.dest_start)
+        scored_objs[score].append(objects[i])
+
+    results = []
+    for score, objs in sorted(scored_objs.items(), key=lambda item: item[0], reverse=True):
+        if score[0] < threshold:
+            break
+        results.extend(objs)
+
+    return results[:max_results]
 
 
 def simple_button(
