@@ -75,3 +75,6 @@ class TableLog(DataTable):
             key=str(record_id),
             height=record.message.count('\n') + 1
         )
+
+        if round(self.max_scroll_y - self.scroll_y) <= 1:
+            self.action_scroll_end()
