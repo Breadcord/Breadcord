@@ -6,7 +6,7 @@ from argparse import Namespace
 from datetime import datetime
 from os import PathLike
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 import discord
 from discord.ext import commands
@@ -99,6 +99,16 @@ class Bot(commands.Bot):
                 style='{'
             )
         )
+
+    async def on_command_error(
+        self,
+        context: commands.Context[Self],
+        exception: commands.errors.CommandError,
+        /
+    ) -> None:
+        error = exception.__traceback__
+        _logger.debug(error)
+        _logger.exception(f'{exception.__class__.__name__}: {exception}', exc_info=exception)
 
     async def start(self, *_, **kwargs) -> None:
         self._init_logging()
