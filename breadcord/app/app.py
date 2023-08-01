@@ -64,6 +64,7 @@ class Breadcord(app.App):
 
     def on_mount(self) -> None:
         self.online = False
+        self.console.set_window_title('Breadcord TUI')
         self.bot_worker = self.start_bot()
 
     @property
