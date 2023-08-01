@@ -3,12 +3,17 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from rich.style import Style
+from rich.traceback import Traceback
 from textual.strip import Strip
 from textual.widgets import DataTable
+
+from breadcord.app.screens import ExceptionModal
 
 if TYPE_CHECKING:
     from logging import LogRecord
     from typing import ClassVar
+
+    from breadcord.app.app import TUIHandler
 
 
 class TableLog(DataTable):
@@ -45,8 +50,9 @@ class TableLog(DataTable):
     }
     '''
 
-    def __init__(self, **kwargs):
+    def __init__(self, handler: TUIHandler, **kwargs):
         super().__init__(**kwargs)
+        self.handler = handler
         self.add_column('Time', key='time')
         self.add_column('Level', key='level', width=8)
         self.add_column('Source', key='source')
@@ -78,3 +84,9 @@ class TableLog(DataTable):
 
         if round(self.max_scroll_y - self.scroll_y) <= 1:
             self.action_scroll_end()
+
+    def on_data_table_cell_selected(self, event: DataTable.CellSelected):
+        key = int(event.cell_key.row_key.value)
+        if key in self.handler.exceptions:
+            traceback = Traceback.from_exception(*self.handler.exceptions[key])
+            self.app.push_screen(ExceptionModal(traceback))

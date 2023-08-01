@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import sys
 from asyncio import CancelledError
+from types import TracebackType
 from typing import TYPE_CHECKING
 
 from rich.text import Text
@@ -21,6 +22,7 @@ class TUIHandler(logging.Handler):
     def __init__(self, tui_app: Breadcord):
         super().__init__()
         self.tui = tui_app
+        self.exceptions: dict[int, tuple[type[BaseException], BaseException, TracebackType | None]] = {}
         self._record_id = 0
 
     def allocate_id(self) -> int:
@@ -29,8 +31,11 @@ class TUIHandler(logging.Handler):
         return allocated
 
     def emit(self, record: logging.LogRecord) -> None:
+        log_id = self.allocate_id()
+        if record.exc_info is not None:
+            self.exceptions[log_id] = record.exc_info
         self.format(record)
-        self.tui.output_log.add_record(self.allocate_id(), record)
+        self.tui.output_log.add_record(log_id, record)
 
 
 class Breadcord(app.App):
@@ -52,7 +57,7 @@ class Breadcord(app.App):
         header = BetterHeader(id='header', show_clock=True)
         yield header
 
-        self.output_log = TableLog(id='output_log')
+        self.output_log = TableLog(handler=self.handler, id='output_log')
         yield self.output_log
 
         yield widgets.Footer()
