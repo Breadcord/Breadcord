@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from textual import events
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import Static
@@ -13,6 +14,10 @@ if TYPE_CHECKING:
 
 
 class ExceptionModal(ModalScreen):
+    BINDINGS = [
+        Binding(key='escape', action='dismiss', description='Close Modal')
+    ]
+
     def __init__(self, traceback: Traceback):
         super().__init__()
         self.traceback = traceback
