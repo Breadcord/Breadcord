@@ -5,6 +5,7 @@ site_description: The modular self-hostable Discord bot framework with customisa
 repo_name: Breadcord/Breadcord
 repo_url: https://github.com/Breadcord/Breadcord
 dev_addr: localhost:80
+strict: true
 
 theme:
   name: material
