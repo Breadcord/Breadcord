@@ -1,3 +1,4 @@
 -r requirements.txt
 
+mkdocs-material==9.1.21
 textual-dev==1.0.1
