@@ -3,6 +3,5 @@
 !breadcord/
 !requirements.txt
 
-**/__pycache__/
-**/*.py[cod]
-**/*$py.class
+breadcord/**/__pycache__/
+breadcord/**/*.py[cod]
