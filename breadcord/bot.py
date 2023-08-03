@@ -6,7 +6,7 @@ from argparse import Namespace
 from datetime import datetime
 from os import PathLike
 from pathlib import Path
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands
@@ -18,6 +18,7 @@ from .module import Modules, global_modules
 
 if TYPE_CHECKING:
     from types import TracebackType
+    from typing import Self
     from . import app
 
 _logger = logging.getLogger('breadcord.bot')
