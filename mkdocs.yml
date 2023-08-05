@@ -7,10 +7,20 @@ repo_url: https://github.com/Breadcord/Breadcord
 dev_addr: localhost:80
 strict: true
 
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+
 theme:
   name: material
   logo: assets/logo.png
   favicon: assets/logo.png
+  features:
+    - navigation.footer
+    - navigation.instant
 
   palette:
     # Palette toggle for dark mode
