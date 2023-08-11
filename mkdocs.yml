@@ -19,8 +19,12 @@ theme:
   logo: assets/logo.png
   favicon: assets/logo.png
   features:
-    - navigation.footer
     - navigation.instant
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.footer
+    - toc.follow
 
   palette:
     # Palette toggle for dark mode
