@@ -6,7 +6,7 @@ from argparse import Namespace
 from datetime import datetime
 from os import PathLike
 from pathlib import Path
-from typing import TYPE_CHECKING, Type, Any
+from typing import TYPE_CHECKING, Any
 
 import discord
 from discord.ext import commands
@@ -184,7 +184,7 @@ class Bot(commands.Bot):
         origin: discord.Message | discord.Interaction,
         /,
         *,
-        cls: Type[commands.Context[Any]] = discord.utils.MISSING,
+        cls: type[commands.Context[Any]] = discord.utils.MISSING,
     ) -> Any:
         if cls is discord.utils.MISSING:
             cls = commands.Context
