@@ -186,6 +186,9 @@ class Bot(commands.Bot):
         *,
         cls: type[commands.Context[Any]] = discord.utils.MISSING,
     ) -> Any:
+        if not self.settings.case_insensitive_prefix.value:
+            return await super().get_context(origin, cls=cls)
+
         if cls is discord.utils.MISSING:
             cls = commands.Context
 

@@ -9,6 +9,9 @@ token = ""
 # List of bot command prefixes
 command_prefixes = ["!"]
 
+# Case insensitive prefix switch
+case_insensitive_prefix = true
+
 # Bot administrator user IDs
 # ⚠️ Specified users, as well as bot owners, will be granted full access to the bot!
 administrators = []
