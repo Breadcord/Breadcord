@@ -19,6 +19,7 @@ from .module import Modules, global_modules
 
 if TYPE_CHECKING:
     from types import TracebackType
+    from typing import Self
     from . import app
 
 _logger = logging.getLogger('breadcord.bot')
@@ -37,7 +38,7 @@ class CommandTree(discord.app_commands.CommandTree):
             ))
 
         else:
-            _logger.exception(f'{error.__class__.__name__}: {error}')
+            _logger.exception(f'{error.__class__.__name__}: {error}', exc_info=error)
 
 
 class Bot(commands.Bot):
@@ -100,6 +101,16 @@ class Bot(commands.Bot):
                 style='{'
             )
         )
+
+    async def on_command_error(
+        self,
+        context: commands.Context[Self],
+        exception: commands.errors.CommandError,
+        /
+    ) -> None:
+        error = exception.__traceback__
+        _logger.debug(error)
+        _logger.exception(f'{exception.__class__.__name__}: {exception}', exc_info=exception)
 
     async def start(self, *_, **kwargs) -> None:
         self._init_logging()

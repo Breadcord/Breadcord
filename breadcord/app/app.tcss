@@ -15,3 +15,22 @@ Tooltip {
 #output_log {
   height: 1fr;
 }
+
+ModalScreen {
+  align: center middle;
+}
+
+#exception_container {
+  align: center middle;
+  max-width: 110;
+  margin: 2 4;
+  padding: 1;
+  background: $panel;
+  scrollbar-background: $panel-darken-2;
+  scrollbar-background-hover: $panel-darken-1;
+  scrollbar-background-active: $panel-darken-1;
+}
+
+#exception {
+  max-width: 100;
+}

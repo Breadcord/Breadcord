@@ -3,12 +3,13 @@ from __future__ import annotations
 import logging
 import sys
 from asyncio import CancelledError
+from types import TracebackType
 from typing import TYPE_CHECKING
 
 from rich.text import Text
 from textual import app, binding, widgets, work, worker
 
-from breadcord.app.widgets import BetterHeader, TableLog
+from breadcord.app.widgets import BetterHeader, TableLog, ColouredHeaderTitle
 from breadcord.bot import Bot
 
 if TYPE_CHECKING:
@@ -21,6 +22,7 @@ class TUIHandler(logging.Handler):
     def __init__(self, tui_app: Breadcord):
         super().__init__()
         self.tui = tui_app
+        self.exceptions: dict[int, tuple[type[BaseException], BaseException, TracebackType | None]] = {}
         self._record_id = 0
 
     def allocate_id(self) -> int:
@@ -29,8 +31,11 @@ class TUIHandler(logging.Handler):
         return allocated
 
     def emit(self, record: logging.LogRecord) -> None:
+        log_id = self.allocate_id()
+        if record.exc_info is not None:
+            self.exceptions[log_id] = record.exc_info
         self.format(record)
-        self.tui.output_log.add_record(self.allocate_id(), record)
+        self.tui.output_log.add_record(log_id, record)
 
 
 class Breadcord(app.App):
@@ -52,13 +57,14 @@ class Breadcord(app.App):
         header = BetterHeader(id='header', show_clock=True)
         yield header
 
-        self.output_log = TableLog(id='output_log')
+        self.output_log = TableLog(handler=self.handler, id='output_log')
         yield self.output_log
 
         yield widgets.Footer()
 
     def on_mount(self) -> None:
         self.online = False
+        self.console.set_window_title('Breadcord TUI')
         self.bot_worker = self.start_bot()
 
     @property
@@ -67,11 +73,20 @@ class Breadcord(app.App):
 
     @online.setter
     def online(self, value: bool) -> None:
+        # noinspection PyTypeChecker
+        header_title = self.query_one('HeaderTitle', expect_type=ColouredHeaderTitle)
+        previous = 'Offline' if isinstance(header_title.sub_text, str) else header_title.sub_text.plain
+
         if value:
-            sub_text = Text('Online ', self.get_css_variables()['success'])
+            sub_text = Text(current := 'Online ', self.get_css_variables()['success'])
+            if previous != current:
+                self.notify('Bot is online!', severity='information')
         else:
-            sub_text = Text('Offline', self.get_css_variables()['error'])
-        self.query_one('HeaderTitle').sub_text = sub_text
+            sub_text = Text(current := 'Offline', self.get_css_variables()['error'])
+            if previous != current:
+                self.notify('Bot is offline!', severity='error')
+
+        header_title.sub_text = sub_text
         self._online = value
 
     @work(exclusive=True)

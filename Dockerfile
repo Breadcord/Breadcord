@@ -23,4 +23,4 @@ COPY --from=build /app/venv ./venv
 COPY breadcord ./breadcord
 
 ENV PATH="/app/venv/bin:$PATH"
-CMD ["python", "-m", "breadcord"]
+CMD ["python", "-m", "breadcord", "-u"]
