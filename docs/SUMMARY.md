@@ -1,0 +1,7 @@
+- Getting Started
+    - [Welcome to Breadcord!](index.md)
+- Modules
+    - [Creating a Module](modules/creating-a-module.md)
+    - [Module Manifest](modules/module-manifest.md)
+- API Reference
+    - api-reference/breadcord.*.md

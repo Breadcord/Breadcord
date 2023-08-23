@@ -16,6 +16,14 @@ markdown_extensions:
 
 # noinspection YAMLSchemaValidation
 plugins:
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: sphinx
+            show_source: false
   - search
 
 theme:

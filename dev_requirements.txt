@@ -1,4 +1,6 @@
 -r requirements.txt
 
+mkdocs-literate-nav==0.6.0
 mkdocs-material==9.1.21
+mkdocstrings-python==1.5.0
 textual-dev==1.1.0

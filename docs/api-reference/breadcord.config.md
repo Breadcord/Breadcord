@@ -1,0 +1,3 @@
+# `breadcord.config`
+
+::: breadcord.config
