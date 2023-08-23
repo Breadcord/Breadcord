@@ -14,6 +14,10 @@ markdown_extensions:
   - toc:
       permalink: true
 
+# noinspection YAMLSchemaValidation
+plugins:
+  - search
+
 theme:
   name: material
   logo: assets/logo.png
@@ -24,6 +28,9 @@ theme:
     - navigation.sections
     - navigation.indexes
     - navigation.footer
+    - search.suggest
+    - search.highlight
+    - search.share
     - toc.follow
 
   palette:
