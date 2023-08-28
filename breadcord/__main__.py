@@ -11,6 +11,15 @@ parser.add_argument(
     metavar='<path>'
 )
 parser.add_argument(
+    '-m', '--module',
+    nargs='+',
+    default=[],
+    type=Path,
+    help='specify an additional module path to load from',
+    metavar='<path>',
+    dest='module_paths'
+)
+parser.add_argument(
     '-u', '--no-ui',
     action='store_false',
     help="don't use the visual user interface",

@@ -137,7 +137,13 @@ class Bot(commands.Bot):
         super().run(token='', log_handler=None, **kwargs)
 
     async def setup_hook(self) -> None:
-        self.modules.discover(self, search_paths=[Path('breadcord/core_modules'), self.modules_dir])
+        search_paths = [
+            *self.args.module_paths,
+            Path('breadcord/core_modules'),
+            self.modules_dir
+        ]
+        _logger.debug(f'Module search paths: {search_paths}')
+        self.modules.discover(self, search_paths=search_paths)
 
         for module in self.settings.modules.value:
             if module not in self.modules:

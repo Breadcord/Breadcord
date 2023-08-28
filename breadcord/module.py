@@ -117,13 +117,15 @@ class Modules:
         self._modules = {}
         for path in search_paths:
             path = Path(path)
-            path.mkdir(exist_ok=True)
+            if not path.is_dir():
+                _logger.warning(f"Module path '{path.as_posix()}' not found")
+                continue
             for module_path in [path] + list(path.iterdir()):
                 if not (module_path / 'manifest.toml').is_file():
                     continue
                 self.add(Module(bot, module_path))
                 if module_path == path:
-                    return
+                    break
 
 
 class ModuleCog(commands.Cog):
