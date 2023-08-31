@@ -176,24 +176,24 @@ class ModuleManifest(pydantic.BaseModel):
     requirements: list[Requirement] = []
     permissions: discord.Permissions = discord.Permissions.none()
 
-    @pydantic.model_validator(mode="after")
-    def validate_core_module(cls, model: ModuleManifest) -> ModuleManifest:
-        if model.is_core_module:
-            model.license = model.license or 'GNU LGPLv3'
-            model.authors = model.authors or ['Breadcord Team']
-        elif model.version is None:
+    @pydantic.model_validator(mode='after')
+    def validate_core_module(self) -> ModuleManifest:
+        if self.is_core_module:
+            self.license = self.license or 'GNU LGPLv3'
+            self.authors = self.authors or ['Breadcord Team']
+        elif self.version is None:
             raise ValueError('field required: version')
-        return model
+        return self
 
-    @pydantic.field_validator('version', mode="before")
+    @pydantic.field_validator('version', mode='before')
     def parse_version(cls, value: str) -> Version:
         return Version(value)
 
-    @pydantic.field_validator('requirements', mode="before")
+    @pydantic.field_validator('requirements', mode='before')
     def parse_requirement(cls, values: list) -> list[Requirement]:
         return [Requirement(value) for value in values]
 
-    @pydantic.field_validator('permissions', mode="before")
+    @pydantic.field_validator('permissions', mode='before')
     def parse_permissions(cls, value: list[str]) -> discord.Permissions:
         return discord.Permissions(**{permission: True for permission in value})
 
