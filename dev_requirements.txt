@@ -1,5 +1,5 @@
 -r requirements.txt
 -r docs_requirements.txt
 
-textual-dev==1.1.0
 ruff==0.0.289
+textual-dev==1.1.0
