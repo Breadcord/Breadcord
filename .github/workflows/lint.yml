@@ -1,0 +1,19 @@
+name: Lint
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ruff
+        uses: chartboost/ruff-action@v1
+        with:
+          src: breadcord
