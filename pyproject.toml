@@ -28,14 +28,7 @@ select = [
 ignore = [
     # Missing docstrings
     # These should be enabled in the future, but for now it's just too much at once
-    "D100",
-    "D101",
-    "D102",
-    "D103",
-    "D104",
-    "D105",
-    "D106",
-    "D107",
+    "D10",
 
     # Wacky docstring defaults
     "D203",
