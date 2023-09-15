@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import inspect
 from collections import defaultdict
-from collections.abc import Sequence
-from typing import TYPE_CHECKING, TypeVar, Callable, overload
+from typing import TYPE_CHECKING, Callable, TypeVar, overload
 
 import discord
 from rapidfuzz.fuzz import partial_ratio_alignment
@@ -12,7 +11,10 @@ import breadcord
 
 if TYPE_CHECKING:
     # noinspection PyProtectedMember
-    from discord.ui.button import V, Button
+    from collections.abc import Sequence
+
+    from discord.ui.button import Button, V
+
     # noinspection PyProtectedMember
     from discord.ui.item import ItemCallbackType
 
@@ -39,7 +41,6 @@ async def administrator_check(interaction: discord.Interaction) -> bool:
 
     :param interaction: The current interaction which the check should apply to.
     """
-
     if not await interaction.client.is_owner(interaction.user):
         raise breadcord.errors.NotAdministratorError
     return True
@@ -51,7 +52,7 @@ def search_for(
     objects: Sequence[str],
     *,
     threshold: float = 80,
-    max_results: int | None = 25
+    max_results: int | None = 25,
 ) -> Sequence[str]:
     ...
 
@@ -63,7 +64,7 @@ def search_for(
     *,
     key: Callable[[_T], str],
     threshold: float = 80,
-    max_results: int | None = 25
+    max_results: int | None = 25,
 ) -> Sequence[_T]:
     ...
 
@@ -74,7 +75,7 @@ def search_for(
     *,
     key: Callable[[_T], str] | None = None,
     threshold: float = 80,
-    max_results: int | None = 25
+    max_results: int | None = 25,
 ) -> Sequence[_T]:
     """A custom implementation of a fuzzy search algorithm.
 

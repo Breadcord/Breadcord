@@ -8,7 +8,7 @@ parser.add_argument(
     '-d', '--data',
     type=Path,
     help='specify an alternative data directory to load from',
-    metavar='<path>'
+    metavar='<path>',
 )
 parser.add_argument(
     '-m', '--module',
@@ -17,13 +17,13 @@ parser.add_argument(
     type=Path,
     help='specify an additional module path to load from',
     metavar='<path>',
-    dest='module_paths'
+    dest='module_paths',
 )
 parser.add_argument(
     '-u', '--no-ui',
     action='store_false',
     help="don't use the visual user interface",
-    dest='ui'
+    dest='ui',
 )
 args = parser.parse_args()
 

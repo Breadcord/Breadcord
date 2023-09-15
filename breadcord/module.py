@@ -3,9 +3,7 @@ from __future__ import annotations
 import importlib.metadata
 import subprocess
 import sys
-from collections.abc import Generator
 from logging import getLogger
-from os import PathLike
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable
 
@@ -18,6 +16,9 @@ from packaging.version import Version
 from breadcord import config
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+    from os import PathLike
+
     from breadcord import Bot
 
 _logger = getLogger('breadcord.module')
@@ -96,7 +97,7 @@ class Modules:
     def __contains__(self, item: str) -> bool:
         if not isinstance(item, str):
             raise TypeError(
-                f"'in <{self.__class__.__name__}>' requires string as left operand, not '{type(item).__name__}'"
+                f"'in <{self.__class__.__name__}>' requires string as left operand, not '{type(item).__name__}'",
             )
         return item in self._modules
 
@@ -106,7 +107,7 @@ class Modules:
     def add(self, module: Module) -> None:
         if module.id in self._modules:
             module.logger.warning(
-                f'Module ID conflicts with {self.get(module.id).import_string} so it will not be loaded'
+                f'Module ID conflicts with {self.get(module.id).import_string} so it will not be loaded',
             )
         self._modules[module.id] = module
 
@@ -120,7 +121,7 @@ class Modules:
             if not path.is_dir():
                 _logger.warning(f"Module path '{path.as_posix()}' not found")
                 continue
-            for module_path in [path] + list(path.iterdir()):
+            for module_path in [path, *list(path.iterdir())]:
                 if not (module_path / 'manifest.toml').is_file():
                     continue
                 self.add(Module(bot, module_path))
@@ -150,28 +151,28 @@ class ModuleManifest(pydantic.BaseModel):
         strip_whitespace=True,
         min_length=1,
         max_length=32,
-        pattern=r'^[a-z_]+$'
+        pattern=r'^[a-z_]+$',
     )
     name: pydantic.constr(
         strip_whitespace=True,
         min_length=1,
-        max_length=64
+        max_length=64,
     )
     description: pydantic.constr(
         strip_whitespace=True,
         min_length=1,
-        max_length=128
+        max_length=128,
     ) = ''
     version: Version | None = None
     license: pydantic.constr(
         strip_whitespace=True,
         min_length=1,
-        max_length=16
+        max_length=16,
     ) = 'No license specified'
     authors: list[pydantic.constr(
         strip_whitespace=True,
         min_length=1,
-        max_length=32
+        max_length=32,
     )] = []
     requirements: list[Requirement] = []
     permissions: discord.Permissions = discord.Permissions.none()

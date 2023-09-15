@@ -2,8 +2,9 @@ from rich.text import Text
 from textual.app import RenderResult
 from textual.events import Mount
 from textual.widget import Widget
+
 # noinspection PyProtectedMember
-from textual.widgets._header import HeaderTitle, HeaderClock, HeaderClockSpace
+from textual.widgets._header import HeaderClock, HeaderClockSpace, HeaderTitle
 
 
 class ColouredHeaderTitle(HeaderTitle):
@@ -14,7 +15,6 @@ class ColouredHeaderTitle(HeaderTitle):
 
         :returns: The value to render.
         """
-
         text = Text(self.text, no_wrap=True, overflow='ellipsis')
         if self.sub_text:
             text = Text.assemble(text, (' — ', 'dim'), self.sub_text)
@@ -52,7 +52,6 @@ class BetterHeader(Widget):
         :param id: The ID of the header widget in the DOM.
         :param classes: The CSS classes of the header widget.
         """
-
         super().__init__(name=name, id=id, classes=classes)
         self._show_clock = show_clock
 
@@ -67,5 +66,5 @@ class BetterHeader(Widget):
         def set_sub_title(sub_title: str) -> None:
             self.query_one(HeaderTitle).sub_text = sub_title
 
-        self.watch(self.app, "title", set_title)
-        self.watch(self.app, "sub_title", set_sub_title)
+        self.watch(self.app, 'title', set_title)
+        self.watch(self.app, 'sub_title', set_sub_title)
