@@ -27,8 +27,8 @@ class SettingTransformer(app_commands.Transformer):
                 objects=interaction.client.settings.walk(skip_groups=True),
                 key=lambda setting: '\n'.join(filter(
                     bool,
-                    (setting.key, setting.path_id(), setting.description)
-                ))
+                    (setting.key, setting.path_id(), setting.description),
+                )),
             )
         ]
 
@@ -38,7 +38,7 @@ class SettingsFileEditor(discord.ui.Modal, title='Settings File Editor'):
 
     def __init__(self, bot: breadcord.Bot):
         self.bot = bot
-        with open(self.bot.settings_file, 'r', encoding='utf-8') as file:
+        with open(self.bot.settings_file, encoding='utf-8') as file:
             self.editor.default = file.read()
         super().__init__()
 
@@ -49,43 +49,43 @@ class SettingsFileEditor(discord.ui.Modal, title='Settings File Editor'):
         await interaction.response.send_message(
             embed=discord.Embed(
                 title='Settings saved!',
-                colour=discord.Colour.green()
+                colour=discord.Colour.green(),
             ),
-            ephemeral=self.bot.settings.settings.ephemeral.value
+            ephemeral=self.bot.settings.settings.ephemeral.value,
         )
 
 
 class Settings(
     breadcord.module.ModuleCog,
     commands.GroupCog,
-    group_name="settings",
-    group_description="Manage bot settings"
+    group_name='settings',
+    group_description='Manage bot settings',
 ):
-    @app_commands.command(description="Get the value of a setting")
-    @app_commands.describe(setting="The key of the setting you want to get")
+    @app_commands.command(description='Get the value of a setting')
+    @app_commands.describe(setting='The key of the setting you want to get')
     @app_commands.check(breadcord.helpers.administrator_check)
     async def get(self, interaction: discord.Interaction, setting: SettingTransformer):
         await interaction.response.send_message(
             embed=discord.Embed(
                 colour=discord.Colour.blurple(),
                 title=f'Inspecting setting: `{setting.key}`',
-                description=setting.description
+                description=setting.description,
             ).add_field(
                 name='Value',
                 value=f'```py\n{setting.value!r}\n```',
-                inline=False
+                inline=False,
             ).add_field(
                 name='Type',
-                value=f'```py\n{setting.type.__name__}\n```'
+                value=f'```py\n{setting.type.__name__}\n```',
             ).add_field(
                 name='In schema',
-                value=f'```py\n{setting.in_schema}\n```'
+                value=f'```py\n{setting.in_schema}\n```',
             ),
-            ephemeral=self.bot.settings.settings.ephemeral.value
+            ephemeral=self.bot.settings.settings.ephemeral.value,
         )
 
-    @app_commands.command(description="Set the value of a setting")
-    @app_commands.describe(setting="The key of the setting you want to change")
+    @app_commands.command(description='Set the value of a setting')
+    @app_commands.describe(setting='The key of the setting you want to change')
     @app_commands.check(breadcord.helpers.administrator_check)
     async def set(self, interaction: discord.Interaction, setting: SettingTransformer, value: str):
         parsed_value = tomlkit.value(value).unwrap()
@@ -95,17 +95,17 @@ class Settings(
         await interaction.response.send_message(
             embed=discord.Embed(
                 colour=discord.Colour.green(),
-                title=f'Updated setting: `{setting}`'
+                title=f'Updated setting: `{setting}`',
             ).add_field(
                 name='Old value',
                 value=f'```diff\n- {old_value!r}\n```',
-                inline=False
+                inline=False,
             ).add_field(
                 name='New value',
                 value=f'```diff\n+ {parsed_value!r}\n```',
-                inline=False
+                inline=False,
             ),
-            ephemeral=self.bot.settings.settings.ephemeral.value
+            ephemeral=self.bot.settings.settings.ephemeral.value,
         )
 
     @set.autocomplete('value')
@@ -133,7 +133,7 @@ class Settings(
                 current = current[1:-1]
             autocomplete.append(app_commands.Choice(
                 name=f"(string) '{current}'" if current else '(string) <empty>',
-                value=tomlkit.item(current).as_string()
+                value=tomlkit.item(current).as_string(),
             ))
 
         elif setting.type == bool:
@@ -150,27 +150,27 @@ class Settings(
 
         return autocomplete
 
-    @app_commands.command(description="Directly edit the bot settings file on disk")
+    @app_commands.command(description='Directly edit the bot settings file on disk')
     @app_commands.check(breadcord.helpers.administrator_check)
     async def edit(self, interaction: discord.Interaction):
         await interaction.response.send_modal(SettingsFileEditor(self.bot))
 
-    @app_commands.command(description="Reload bot settings from disk")
+    @app_commands.command(description='Reload bot settings from disk')
     @app_commands.check(breadcord.helpers.administrator_check)
     async def reload(self, interaction: discord.Interaction):
         self.bot.load_settings()
         await interaction.response.send_message(
             'Settings reloaded from config file.',
-            ephemeral=self.bot.settings.settings.ephemeral.value
+            ephemeral=self.bot.settings.settings.ephemeral.value,
         )
 
-    @app_commands.command(description="Save bot settings to disk")
+    @app_commands.command(description='Save bot settings to disk')
     @app_commands.check(breadcord.helpers.administrator_check)
     async def save(self, interaction: discord.Interaction):
         self.bot.save_settings()
         await interaction.response.send_message(
             'Settings saved to config file.',
-            ephemeral=self.bot.settings.settings.ephemeral.value
+            ephemeral=self.bot.settings.settings.ephemeral.value,
         )
 
 

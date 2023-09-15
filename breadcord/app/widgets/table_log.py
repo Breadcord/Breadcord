@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from rich.style import Style
 from rich.traceback import Traceback
 from textual.strip import Strip
 from textual.widgets import DataTable
@@ -12,6 +11,8 @@ from breadcord.app.screens import ExceptionModal
 if TYPE_CHECKING:
     from logging import LogRecord
     from typing import ClassVar
+
+    from rich.style import Style
 
     from breadcord.app.app import TUIHandler
 
@@ -23,7 +24,7 @@ class TableLog(DataTable):
         'tablelog--warning',
         'tablelog--error',
         'tablelog--critical',
-        'tablelog--unknown'
+        'tablelog--unknown',
     }
 
     # noinspection ALL
@@ -32,19 +33,19 @@ class TableLog(DataTable):
     TableLog > .tablelog--debug {
         color: $accent;
     }
-    
+
     TableLog > .tablelog--warning {
         color: $warning;
     }
-    
+
     TableLog > .tablelog--error {
         color: $error;
     }
-    
+
     TableLog > .tablelog--critical {
         background: $error;
     }
-    
+
     TableLog > .tablelog--unknown {
         background: $accent;
     }
@@ -79,7 +80,7 @@ class TableLog(DataTable):
             record.name,
             record.message,
             key=str(record_id),
-            height=record.message.count('\n') + 1
+            height=record.message.count('\n') + 1,
         )
 
         if round(self.max_scroll_y - self.scroll_y) <= 1:

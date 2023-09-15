@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-from collections.abc import Generator
 from functools import partial, wraps
 from logging import getLogger
-from os import PathLike
-from typing import Any, Callable, KeysView, ValuesView
+from typing import TYPE_CHECKING, Any, Callable, KeysView, ValuesView
 
 import tomlkit
-from tomlkit.items import Key, Item, Comment, Whitespace, Table
+from tomlkit.items import Comment, Item, Key, Table, Whitespace
 from tomlkit.toml_file import TOMLDocument, TOMLFile
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+    from os import PathLike
 
 _logger = getLogger('breadcord.config')
 
@@ -32,7 +34,7 @@ class SettingsNode:
         *,
         description: str = '',
         parent: SettingsGroup | None = None,
-        in_schema: bool = False
+        in_schema: bool = False,
     ):
         self._key = key
         self._path = (self,)
@@ -53,7 +55,7 @@ class SettingsNode:
         """A series of node references representing the path to this node from the root node."""
         if self.parent is None:
             return self,
-        return self.parent.path() + (self,)
+        return (*self.parent.path(), self)
 
     def path_id(self):
         """Returns a string identifier representing the path to this node from the root node."""
@@ -64,7 +66,6 @@ class SettingsNode:
 
         This method is equivalent to calling ``node.path()[0]``.
         """
-
         node = self
         while node.parent is not None:
             node = node.parent
@@ -94,7 +95,7 @@ class Setting(SettingsNode):
         *,
         description: str = '',
         parent: SettingsGroup | None = None,
-        in_schema: bool = False
+        in_schema: bool = False,
     ) -> None:
 
         super().__init__(key=key, description=description, parent=parent, in_schema=in_schema)
@@ -113,7 +114,7 @@ class Setting(SettingsNode):
         """Assigns a new value to the setting, validating the new value type and triggering necessary observers."""
         if not isinstance(new_value, self.type):
             raise TypeError(
-                f"Cannot assign type '{type(new_value).__name__}' to setting with type '{self.type.__name__}'"
+                f"Cannot assign type '{type(new_value).__name__}' to setting with type '{self.type.__name__}'",
             )
 
         old_value = self._value
@@ -130,7 +131,7 @@ class Setting(SettingsNode):
         self,
         observer: Callable[[Any, Any], Any] | None = None,
         *,
-        always_trigger: bool = False
+        always_trigger: bool = False,
     ) -> Callable[[Any, Any], None]:
         """Registers an observer function which is called whenever the setting value is updated.
 
@@ -141,7 +142,6 @@ class Setting(SettingsNode):
         :param always_trigger: If the observer should be called even if the updated value is equal to the previous
             value.
         """
-
         if observer is None:
             return partial(self.observe, always_trigger=always_trigger)
 
@@ -184,7 +184,7 @@ class SettingsGroup(SettingsNode):
         parent: SettingsGroup | None = None,
         in_schema: bool = False,
         schema_path: str | PathLike[str] | None = None,
-        observers: dict[str, list[Callable[[Any, Any], None]]] | None = None
+        observers: dict[str, list[Callable[[Any, Any], None]]] | None = None,
     ) -> None:
 
         self._settings: dict[str, Setting] = {setting.key: setting for setting in settings or ()}
@@ -211,7 +211,7 @@ class SettingsGroup(SettingsNode):
     def __contains__(self, item: str) -> bool:
         if not isinstance(item, str):
             raise TypeError(
-                f"'in <{self.__class__.__name__}>' requires string as left operand, not '{type(item).__name__}'"
+                f"'in <{self.__class__.__name__}>' requires string as left operand, not '{type(item).__name__}'",
             )
         return item in self.keys()
 
@@ -233,7 +233,6 @@ class SettingsGroup(SettingsNode):
         :param skip_groups: Whether :cls:`SettingsGroup` objects should be skipped
         :param skip_settings: Whether :cls:`Setting` objects should be skipped
         """
-
         discovered: list[SettingsNode] = [] if skip_groups else [self]
         if not skip_settings:
             discovered.extend(self)
@@ -245,14 +244,13 @@ class SettingsGroup(SettingsNode):
         self,
         *,
         file_path: str | PathLike[str] | None = None,
-        body: list[tuple[Key | None, Item]] = None
+        body: list[tuple[Key | None, Item]] | None = None,
     ) -> None:
         """Loads and deserialises a settings schema, for the settings to follow.
 
         :param file_path: Path to the schema file.
         :param body: The parsed TOML body data to interpret as. Overrides loading from ``file_path`` when present.
         """
-
         body: list[tuple[Key | None, Item]] = TOMLFile(file_path).read().body if body is None else body
         if body is None:
             raise ValueError('either file_path or body must be specified')
@@ -297,7 +295,6 @@ class SettingsGroup(SettingsNode):
 
         :param key: The key for the setting (the identifier before the equals sign in a TOML document).
         """
-
         return self._settings[key]
 
     def set(self, key: str, value: Any, *, strict: bool = True) -> None:
@@ -307,7 +304,6 @@ class SettingsGroup(SettingsNode):
         :param value: The new value to set for the setting.
         :param strict: Whether :class:`KeyError` should be thrown when the key doesn't exist in the schema.
         """
-
         if strict and (
             key not in self
             or not self.get(key).in_schema
@@ -328,7 +324,6 @@ class SettingsGroup(SettingsNode):
         :param key: The key for the child group.
         :param allow_new: Whether a new :class:`SettingsGroup` instance should be created if it doesn't exist.
         """
-
         if allow_new and key not in self._children:
             self.add_child(SettingsGroup(key))
         return self._children[key]
@@ -338,7 +333,6 @@ class SettingsGroup(SettingsNode):
 
         :param child: The settings group to attach as a child node.
         """
-
         self._children[child.key] = child
         child.parent = self
 
@@ -352,7 +346,6 @@ class SettingsGroup(SettingsNode):
         :param strict: Whether :class:`KeyError` should be thrown when a key doesn't exist, instead of creating a new
             setting.
         """
-
         for key, value in data.items():
             if isinstance(value, dict):
                 child = self.get_child(key, allow_new=True)
@@ -369,7 +362,6 @@ class SettingsGroup(SettingsNode):
         :param table: Whether a table should be generated instead of a document.
         :param warn_schema: Whether settings not declared in the schema should warn the user.
         """
-
         document = tomlkit.table() if table else TOMLDocument()
 
         previous_setting_in_schema = False
@@ -406,7 +398,6 @@ def parse_schema_chunk(chunk: list[tuple[Key | None, Item]]) -> Setting:
 
     :param chunk: A sub-list of TOMLDocument.body. Must contain one key-value pair.
     """
-
     chunk = chunk.copy()
 
     description = ''
@@ -424,5 +415,4 @@ def load_settings(file_path: str | PathLike[str]) -> dict[str, Any]:
     :param file_path: Path to the TOML settings file.
     :returns: A dict structure representing the hierarchy of the TOML document.
     """
-
     return TOMLFile(file_path).read().unwrap()

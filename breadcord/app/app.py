@@ -3,17 +3,17 @@ from __future__ import annotations
 import logging
 import sys
 from asyncio import CancelledError
-from types import TracebackType
 from typing import TYPE_CHECKING
 
 from rich.text import Text
 from textual import app, binding, widgets, work, worker
 
-from breadcord.app.widgets import BetterHeader, TableLog, ColouredHeaderTitle
+from breadcord.app.widgets import BetterHeader, ColouredHeaderTitle, TableLog
 from breadcord.bot import Bot
 
 if TYPE_CHECKING:
     from argparse import Namespace
+    from types import TracebackType
 
 _logger = logging.getLogger('breadcord.app')
 
@@ -42,7 +42,7 @@ class Breadcord(app.App):
     CSS_PATH = 'app.tcss'
     BINDINGS = [
         binding.Binding(key='ctrl+c', action='quit', description='Quit', priority=True),
-        binding.Binding(key='ctrl+p', action='toggle_bot', description='Toggle Bot On/Off')
+        binding.Binding(key='ctrl+p', action='toggle_bot', description='Toggle Bot On/Off'),
     ]
 
     def __init__(self, args: Namespace) -> None:

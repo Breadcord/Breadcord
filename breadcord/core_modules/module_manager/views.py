@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from asyncio import to_thread
-from pathlib import Path
 from shutil import rmtree
 from typing import TYPE_CHECKING, Callable
 from zipfile import ZipFile
@@ -13,6 +12,8 @@ from breadcord.helpers import simple_button
 from breadcord.module import Module, ModuleManifest
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from . import ModuleManager
 
 
@@ -52,7 +53,7 @@ class BaseView(discord.ui.View):
 
         await interaction.response.send_message(
             f'Only <@{self.user_id}> can perform this action!',
-            ephemeral=True
+            ephemeral=True,
         )
         return False
 
@@ -79,10 +80,9 @@ class ModuleInstallView(BaseView):
         self.cog.logger.info(f"Installing module '{self.manifest.id}' from source {self.zip_url}")
 
         zip_path = self.cog.bot.modules_dir / f'{self.manifest.id}.zip'
-        async with self.cog.session.get(self.zip_url) as response:
-            async with aiofiles.open(zip_path, 'wb') as file:
-                async for chunk in response.content:
-                    await file.write(chunk)
+        async with self.cog.session.get(self.zip_url) as response, aiofiles.open(zip_path, 'wb') as file:
+            async for chunk in response.content:
+                await file.write(chunk)
         await to_thread(nested_zip_extractor(zip_path))
         self.cog.bot.modules.add(Module(self.cog.bot, zip_path.parent / zip_path.stem))
         self.cog.logger.info(f"Module '{self.manifest.id}' installed")
@@ -92,7 +92,7 @@ class ModuleInstallView(BaseView):
         view = ModulePostInstallView(
             cog=self.cog,
             user_id=self.user_id,
-            module=self.cog.bot.modules.get(self.manifest.id)
+            module=self.cog.bot.modules.get(self.manifest.id),
         )
         await interaction.message.edit(embed=embed, view=view)
         view.message = await interaction.original_response()
