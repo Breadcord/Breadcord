@@ -26,7 +26,7 @@ select = [
 ]
 
 ignore = [
-    # Mising docstrings
+    # Missing docstrings
     # These should be enabled in the future, but for now it's just too much at once
     "D100",
     "D101",
@@ -42,7 +42,7 @@ ignore = [
     "D213",
 
     # Insane suggestion that pathlib.Path.open() should be prefered over open()
-    "PTH123"
+    "PTH123",
 ]
 
 line-length = 120
