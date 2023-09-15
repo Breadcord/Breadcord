@@ -40,8 +40,10 @@ ignore = [
 
 line-length = 120
 
+
 [tool.ruff.per-file-ignores]
 "__init__.py" = ["F401"] # Unused imports in __init__.py are fine
+
 
 [tool.ruff.flake8-quotes]
 inline-quotes = "single"
