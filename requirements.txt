@@ -4,6 +4,6 @@ discord.py==2.3.2
 packaging==23.1
 pydantic==2.3.0
 rapidfuzz==3.2.0
-rich==13.5.2
+rich==13.5.3
 textual==0.36.0
 tomlkit==0.12.1
