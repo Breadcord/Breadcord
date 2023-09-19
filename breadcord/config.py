@@ -54,7 +54,7 @@ class SettingsNode:
     def path(self) -> tuple[SettingsNode | Setting | SettingsGroup, ...]:
         """A series of node references representing the path to this node from the root node."""
         if self.parent is None:
-            return self,
+            return (self,)
         return (*self.parent.path(), self)
 
     def path_id(self):

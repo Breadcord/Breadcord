@@ -1,3 +1,4 @@
+import aiofiles
 import discord
 import tomlkit
 import tomlkit.exceptions
@@ -43,7 +44,7 @@ class SettingsFileEditor(discord.ui.Modal, title='Settings File Editor'):
         super().__init__()
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
-        with open(self.bot.settings_file, 'w', encoding='utf-8') as file:
+        async with aiofiles.open(self.bot.settings_file, 'w', encoding='utf-8') as file:
             file.write(self.editor.value)
         self.bot.load_settings()
         await interaction.response.send_message(
