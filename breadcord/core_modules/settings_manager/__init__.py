@@ -51,7 +51,7 @@ class SettingsFileEditor(discord.ui.Modal, title='Settings File Editor'):
                 title='Settings saved!',
                 colour=discord.Colour.green(),
             ),
-            ephemeral=self.bot.settings.settings.ephemeral.value,
+            ephemeral=self.settings.ephemeral.value,
         )
 
 
@@ -81,7 +81,7 @@ class Settings(
                 name='In schema',
                 value=f'```py\n{setting.in_schema}\n```',
             ),
-            ephemeral=self.bot.settings.settings.ephemeral.value,
+            ephemeral=self.settings.ephemeral.value,
         )
 
     @app_commands.command(description='Set the value of a setting')
@@ -105,7 +105,7 @@ class Settings(
                 value=f'```diff\n+ {parsed_value!r}\n```',
                 inline=False,
             ),
-            ephemeral=self.bot.settings.settings.ephemeral.value,
+            ephemeral=self.settings.ephemeral.value,
         )
 
     @set.autocomplete('value')
@@ -161,7 +161,7 @@ class Settings(
         self.bot.load_settings()
         await interaction.response.send_message(
             'Settings reloaded from config file.',
-            ephemeral=self.bot.settings.settings.ephemeral.value,
+            ephemeral=self.settings.ephemeral.value,
         )
 
     @app_commands.command(description='Save bot settings to disk')
@@ -170,7 +170,7 @@ class Settings(
         self.bot.save_settings()
         await interaction.response.send_message(
             'Settings saved to config file.',
-            ephemeral=self.bot.settings.settings.ephemeral.value,
+            ephemeral=self.settings.ephemeral.value,
         )
 
 
