@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     from argparse import Namespace
     from os import PathLike
     from types import TracebackType
-    from typing import Self
 
     from . import app
 
@@ -106,7 +105,7 @@ class Bot(commands.Bot):
 
     async def on_command_error(
         self,
-        context: commands.Context[Self],
+        _,
         exception: commands.errors.CommandError,
         /,
     ) -> None:

@@ -52,17 +52,17 @@ class SettingsNode:
         return self._key
 
     def path(self) -> tuple[SettingsNode | Setting | SettingsGroup, ...]:
-        """A series of node references representing the path to this node from the root node."""
+        """Return a series of node references representing the path to this node from the root node."""
         if self.parent is None:
             return (self,)
         return (*self.parent.path(), self)
 
     def path_id(self):
-        """Returns a string identifier representing the path to this node from the root node."""
+        """Return a string identifier representing the path to this node from the root node."""
         return '.'.join(node.key for node in self.path())
 
     def root(self) -> SettingsGroup:
-        """Returns the root node of the settings tree this node belongs to.
+        """Return the root node of the settings tree this node belongs to.
 
         This method is equivalent to calling ``node.path()[0]``.
         """
@@ -111,7 +111,7 @@ class Setting(SettingsNode):
 
     @value.setter
     def value(self, new_value: Any) -> None:
-        """Assigns a new value to the setting, validating the new value type and triggering necessary observers."""
+        """Assign a new value to the setting, validating the new value type and triggering necessary observers."""
         if not isinstance(new_value, self.type):
             raise TypeError(
                 f"Cannot assign type '{type(new_value).__name__}' to setting with type '{self.type.__name__}'",
@@ -133,7 +133,7 @@ class Setting(SettingsNode):
         *,
         always_trigger: bool = False,
     ) -> Callable[[Any, Any], None]:
-        """Registers an observer function which is called whenever the setting value is updated.
+        """Register an observer function which is called whenever the setting value is updated.
 
         This method can be used as a decorator, with optional parentheses for arguments.
 
@@ -246,7 +246,7 @@ class SettingsGroup(SettingsNode):
         file_path: str | PathLike[str] | None = None,
         body: list[tuple[Key | None, Item]] | None = None,
     ) -> None:
-        """Loads and deserialises a settings schema, for the settings to follow.
+        """Load and deserialise a settings schema, for the settings to follow.
 
         :param file_path: Path to the schema file.
         :param body: The parsed TOML body data to interpret as. Overrides loading from ``file_path`` when present.
@@ -288,7 +288,7 @@ class SettingsGroup(SettingsNode):
             chunk = next_chunk
 
     def get(self, key: str) -> Setting:
-        """Gets a :class:`Setting` object by its key.
+        """Get a :class:`Setting` object by its key.
 
         :class:`SettingsGroup` implements ``__getattr__``, so a setting can be accessed by attribute as a shortcut.
         For example, ``settings.debug`` can be used instead of ``settings.get('debug')``.
@@ -298,7 +298,7 @@ class SettingsGroup(SettingsNode):
         return self._settings[key]
 
     def set(self, key: str, value: Any, *, strict: bool = True) -> None:
-        """Sets the value for a setting by its key, creating new settings as necessary if not using strict mode.
+        """Set the value for a setting by its key, creating new settings as necessary if not using strict mode.
 
         :param key: The key for the setting (the identifier before the equals sign in a TOML document).
         :param value: The new value to set for the setting.
@@ -316,7 +316,7 @@ class SettingsGroup(SettingsNode):
         self.get(key).value = value
 
     def get_child(self, key: str, allow_new: bool = False) -> SettingsGroup:
-        """Gets a child :class:`SettingsGroup` object by its key.
+        """Get a child :class:`SettingsGroup` object by its key.
 
         :class:`SettingsGroup` implements ``__getattr__``, so a child node can be accessed by attribute as a shortcut.
         For example, ``settings.ExampleModule`` can be used instead of ``settings.get_child('ExampleModule')``.
@@ -329,7 +329,7 @@ class SettingsGroup(SettingsNode):
         return self._children[key]
 
     def add_child(self, child: SettingsGroup) -> None:
-        """Sets a child :class:`SettingsGroup` object as a child node to the current node.
+        """Set a child :class:`SettingsGroup` object as a child node to the current node.
 
         :param child: The settings group to attach as a child node.
         """
@@ -354,7 +354,7 @@ class SettingsGroup(SettingsNode):
                 self.set(key, value, strict=strict)
 
     def as_toml(self, *, table: bool = False, warn_schema: bool = True) -> TOMLDocument | Table:
-        """Exports the descendent settings as a :class:`TOMLDocument` or :class:`Table` instance.
+        """Export the descendent settings as a :class:`TOMLDocument` or :class:`Table` instance.
 
         This method works recursively on any settings which have a value of a :class:`SettingsGroup` instance,
         adding them to the TOML document as tables.
@@ -392,7 +392,7 @@ class SettingsGroup(SettingsNode):
 
 
 def parse_schema_chunk(chunk: list[tuple[Key | None, Item]]) -> Setting:
-    """Converts a TOMLDocument.body chunk representing a single schema setting into a :class:`Setting` instance.
+    """Convert a TOMLDocument.body chunk representing a single schema setting into a :class:`Setting` instance.
 
     Any comments located before the key-value pair will be used for the setting's description.
 
@@ -410,7 +410,7 @@ def parse_schema_chunk(chunk: list[tuple[Key | None, Item]]) -> Setting:
 
 
 def load_settings(file_path: str | PathLike[str]) -> dict[str, Any]:
-    """Loads and deserialises a TOML settings file into a :class:`TOMLDocument` instance.
+    """Load and deserialise a TOML settings file into a :class:`TOMLDocument` instance.
 
     :param file_path: Path to the TOML settings file.
     :returns: A dict structure representing the hierarchy of the TOML document.
