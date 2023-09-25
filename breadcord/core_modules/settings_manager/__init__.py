@@ -45,7 +45,7 @@ class SettingsFileEditor(discord.ui.Modal, title='Settings File Editor'):
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         async with aiofiles.open(self.bot.settings_file, 'w', encoding='utf-8') as file:
-            file.write(self.editor.value)
+            await file.write(self.editor.value)
         self.bot.load_settings()
         await interaction.response.send_message(
             embed=discord.Embed(
