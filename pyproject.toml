@@ -41,7 +41,7 @@ ignore = [
     # Insane suggestion that pathlib.Path.open() should be prefered over open()
     "PTH123",
 
-    # Too unflexible to be resonable
+    # Too inflexible to be reasonable
     # https://github.com/Breadcord/Breadcord/pull/144#issuecomment-1732071028
     "PLR0913",
 ]
