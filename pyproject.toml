@@ -27,7 +27,7 @@ select = [
 
 ignore = [
     # Missing docstrings
-    # These should be enabled in the future, but for now it's just too much at once
+    # This should be enabled in the future, but for now it's just too much at once
     "D10",
 
     # Wacky docstring defaults
@@ -36,6 +36,10 @@ ignore = [
 
     # Insane suggestion that pathlib.Path.open() should be prefered over open()
     "PTH123",
+
+    # Too unflexible to be resonable
+    # https://github.com/Breadcord/Breadcord/pull/144#issuecomment-1732071028
+    "PLR0913",
 ]
 
 line-length = 120
