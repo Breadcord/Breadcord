@@ -30,6 +30,10 @@ ignore = [
     # This should be enabled in the future, but for now it's just too much at once
     "D10",
 
+    # I have aged 30 years due to this rule
+    # - Fripe
+    "D401",
+
     # Wacky docstring defaults
     "D203",
     "D213",
