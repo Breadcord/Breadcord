@@ -130,7 +130,7 @@ class Settings(
                 return [app_commands.Choice(name=f"⚠️ Invalid integer '{current}'", value=current)]
 
         elif setting.type == str:
-            if len(current) >= 2 and current[0] == current[-1] and current[0] in '\'"':
+            if current[0] + current[-1] in ('""', "''"):
                 current = current[1:-1]
             autocomplete.append(app_commands.Choice(
                 name=f"(string) '{current}'" if current else '(string) <empty>',
