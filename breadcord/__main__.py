@@ -11,6 +11,24 @@ parser.add_argument(
     metavar='<path>',
 )
 parser.add_argument(
+    '-l', '--logs',
+    type=Path,
+    help='specify an alternative directory to place logs in',
+    metavar='<path>',
+)
+parser.add_argument(
+    '-s', '--storage',
+    type=Path,
+    help='specify an alternative directory for modules to store data in',
+    metavar='<path>',
+)
+parser.add_argument(
+    '-c', '--settings', '--config',
+    type=Path,
+    help='specify an alternative settings file to load',
+    metavar='<path>',
+)
+parser.add_argument(
     '-m', '--module',
     nargs='+',
     default=[],

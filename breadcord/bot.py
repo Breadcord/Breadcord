@@ -51,13 +51,13 @@ class Bot(commands.Bot):
         data_dir = self.args.data or Path('data')
         data_dir.mkdir(exist_ok=True)
         self.data_dir = data_dir.resolve()
-        self.logs_dir = self.data_dir / 'logs'
+        self.logs_dir = self.args.logs or self.data_dir / 'logs'
         self.logs_dir.mkdir(exist_ok=True)
         self.modules_dir = self.data_dir / 'modules'
         self.modules_dir.mkdir(exist_ok=True)
-        self.storage_dir = self.data_dir / 'storage'
+        self.storage_dir = self.args.storage or self.data_dir / 'storage'
         self.storage_dir.mkdir(exist_ok=True)
-        self.settings_file = self.data_dir / 'settings.toml'
+        self.settings_file = self.args.settings or self.data_dir / 'settings.toml'
 
         super().__init__(
             command_prefix=[],
@@ -81,7 +81,7 @@ class Bot(commands.Bot):
 
         log_file = self.logs_dir / 'breadcord_latest.log'
         if log_file.is_file():
-            with log_file.open('r', encoding='utf-8') as file:
+            with log_file.open(encoding='utf-8') as file:
                 timestamp = file.read(10)
             try:
                 datetime.strptime(timestamp, '%Y-%m-%d')
@@ -257,12 +257,9 @@ class Bot(commands.Bot):
         self.settings = settings
 
     def save_settings(self, file_path: str | PathLike[str] | None = None) -> None:
-        if file_path is None:
-            path = self.settings_file
-        else:
-            path = Path(file_path)
+        path = self.settings_file if file_path is None else Path(file_path)
         _logger.info(f'Saving settings to {path.as_posix()}')
         path.parent.mkdir(parents=True, exist_ok=True)
         output = self.settings.as_toml().as_string().rstrip() + '\n'
-        with path.open('w+', encoding='utf-8') as file:
+        with path.open('w', encoding='utf-8') as file:
             file.write(output)
