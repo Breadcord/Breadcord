@@ -143,10 +143,11 @@ def simple_button(
         if not inspect.iscoroutinefunction(func):
             raise TypeError('button function must be a coroutine function')
 
+        max_id_length = 100
         # noinspection PyUnresolvedReferences
         custom_id = f'{func.__module__}:{func.__qualname__}'.removeprefix('breadcord.')
-        if len(custom_id) > 100:
-            raise RuntimeError(f'decorated function path exceeds 100 characters: {custom_id}')
+        if len(custom_id) > max_id_length:
+            raise RuntimeError(f'decorated function path exceeds {max_id_length} characters: {custom_id}')
 
         func.__discord_ui_model_type__ = discord.ui.Button
         func.__discord_ui_model_kwargs__ = {
