@@ -51,13 +51,20 @@ class Bot(commands.Bot):
         data_dir = self.args.data or Path('data')
         data_dir.mkdir(exist_ok=True)
         self.data_dir = data_dir.resolve()
-        self.logs_dir = self.args.logs or self.data_dir / 'logs'
-        self.logs_dir.mkdir(exist_ok=True)
-        self.modules_dir = self.data_dir / 'modules'
-        self.modules_dir.mkdir(exist_ok=True)
-        self.storage_dir = self.args.storage or self.data_dir / 'storage'
-        self.storage_dir.mkdir(exist_ok=True)
-        self.settings_file = self.args.settings or self.data_dir / 'settings.toml'
+
+        logs_dir = self.args.logs or self.data_dir / 'logs'
+        logs_dir.mkdir(exist_ok=True)
+        self.logs_dir = logs_dir.resolve()
+
+        modules_dir = self.data_dir / 'modules'
+        modules_dir.mkdir(exist_ok=True)
+        self.modules_dir = modules_dir.resolve()
+
+        storage_dir = self.args.storage or self.data_dir / 'storage'
+        storage_dir.mkdir(exist_ok=True)
+        self.storage_dir = storage_dir.resolve()
+
+        self.settings_file = (self.args.settings or self.data_dir / 'settings.toml').resolve()
 
         super().__init__(
             command_prefix=[],
