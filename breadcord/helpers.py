@@ -24,7 +24,7 @@ _Transformer = TypeVar('_Transformer', bound=discord.app_commands.Transformer)
 
 
 async def administrator_check(interaction: discord.Interaction) -> bool:
-    """discord.py check to ensure that the interaction user is an administrator.
+    """A discord.py check to ensure that the interaction user is an administrator.
 
     An administrator is either an owner of the bot application as seen on the Discord developer portal, or a user
     granted administrator privileges under the ``settings.administrators`` setting.
