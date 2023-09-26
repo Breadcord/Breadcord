@@ -69,17 +69,18 @@ class Module:
         settings.in_schema = True
 
     def install_requirements(self) -> None:
-        distributions = list(importlib.metadata.distributions())
-        if missing_requirements := [
-            str(requirement)
-            for requirement in self.manifest.requirements
-            if not any(
-                requirement.name == distribution.name
-                and distribution.version in requirement.specifier
-                for distribution in distributions
-            )
-        ]:
-            self.logger.info(f'Installing missing requirements: {", ".join(missing_requirements)}')
+        installed_distributions = tuple(importlib.metadata.distributions())
+
+        def is_installed(requirement: Requirement) -> bool:
+            for distribution in installed_distributions:
+                if requirement.name == distribution.name and distribution.version in requirement.specifier:
+                    return True
+            return False
+
+        if missing_requirements := filter(
+            lambda requirement: not is_installed(requirement),
+            self.manifest.requirements,
+        ):
             subprocess.check_call([sys.executable, '-m', 'pip', 'install', *missing_requirements])  # noqa: S603
 
 
