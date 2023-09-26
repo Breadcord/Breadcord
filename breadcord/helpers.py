@@ -77,7 +77,7 @@ def search_for(
     threshold: float = 80,
     max_results: int | None = 25,
 ) -> Sequence[_T]:
-    """Custom implementation of a fuzzy search algorithm.
+    """A custom implementation of a fuzzy search algorithm.
 
     The algorithm works by assigning each string a two-part score: The partial ratio score (a metric for similarity),
     and how far from the start of the string the optimal alignment is. Results are then sorted by highest partial ratio
@@ -122,7 +122,7 @@ def simple_button(
     emoji: str | discord.Emoji | discord.PartialEmoji | None = None,
     row: int | None = None,
 ):
-    """Substitute for ``discord.ui.button`` which generates a custom ID for you.
+    """A substitute for ``discord.ui.button`` which generates a custom ID for you.
 
     The custom ID is generated based off the qualified name of the decorated method, which should ensure that the ID is
     both unique and idempotent. However, since custom IDs cannot exceed 100 characters in length, this may fail for
@@ -166,7 +166,7 @@ def simple_button(
 
 
 def simple_transformer(to: type[_T]) -> Callable[[type[_Transformer]], _Transformer]:
-    """Decorator for discord.py transformers to make them easier to use in type annotations.
+    """A decorator for discord.py transformers to make them easier to use in type annotations.
 
     Before::
 
