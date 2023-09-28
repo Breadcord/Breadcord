@@ -1,3 +1,4 @@
+import aiofiles
 import discord
 import tomlkit
 import tomlkit.exceptions
@@ -43,8 +44,8 @@ class SettingsFileEditor(discord.ui.Modal, title='Settings File Editor'):
         super().__init__()
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
-        with open(self.bot.settings_file, 'w', encoding='utf-8') as file:
-            file.write(self.editor.value)
+        async with aiofiles.open(self.bot.settings_file, 'w', encoding='utf-8') as file:
+            await file.write(self.editor.value)
         self.bot.load_settings()
         await interaction.response.send_message(
             embed=discord.Embed(
@@ -129,7 +130,7 @@ class Settings(
                 return [app_commands.Choice(name=f"⚠️ Invalid integer '{current}'", value=current)]
 
         elif setting.type == str:
-            if len(current) >= 2 and current[0] == current[-1] and current[0] in '\'"':
+            if current[0] + current[-1] in ('""', "''"):
                 current = current[1:-1]
             autocomplete.append(app_commands.Choice(
                 name=f"(string) '{current}'" if current else '(string) <empty>',

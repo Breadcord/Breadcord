@@ -2,15 +2,14 @@ from __future__ import annotations
 
 import logging
 import sys
-from argparse import Namespace
 from datetime import datetime
-from os import PathLike
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import discord
 from discord.ext import commands
 from discord.ext.commands.view import StringView
+
 # noinspection PyProtectedMember
 from discord.utils import _ColourFormatter
 
@@ -18,8 +17,10 @@ from . import config, errors
 from .module import Modules, global_modules
 
 if TYPE_CHECKING:
+    from argparse import Namespace
+    from os import PathLike
     from types import TracebackType
-    from typing import Self
+
     from . import app
 
 _logger = logging.getLogger('breadcord.bot')
@@ -34,7 +35,7 @@ class CommandTree(discord.app_commands.CommandTree):
             await interaction.response.send_message(embed=discord.Embed(
                 colour=discord.Colour.red(),
                 title='Missing permissions!',
-                description='This operation is restricted to bot owners only.'
+                description='This operation is restricted to bot owners only.',
             ))
 
         else:
@@ -62,7 +63,7 @@ class Bot(commands.Bot):
         super().__init__(
             command_prefix=[],
             intents=discord.Intents.all(),
-            tree_cls=CommandTree
+            tree_cls=CommandTree,
         )
 
     @property
@@ -98,25 +99,25 @@ class Bot(commands.Bot):
             formatter=logging.Formatter(
                 fmt='{asctime} [{levelname}] {name}: {message}',
                 datefmt='%Y-%m-%d %H:%M:%S',
-                style='{'
-            )
+                style='{',
+            ),
         )
 
     async def on_command_error(
         self,
-        context: commands.Context[Self],
+        _,
         exception: commands.errors.CommandError,
-        /
+        /,
     ) -> None:
         error = exception.__traceback__
         _logger.debug(error)
         _logger.exception(f'{exception.__class__.__name__}: {exception}', exc_info=exception)
 
-    async def start(self, *_, **kwargs) -> None:
+    async def start(self, *_, **__) -> None:
         self._init_logging()
 
         if not self.settings_file.is_file():
-            _logger.info('Generating missing settings.toml file'),
+            _logger.info('Generating missing settings.toml file')
             self.settings = config.SettingsGroup('settings', schema_path='breadcord/settings_schema.toml')
             _logger.warning('Bot token must be supplied to start the bot')
             self.ready = True
@@ -140,7 +141,7 @@ class Bot(commands.Bot):
         search_paths = [
             *self.args.module_paths,
             Path('breadcord/core_modules'),
-            self.modules_dir
+            self.modules_dir,
         ]
         _logger.debug(f'Module search paths: {search_paths}')
         self.modules.discover(self, search_paths=search_paths)
@@ -192,9 +193,9 @@ class Bot(commands.Bot):
         if app_info.team:
             self.owner_ids = ids = {member.id for member in app_info.team.members}
             return user.id in ids
-        else:
-            self.owner_id = owner_id = app_info.owner.id
-            return user.id == owner_id
+
+        self.owner_id = owner_id = app_info.owner.id
+        return user.id == owner_id
 
     async def get_context(
         self,
@@ -217,14 +218,12 @@ class Bot(commands.Bot):
         if origin.author.id == self.user.id:
             return ctx
 
-        if origin.content.lower().startswith(tuple(map(
-            lambda p: p.lower(),
-            prefix := await self.get_prefix(origin)
-        ))):
+        prefix = await self.get_prefix(origin)
+        if origin.content.lower().startswith(tuple(p.lower() for p in prefix)):
             # Upon success `skip_string` will remove the prefix from the view
             invoked_prefix = discord.utils.find(
                 StringView(origin.content.lower()).skip_string,
-                prefix
+                prefix,
             )
             view = StringView(origin.content[len(invoked_prefix):])
             ctx = cls(view=view, bot=self, message=origin)
@@ -248,7 +247,7 @@ class Bot(commands.Bot):
         settings = config.SettingsGroup(
             'settings',
             schema_path='breadcord/settings_schema.toml',
-            observers=self.settings.observers
+            observers=self.settings.observers,
         )
         settings.update_from_dict(config.load_settings(file_path), strict=False)
         for module in self.modules:
@@ -257,10 +256,7 @@ class Bot(commands.Bot):
         self.settings = settings
 
     def save_settings(self, file_path: str | PathLike[str] | None = None) -> None:
-        if file_path is None:
-            path = self.settings_file
-        else:
-            path = Path(file_path)
+        path = self.settings_file if file_path is None else Path(file_path)
         _logger.info(f'Saving settings to {path.as_posix()}')
         path.parent.mkdir(parents=True, exist_ok=True)
         output = self.settings.as_toml().as_string().rstrip() + '\n'
