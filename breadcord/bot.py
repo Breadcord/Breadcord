@@ -48,11 +48,11 @@ class Bot(commands.Bot):
         self.settings = config.SettingsGroup('settings', observers={})
         self.ready = False
 
-        data_dir = self.args.data or Path('data')
+        data_dir = self.args.data_dir or Path('data')
         data_dir.mkdir(exist_ok=True)
         self.data_dir = data_dir.resolve()
 
-        logs_dir = self.args.logs or self.data_dir / 'logs'
+        logs_dir = self.args.logs_dir or self.data_dir / 'logs'
         logs_dir.mkdir(exist_ok=True)
         self.logs_dir = logs_dir.resolve()
 
@@ -60,11 +60,11 @@ class Bot(commands.Bot):
         modules_dir.mkdir(exist_ok=True)
         self.modules_dir = modules_dir.resolve()
 
-        storage_dir = self.args.storage or self.data_dir / 'storage'
+        storage_dir = self.args.storage_dir or self.data_dir / 'storage'
         storage_dir.mkdir(exist_ok=True)
         self.storage_dir = storage_dir.resolve()
 
-        self.settings_file = (self.args.settings or self.data_dir / 'settings.toml').resolve()
+        self.settings_file = (self.args.setting_file or self.data_dir / 'settings.toml').resolve()
 
         super().__init__(
             command_prefix=[],
@@ -145,7 +145,7 @@ class Bot(commands.Bot):
 
     async def setup_hook(self) -> None:
         search_paths = [
-            *self.args.module_paths,
+            *self.args.module_dirs,
             Path('breadcord/core_modules'),
             self.modules_dir
         ]
