@@ -49,16 +49,23 @@ class Bot(commands.Bot):
         self.settings = config.SettingsGroup('settings', observers={})
         self.ready = False
 
-        data_dir = self.args.data or Path('data')
+        data_dir = self.args.data_dir or Path('data')
         data_dir.mkdir(exist_ok=True)
         self.data_dir = data_dir.resolve()
-        self.logs_dir = self.data_dir / 'logs'
-        self.logs_dir.mkdir(exist_ok=True)
-        self.modules_dir = self.data_dir / 'modules'
-        self.modules_dir.mkdir(exist_ok=True)
-        self.storage_dir = self.data_dir / 'storage'
-        self.storage_dir.mkdir(exist_ok=True)
-        self.settings_file = self.data_dir / 'settings.toml'
+
+        logs_dir = self.args.logs_dir or self.data_dir / 'logs'
+        logs_dir.mkdir(exist_ok=True)
+        self.logs_dir = logs_dir.resolve()
+
+        modules_dir = self.data_dir / 'modules'
+        modules_dir.mkdir(exist_ok=True)
+        self.modules_dir = modules_dir.resolve()
+
+        storage_dir = self.args.storage_dir or self.data_dir / 'storage'
+        storage_dir.mkdir(exist_ok=True)
+        self.storage_dir = storage_dir.resolve()
+
+        self.settings_file = (self.args.setting_file or self.data_dir / 'settings.toml').resolve()
 
         super().__init__(
             command_prefix=[],
@@ -82,7 +89,7 @@ class Bot(commands.Bot):
 
         log_file = self.logs_dir / 'breadcord_latest.log'
         if log_file.is_file():
-            with log_file.open('r', encoding='utf-8') as file:
+            with log_file.open(encoding='utf-8') as file:
                 timestamp = file.read(10)
             try:
                 datetime.strptime(timestamp, '%Y-%m-%d')
@@ -139,7 +146,7 @@ class Bot(commands.Bot):
 
     async def setup_hook(self) -> None:
         search_paths = [
-            *self.args.module_paths,
+            *self.args.module_dirs,
             Path('breadcord/core_modules'),
             self.modules_dir,
         ]
@@ -260,5 +267,5 @@ class Bot(commands.Bot):
         _logger.info(f'Saving settings to {path.as_posix()}')
         path.parent.mkdir(parents=True, exist_ok=True)
         output = self.settings.as_toml().as_string().rstrip() + '\n'
-        with path.open('w+', encoding='utf-8') as file:
+        with path.open('w', encoding='utf-8') as file:
             file.write(output)
