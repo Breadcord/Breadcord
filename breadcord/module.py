@@ -138,6 +138,8 @@ class ModuleCog(commands.Cog):
         return self.bot.settings.get_child(self.module.id)
 
 
+# PyCharm complains about having @classmethod underneath @pydantic.field_validator
+# noinspection PyNestedDecorators
 class ModuleManifest(pydantic.BaseModel):
     class Config:
         arbitrary_types_allowed = True
@@ -183,14 +185,17 @@ class ModuleManifest(pydantic.BaseModel):
         return self
 
     @pydantic.field_validator('version', mode='before')
+    @classmethod
     def parse_version(cls, value: str) -> Version:
         return Version(value)
 
     @pydantic.field_validator('requirements', mode='before')
-    def parse_requirement(cls, values: list) -> list[Requirement]:
+    @classmethod
+    def parse_requirement(cls, values: list[str]) -> list[Requirement]:
         return [Requirement(value) for value in values]
 
     @pydantic.field_validator('permissions', mode='before')
+    @classmethod
     def parse_permissions(cls, value: list[str]) -> discord.Permissions:
         return discord.Permissions(**{permission: True for permission in value})
 
