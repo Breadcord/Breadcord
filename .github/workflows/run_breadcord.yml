@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: pip install -Ur requirements.txt
 
-      - name: Generate config and set the config
+      - name: Generate config and set token
         shell: bash
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
