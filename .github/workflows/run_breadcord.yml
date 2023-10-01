@@ -1,0 +1,39 @@
+name: Run breadcord
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+
+jobs:
+  run:
+    name: Run Breadcord
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Checkout repository
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: pip install -Ur requirements.txt
+
+      - name: Generate config and set the config
+        shell: bash
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          python tests/setup_breadcord.py "$BOT_TOKEN"
+
+      - name: Run breadcord without the TUI
+        run: |
+          timeout --preserve-status 10 python -m breadcord --no-ui \
+          || ([[ $? -eq 143 ]] && echo "Breadcord was terminated")
+
+      - name: Run breadcord with the TUI
+        run: |
+          timeout --preserve-status 10 python -m breadcord \
+          || ([[ $? -eq 143 ]] && echo "Breadcord was terminated")
