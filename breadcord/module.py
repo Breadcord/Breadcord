@@ -77,7 +77,7 @@ class Module:
                     return False
             return True
 
-        if missing_requirements := tuple(filter(is_missing, self.manifest.requirements)):
+        if missing_requirements := tuple(map(str, filter(is_missing, self.manifest.requirements))):
             subprocess.check_call([sys.executable, '-m', 'pip', 'install', *missing_requirements])  # noqa: S603
 
 
