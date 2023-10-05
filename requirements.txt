@@ -2,7 +2,7 @@ aiofiles==23.2.1
 aiohttp==3.8.5
 discord.py==2.3.2
 packaging==23.1
-pydantic==2.3.0
+pydantic==2.4.2
 rapidfuzz==3.2.0
 rich==13.5.2
 textual==0.36.0
