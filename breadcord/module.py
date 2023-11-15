@@ -69,19 +69,16 @@ class Module:
         settings.in_schema = True
 
     def install_requirements(self) -> None:
-        distributions = list(importlib.metadata.distributions())
-        missing_requirements = []
-        for requirement in self.manifest.requirements:
-            if not any(
-                requirement.name == distribution.name
-                and distribution.version in requirement.specifier
-                for distribution in distributions
-            ):
-                missing_requirements.append(str(requirement))
+        installed_distributions = tuple(importlib.metadata.distributions())
 
-        if missing_requirements:
-            self.logger.info(f'Installing missing requirements: {", ".join(missing_requirements)}')
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', *missing_requirements])
+        def is_missing(requirement: Requirement) -> bool:
+            for distribution in installed_distributions:
+                if requirement.name == distribution.name and distribution.version in requirement.specifier:
+                    return False
+            return True
+
+        if missing_requirements := tuple(map(str, filter(is_missing, self.manifest.requirements))):
+            subprocess.check_call([sys.executable, '-m', 'pip', 'install', *missing_requirements])  # noqa: S603
 
 
 class Modules:
@@ -116,8 +113,7 @@ class Modules:
 
     def discover(self, bot: Bot, search_paths: Iterable[str | PathLike[str]]) -> None:
         self._modules = {}
-        for path in search_paths:
-            path = Path(path)
+        for path in map(Path, search_paths):
             if not path.is_dir():
                 _logger.warning(f"Module path '{path.as_posix()}' not found")
                 continue
@@ -142,6 +138,8 @@ class ModuleCog(commands.Cog):
         return self.bot.settings.get_child(self.module.id)
 
 
+# PyCharm complains about having @classmethod underneath @pydantic.field_validator
+# noinspection PyNestedDecorators
 class ModuleManifest(pydantic.BaseModel):
     class Config:
         arbitrary_types_allowed = True
@@ -187,14 +185,17 @@ class ModuleManifest(pydantic.BaseModel):
         return self
 
     @pydantic.field_validator('version', mode='before')
+    @classmethod
     def parse_version(cls, value: str) -> Version:
         return Version(value)
 
     @pydantic.field_validator('requirements', mode='before')
-    def parse_requirement(cls, values: list) -> list[Requirement]:
+    @classmethod
+    def parse_requirement(cls, values: list[str]) -> list[Requirement]:
         return [Requirement(value) for value in values]
 
     @pydantic.field_validator('permissions', mode='before')
+    @classmethod
     def parse_permissions(cls, value: list[str]) -> discord.Permissions:
         return discord.Permissions(**{permission: True for permission in value})
 
