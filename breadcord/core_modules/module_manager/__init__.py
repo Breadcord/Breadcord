@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from http import HTTPStatus
 
 import aiohttp
 import discord
@@ -86,7 +87,7 @@ class ModuleManager(
             f'https://api.github.com/repos/{module}/contents/manifest.toml' + (f'?ref={branch}' if branch else ''),
             headers={'Accept': 'application/vnd.github.raw'},
         ) as response:
-            if response.status != 200:
+            if response.status != HTTPStatus.OK:
                 await interaction.response.send_message(embed=discord.Embed(
                     colour=discord.Colour.red(),
                     title='Module not found!',

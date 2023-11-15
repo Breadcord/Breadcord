@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from textual.binding import Binding
 from textual.containers import VerticalScroll
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 class ExceptionModal(ModalScreen):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding(key='escape', action='dismiss', description='Close Modal'),
     ]
 
