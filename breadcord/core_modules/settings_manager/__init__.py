@@ -1,3 +1,4 @@
+import aiofiles
 import discord
 import tomlkit
 import tomlkit.exceptions
@@ -43,15 +44,15 @@ class SettingsFileEditor(discord.ui.Modal, title='Settings File Editor'):
         super().__init__()
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
-        with open(self.bot.settings_file, 'w', encoding='utf-8') as file:
-            file.write(self.editor.value)
+        async with aiofiles.open(self.bot.settings_file, 'w', encoding='utf-8') as file:
+            await file.write(self.editor.value)
         self.bot.load_settings()
         await interaction.response.send_message(
             embed=discord.Embed(
                 title='Settings saved!',
                 colour=discord.Colour.green(),
             ),
-            ephemeral=self.bot.settings.settings.ephemeral.value,
+            ephemeral=self.settings.ephemeral.value,
         )
 
 
@@ -81,7 +82,7 @@ class Settings(
                 name='In schema',
                 value=f'```py\n{setting.in_schema}\n```',
             ),
-            ephemeral=self.bot.settings.settings.ephemeral.value,
+            ephemeral=self.settings.ephemeral.value,
         )
 
     @app_commands.command(description='Set the value of a setting')
@@ -105,7 +106,7 @@ class Settings(
                 value=f'```diff\n+ {parsed_value!r}\n```',
                 inline=False,
             ),
-            ephemeral=self.bot.settings.settings.ephemeral.value,
+            ephemeral=self.settings.ephemeral.value,
         )
 
     @set.autocomplete('value')
@@ -129,7 +130,7 @@ class Settings(
                 return [app_commands.Choice(name=f"⚠️ Invalid integer '{current}'", value=current)]
 
         elif setting.type == str:
-            if len(current) >= 2 and current[0] == current[-1] and current[0] in '\'"':
+            if current[0] + current[-1] in ('""', "''"):
                 current = current[1:-1]
             autocomplete.append(app_commands.Choice(
                 name=f"(string) '{current}'" if current else '(string) <empty>',
@@ -161,7 +162,7 @@ class Settings(
         self.bot.load_settings()
         await interaction.response.send_message(
             'Settings reloaded from config file.',
-            ephemeral=self.bot.settings.settings.ephemeral.value,
+            ephemeral=self.settings.ephemeral.value,
         )
 
     @app_commands.command(description='Save bot settings to disk')
@@ -170,7 +171,7 @@ class Settings(
         self.bot.save_settings()
         await interaction.response.send_message(
             'Settings saved to config file.',
-            ephemeral=self.bot.settings.settings.ephemeral.value,
+            ephemeral=self.settings.ephemeral.value,
         )
 
 

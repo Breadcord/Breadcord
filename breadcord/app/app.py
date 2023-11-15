@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import sys
 from asyncio import CancelledError
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from rich.text import Text
 from textual import app, binding, widgets, work, worker
@@ -40,7 +40,7 @@ class TUIHandler(logging.Handler):
 
 class Breadcord(app.App):
     CSS_PATH = 'app.tcss'
-    BINDINGS = [
+    BINDINGS: ClassVar[list[binding.Binding]] = [
         binding.Binding(key='ctrl+c', action='quit', description='Quit', priority=True),
         binding.Binding(key='ctrl+p', action='toggle_bot', description='Toggle Bot On/Off'),
     ]
@@ -96,7 +96,7 @@ class Breadcord(app.App):
             await bot.start()
         except CancelledError:
             _logger.info('Interrupt received')
-        except:  # noqa
+        except:  # noqa: E722
             sys.excepthook(*sys.exc_info())
         finally:
             if not bot.is_closed():
