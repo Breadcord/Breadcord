@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM python:3.11.5-slim-bullseye as build
+FROM python:3.11-slim-bullseye as build
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt --upgrade pip
 
 
-FROM python:3.11.5-slim-bullseye
+FROM python:3.11-slim-bullseye
 
 WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
