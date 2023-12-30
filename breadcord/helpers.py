@@ -4,6 +4,7 @@ import inspect
 from collections import defaultdict
 from typing import TYPE_CHECKING, Callable, TypeVar, overload
 
+import aiohttp
 import discord
 from rapidfuzz.fuzz import partial_ratio_alignment
 
@@ -203,3 +204,19 @@ def simple_transformer(to: type[_T]) -> Callable[[type[_Transformer]], _Transfor
         return discord.app_commands.Transform.__class_getitem__((to, cls))
 
     return decorator
+
+
+class ModuleSessionCog(breadcord.module.ModuleCog):
+    """A module cog which automatically creates and closes an aiohttp session."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # White lie since the type checker doesn't know about cog_load
+        self.session: aiohttp.ClientSession = None  # type: ignore
+
+    async def cog_load(self) -> None:
+        self.session = aiohttp.ClientSession()
+
+    async def cog_unload(self) -> None:
+        if self.session is not None and not self.session.closed:
+            await self.session.close()
