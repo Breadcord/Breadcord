@@ -212,7 +212,7 @@ class ModuleSessionCog(breadcord.module.ModuleCog):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # White lie since the type checker doesn't know about cog_load
-        self.session: aiohttp.ClientSession = None  # type: ignore
+        self.session: aiohttp.ClientSession = None  # type: ignore[assignment]
 
     async def cog_load(self) -> None:
         await super().cog_load()
