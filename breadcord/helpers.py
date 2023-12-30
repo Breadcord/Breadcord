@@ -215,8 +215,10 @@ class ModuleSessionCog(breadcord.module.ModuleCog):
         self.session: aiohttp.ClientSession = None  # type: ignore
 
     async def cog_load(self) -> None:
+        await super().cog_load()
         self.session = aiohttp.ClientSession()
 
     async def cog_unload(self) -> None:
+        await super().cog_unload()
         if self.session is not None and not self.session.closed:
             await self.session.close()
