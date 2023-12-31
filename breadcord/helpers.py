@@ -206,7 +206,7 @@ def simple_transformer(to: type[_T]) -> Callable[[type[_Transformer]], _Transfor
     return decorator
 
 
-class ModuleSessionCog(breadcord.module.ModuleCog):
+class HTTPModuleCog(breadcord.module.ModuleCog):
     """A module cog which automatically creates and closes an aiohttp session."""
 
     def __init__(self, *args, **kwargs):
