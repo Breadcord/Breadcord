@@ -209,14 +209,16 @@ def simple_transformer(to: type[_T]) -> Callable[[type[_Transformer]], _Transfor
 class HTTPModuleCog(breadcord.module.ModuleCog):
     """A module cog which automatically creates and closes an aiohttp session."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, headers: aiohttp.typedefs.LooseHeaders | None = None, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self._session_headers = headers
         # White lie since the type checker doesn't know about cog_load
         self.session: aiohttp.ClientSession = None  # type: ignore[assignment]
 
     async def cog_load(self) -> None:
         await super().cog_load()
-        self.session = aiohttp.ClientSession()
+        self.session = aiohttp.ClientSession(headers=self._session_headers)
 
     async def cog_unload(self) -> None:
         await super().cog_unload()
