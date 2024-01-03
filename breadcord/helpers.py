@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import sys
 from collections import defaultdict
 from typing import TYPE_CHECKING, Callable, TypeVar, overload
 
@@ -212,6 +213,12 @@ class HTTPModuleCog(breadcord.module.ModuleCog):
     def __init__(self, *args, headers: aiohttp.typedefs.LooseHeaders | None = None, **kwargs):
         super().__init__(*args, **kwargs)
 
+        headers['User-Agent'] = headers.get('User-Agent') or (
+            f'Breadcord (https://breadcord.com/) '
+            f'{self.module.manifest.id}/{self.module.manifest.version} '
+            f'Python/{".".join(map(str, sys.version_info[:3]))} '
+            f'aiohttp/{aiohttp.__version__}'
+        )
         self._session_headers = headers
         # White lie since the type checker doesn't know about cog_load
         self.session: aiohttp.ClientSession = None  # type: ignore[assignment]
