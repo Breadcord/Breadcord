@@ -8,8 +8,10 @@ from typing import TYPE_CHECKING, Callable, TypeVar, overload
 import aiohttp
 import discord
 from rapidfuzz.fuzz import partial_ratio_alignment
+from typing_extensions import Self
 
 import breadcord
+from breadcord.module import ModuleCog
 
 if TYPE_CHECKING:
     # noinspection PyProtectedMember
@@ -207,18 +209,19 @@ def simple_transformer(to: type[_T]) -> Callable[[type[_Transformer]], _Transfor
     return decorator
 
 
-class HTTPModuleCog(breadcord.module.ModuleCog):
+class HTTPModuleCog(ModuleCog):
     """A module cog which automatically creates and closes an aiohttp session."""
 
     def __init__(self, *args, headers: aiohttp.typedefs.LooseHeaders | None = None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        headers['User-Agent'] = headers.get('User-Agent') or (
-            f'Breadcord (https://breadcord.com/) '
-            f'{self.module.manifest.id}/{self.module.manifest.version} '
-            f'Python/{".".join(map(str, sys.version_info[:3]))} '
-            f'aiohttp/{aiohttp.__version__}'
-        )
+        if headers:
+            headers['User-Agent'] = headers.get('User-Agent') or (
+                f'Breadcord (https://breadcord.com/) '
+                f'{self.module.manifest.id}/{self.module.manifest.version} '
+                f'Python/{".".join(map(str, sys.version_info[:3]))} '
+                f'aiohttp/{aiohttp.__version__}'
+            )
         self._session_headers = headers
         # White lie since the type checker doesn't know about cog_load
         self.session: aiohttp.ClientSession = None  # type: ignore[assignment]
@@ -231,3 +234,13 @@ class HTTPModuleCog(breadcord.module.ModuleCog):
         await super().cog_unload()
         if self.session is not None and not self.session.closed:
             await self.session.close()
+
+    async def _inject(self, *args, **kwargs) -> Self:
+        try:
+            return await super()._inject(*args, **kwargs)
+        except Exception:
+            # Extra check since putting it in cog_unload apparently isn't enough
+            if isinstance(self.session, aiohttp.ClientSession) and not self.session.closed:
+                self.logger.warning("Session wasn't closed properly, closing it now")
+                await self.session.close()
+            raise
