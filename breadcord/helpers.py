@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections import defaultdict
-from typing import TYPE_CHECKING, Callable, TypeVar, overload, Self
+from typing import TYPE_CHECKING, Callable, Self, TypeVar, overload
 
 import aiohttp
 import discord
