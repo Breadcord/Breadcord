@@ -3,12 +3,11 @@ from __future__ import annotations
 import inspect
 import sys
 from collections import defaultdict
-from typing import TYPE_CHECKING, Callable, TypeVar, overload
+from typing import TYPE_CHECKING, Callable, TypeVar, overload, Self
 
 import aiohttp
 import discord
 from rapidfuzz.fuzz import partial_ratio_alignment
-from typing_extensions import Self
 
 import breadcord
 from breadcord.module import ModuleCog
