@@ -1,0 +1,5 @@
+[core_module]
+id = "auto_update"
+name = "Auto Update"
+description = "Automatically updates modules"
+license = "GNU LGPLv3"
