@@ -55,7 +55,8 @@ class AutoUpdate(breadcord.module.ModuleCog):
         def on_update_interval_changed(_, new: float) -> None:
             if self.loop is not None:
                 self.loop.stop()
-            self.logger.debug(f"Auto update interval now set to {new}")
+            # Are you kidding me? SQL injection from Git?
+            self.logger.debug(f'Auto update interval now set to {new}')  # noqa: S608
             self.loop = tasks.loop(hours=new)(self.update_modules)
             self.loop.start()
 
@@ -65,7 +66,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
         if self.loop.current_loop == 0:
             return
 
-        self.logger.info("Attempting to update modules")
+        self.logger.info('Attempting to update modules')
         for module in self.bot.modules:
             if not (module.path / '.git' / 'HEAD').is_file():
                 continue
@@ -76,11 +77,11 @@ class AutoUpdate(breadcord.module.ModuleCog):
                     ==
                     await git('rev-parse', 'HEAD', cwd=module.path)
                 ):
-                    self.logger.debug(f"Module {module.id} is up-to-date.")
+                    self.logger.debug(f'Module {module.id} is up-to-date.')
                     return
                 await self.update_module(module)
             except subprocess.CalledProcessError as error:
-                self.logger.error(f"Failed to fetch updates for the module {module.id!r}: {error}\n{error.stderr}")
+                self.logger.error(f'Failed to fetch updates for the module {module.id!r}: {error}\n{error.stderr}')
 
     async def update_module(self, module: breadcord.module.Module) -> None:
         self.logger.info(f'Updating {module.id}')
@@ -89,7 +90,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
         await module.unload()
         await module.load()
 
-        git_hash_msg = await git("log", "-1", '--format="%H %s"', cwd=module.path)
+        git_hash_msg = await git('log', '-1', '--format="%H %s"', cwd=module.path)
         self.logger.debug(f'Module {module.id} now on: {git_hash_msg[1:-2]}')
 
 
