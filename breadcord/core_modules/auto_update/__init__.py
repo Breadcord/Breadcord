@@ -6,7 +6,7 @@ import subprocess
 from functools import cache
 from typing import Any
 
-from discord.ext import tasks
+from discord.ext import tasks, commands
 
 import breadcord
 
@@ -92,6 +92,13 @@ class AutoUpdate(breadcord.module.ModuleCog):
 
         git_hash_msg = await git('log', '-1', '--format="%H %s"', cwd=module.path)
         self.logger.debug(f'Module {module.id} now on: {git_hash_msg[1:-2]}')
+
+    @commands.command()
+    @commands.is_owner()
+    async def update(self, ctx: commands.Context) -> None:
+        message = await ctx.send('Updating...')
+        await self.update_modules()
+        await message.edit(content='Finished updating modules.')
 
 
 async def setup(bot: breadcord.Bot):
