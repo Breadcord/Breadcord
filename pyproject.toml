@@ -1,4 +1,4 @@
-[tool.ruff]
+[tool.ruff.lint]
 select = [
     "F",        # pyflakes
     "W",        # pycodestyle warnings
@@ -46,13 +46,14 @@ ignore = [
     "PLR0913",
 ]
 
+[tool.ruff]
 line-length = 120
 
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"] # Unused imports in __init__.py are fine
 
 
-[tool.ruff.flake8-quotes]
+[tool.ruff.lint.flake8-quotes]
 inline-quotes = "single"
 multiline-quotes = "single"
