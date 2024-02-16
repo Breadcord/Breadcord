@@ -28,7 +28,7 @@ _logger = logging.getLogger('breadcord.bot')
 
 class CommandTree(discord.app_commands.CommandTree):
     async def on_error(self, interaction: discord.Interaction, error: discord.app_commands.AppCommandError, /) -> None:
-        if 'error_handled' in interaction.extras and interaction.extras['error_handled']:
+        if interaction.extras.get('error_handled'):
             return
 
         if isinstance(error, errors.NotAdministratorError):
