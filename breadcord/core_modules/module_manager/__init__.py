@@ -11,6 +11,7 @@ from discord.utils import escape_markdown
 
 import breadcord
 from breadcord.module import parse_manifest
+
 from . import views
 
 REPO_PATH = re.compile(r'[\w.-]+/[\w.-]+')
