@@ -42,6 +42,14 @@ theme:
     - toc.follow
 
   palette:
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      primary: custom
+      accent: yellow
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to dark mode
+
     # Palette toggle for dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
@@ -58,7 +66,7 @@ theme:
       accent: yellow
       toggle:
         icon: material/brightness-7
-        name: Switch to dark mode
+        name: Switch to system preference
 
 extra_css:
   - stylesheets/extra.css

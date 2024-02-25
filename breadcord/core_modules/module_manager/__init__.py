@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from http import HTTPStatus
 
-import aiohttp
 import discord
 import tomlkit
 from discord import app_commands
@@ -31,7 +30,7 @@ class ModuleTransformer(app_commands.Transformer):
             )
             for module in breadcord.helpers.search_for(
                 query=value,
-                objects=list(interaction.client.modules),
+                objects=tuple(interaction.client.modules),
                 key=lambda module: '\n'.join(filter(
                     bool,
                     (module.id, module.manifest.name, module.manifest.description),
@@ -41,21 +40,11 @@ class ModuleTransformer(app_commands.Transformer):
 
 
 class ModuleManager(
-    breadcord.module.ModuleCog,
+    breadcord.helpers.HTTPModuleCog,
     commands.GroupCog,
     group_name='module',
     group_description='Manage Breadcord modules',
 ):
-    def __init__(self, module_id: str):
-        super().__init__(module_id)
-        self.session: aiohttp.ClientSession | None = None
-
-    async def cog_load(self) -> None:
-        self.session = aiohttp.ClientSession()
-
-    async def cog_unload(self) -> None:
-        await self.session.close()
-
     async def cog_app_command_error(
         self,
         interaction: discord.Interaction,
