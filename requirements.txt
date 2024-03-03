@@ -1,9 +1,9 @@
 aiofiles==23.2.1
-aiohttp==3.8.5
+aiohttp==3.9.3
 discord.py==2.3.2
-packaging==23.1
-pydantic==2.3.0
-rapidfuzz==3.2.0
-rich==13.5.2
-textual==0.36.0
-tomlkit==0.12.1
+packaging==23.2
+pydantic==2.6.3
+rapidfuzz==3.5.2
+rich==13.6.0
+textual==0.52.1
+tomlkit==0.12.3

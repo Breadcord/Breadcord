@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from functools import partial, wraps
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, Callable, KeysView, ValuesView
+from typing import TYPE_CHECKING, Any
 
 import tomlkit
 from tomlkit.items import Comment, Item, Key, Table, Whitespace
 from tomlkit.toml_file import TOMLDocument, TOMLFile
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Callable, Generator, KeysView, ValuesView
     from os import PathLike
 
 _logger = getLogger('breadcord.config')
@@ -55,7 +55,7 @@ class SettingsNode:
         """Return a series of node references representing the path to this node from the root node."""
         if self.parent is None:
             return (self,)
-        return (*self.parent.path(), self)
+        return *self.parent.path(), self
 
     def path_id(self):
         """Return a string identifier representing the path to this node from the root node."""

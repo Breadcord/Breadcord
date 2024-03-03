@@ -5,7 +5,7 @@ import subprocess
 import sys
 from logging import getLogger
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 import discord
 import pydantic
@@ -16,7 +16,7 @@ from packaging.version import Version
 from breadcord import config
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Generator, Iterable
     from os import PathLike
 
     from breadcord import Bot
@@ -77,7 +77,7 @@ class Module:
                     return False
             return True
 
-        if missing_requirements := tuple(filter(is_missing, self.manifest.requirements)):
+        if missing_requirements := tuple(map(str, filter(is_missing, self.manifest.requirements))):
             subprocess.check_call([sys.executable, '-m', 'pip', 'install', *missing_requirements])  # noqa: S603
 
 
