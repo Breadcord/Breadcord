@@ -100,7 +100,7 @@ class ModuleManager(
 
         requirements_str = ', '.join(f'`{req}`' for req in manifest.requirements) or 'No requirements specified'
         permissions = []
-        for manifest_permission, bot_permission in zip(manifest.permissions, interaction.app_permissions):
+        for manifest_permission, bot_permission in zip(manifest.permissions, interaction.app_permissions, strict=True):
             if manifest_permission[1]:
                 emoji = '✅' if bot_permission[1] else '⚠️'
                 permissions.append(f'{emoji} {manifest_permission[0]}')

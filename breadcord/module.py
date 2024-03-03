@@ -5,7 +5,7 @@ import subprocess
 import sys
 from logging import getLogger
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 import discord
 import pydantic
@@ -16,7 +16,7 @@ from packaging.version import Version
 from breadcord import config
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Generator, Iterable
     from os import PathLike
 
     from breadcord import Bot
