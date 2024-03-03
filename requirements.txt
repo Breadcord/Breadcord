@@ -5,5 +5,5 @@ packaging==23.2
 pydantic==2.4.2
 rapidfuzz==3.5.2
 rich==13.6.0
-textual==0.47.1
+textual==0.52.1
 tomlkit==0.12.3
