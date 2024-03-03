@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from asyncio import to_thread
 from shutil import rmtree
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 from zipfile import ZipFile
 
 import aiofiles
@@ -12,6 +12,7 @@ from breadcord.helpers import simple_button
 from breadcord.module import Module, ModuleManifest
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
     from . import ModuleManager

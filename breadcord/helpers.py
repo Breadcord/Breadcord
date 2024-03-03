@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections import defaultdict
-from typing import TYPE_CHECKING, Callable, Self, TypeVar, overload
+from typing import TYPE_CHECKING, Self, TypeVar, overload
 
 import aiohttp
 import discord
@@ -14,7 +14,7 @@ from breadcord.module import ModuleCog
 
 if TYPE_CHECKING:
     # noinspection PyProtectedMember
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
 
     from discord.ui.button import Button, V
 
