@@ -3,24 +3,24 @@
 FROM python:3.11.8-slim-bullseye as build
 
 WORKDIR /app
-
-RUN apt update && apt install -y --no-install-recommends build-essential
 ENV PYTHONDONTWRITEBYTECODE=1
-RUN python -m venv venv
-ENV PATH="/app/venv/bin:$PATH"
+
+RUN apt update && apt install -y --no-install-recommends curl
+ADD --chmod=755 https://astral.sh/uv/install.sh ./install.sh
+RUN ./install.sh && rm ./install.sh
 
 COPY requirements.txt .
-RUN pip install -r requirements.txt --upgrade pip
+RUN /root/.cargo/bin/uv venv --seed
+RUN /root/.cargo/bin/uv pip install --no-cache -r requirements.txt
 
 
 FROM python:3.11.8-slim-bullseye
 
 WORKDIR /app
-ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-COPY --from=build /app/venv ./venv
+COPY --from=build /app/.venv ./.venv
 COPY breadcord ./breadcord
 
-ENV PATH="/app/venv/bin:$PATH"
-CMD ["python", "-m", "breadcord", "-u"]
+ENV PATH="/app/.venv/bin:$PATH"
+CMD ["python", "-m", "breadcord", "--no-ui"]
