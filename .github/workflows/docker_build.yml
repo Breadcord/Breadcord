@@ -58,6 +58,7 @@ jobs:
           context: .
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.metadata.outputs.labels }}
+          provenance: true
           outputs: type=image,name=ghcr.io/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
