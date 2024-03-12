@@ -87,7 +87,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
     async def update_module(self, module: breadcord.module.Module) -> None:
         self.logger.info(f'Updating {module.id}')
         update_text = await git('pull', cwd=module.path)
-        self.logger.debug(f"({module.id}) Git output:\n{update_text.strip()}")
+        self.logger.debug(f'({module.id}) Git output:\n{update_text.strip()}')
         await module.reload()
 
         git_hash_msg = await git('log', '-1', '--format="%H %s"', cwd=module.path)
