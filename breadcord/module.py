@@ -61,6 +61,14 @@ class Module:
         self.loaded = False
         self.logger.info('Module successfully unloaded')
 
+    async def reload(self) -> None:
+        self.loaded = False
+        self.load_settings_schema()
+        self.install_requirements()
+        await self.bot.reload_extension(self.import_string)
+        self.loaded = True
+        self.logger.info('Module successfully reloaded')
+
     def load_settings_schema(self) -> None:
         if not (schema_path := self.path / 'settings_schema.toml').is_file():
             return

@@ -79,6 +79,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
                 ):
                     self.logger.debug(f'Module {module.id} is up-to-date.')
                     return
+                self.logger.warning(f'Module {module.id} is out-of-date.')
                 await self.update_module(module)
             except subprocess.CalledProcessError as error:
                 self.logger.error(f'Failed to fetch updates for the module {module.id!r}: {error}\n{error.stderr}')
@@ -86,9 +87,8 @@ class AutoUpdate(breadcord.module.ModuleCog):
     async def update_module(self, module: breadcord.module.Module) -> None:
         self.logger.info(f'Updating {module.id}')
         update_text = await git('pull', cwd=module.path)
-        self.logger.debug(update_text.strip())
-        await module.unload()
-        await module.load()
+        self.logger.debug(f"({module.id}) Git output:\n{update_text.strip()}")
+        await module.reload()
 
         git_hash_msg = await git('log', '-1', '--format="%H %s"', cwd=module.path)
         self.logger.debug(f'Module {module.id} now on: {git_hash_msg[1:-2]}')
