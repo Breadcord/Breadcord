@@ -223,7 +223,7 @@ class HTTPModuleCog(ModuleCog):
             )
         self._session_headers = headers
         # White lie since the type checker doesn't know about cog_load
-        self.session: aiohttp.ClientSession = None  # type: ignore[assignment]
+        self.session: aiohttp.ClientSession | None = None
 
     async def cog_load(self) -> None:
         await super().cog_load()
