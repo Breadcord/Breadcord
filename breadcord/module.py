@@ -138,6 +138,7 @@ class ModuleCog(commands.Cog):
         self.module = global_modules.get(module_id)
         self.bot = self.module.bot
         self.logger = self.module.logger
+        self.storage_path = self.module.storage_path
 
     @property
     def settings(self) -> config.SettingsGroup:
