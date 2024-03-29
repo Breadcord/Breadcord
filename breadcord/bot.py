@@ -153,11 +153,20 @@ class Bot(commands.Bot):
         _logger.debug(f'Module search paths: {search_paths}')
         self.modules.discover(self, search_paths=search_paths)
 
+        failed = []
         for module in self.settings.modules.value:
             if module not in self.modules:
                 _logger.warning(f"Module '{module}' enabled but not found")
                 continue
-            await self.modules.get(module).load()
+            try:
+                await self.modules.get(module).load()
+            except Exception as error:
+                _logger.exception(f'Failed to load module {module!r}: {error}')
+                # Not needed as of writing (2024/03/29), but it means we won't ever have a "ghost loaded" module
+                self.modules.get(module).loaded = False
+                failed.append(module)
+        if failed:
+            _logger.warning('Failed to load modules: ' + ', '.join(f'{module}' for module in failed))
 
         @self.settings.command_prefixes.observe
         def on_command_prefixes_changed(_, new: list[str]) -> None:

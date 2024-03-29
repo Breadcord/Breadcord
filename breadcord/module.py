@@ -51,6 +51,9 @@ class Module:
 
     async def load(self) -> None:
         self.load_settings_schema()
+        # Some modules might fail to load because of their settings. We want to save them so the user can fix them
+        self.bot.save_settings()
+
         self.install_requirements()
         await self.bot.load_extension(self.import_string)
         self.loaded = True
@@ -84,8 +87,8 @@ class Module:
                 if requirement.name == distribution.name and distribution.version in requirement.specifier:
                     return False
             return True
-
-        if missing_requirements := tuple(map(str, filter(is_missing, self.manifest.requirements))):
+        if missing_requirements := tuple(str(req) for req in self.manifest.requirements if is_missing(req)):
+            self.logger.info(f'Installing missing requirements: {" ".join(missing_requirements)}')
             subprocess.check_call([sys.executable, '-m', 'pip', 'install', *missing_requirements])  # noqa: S603
 
 
