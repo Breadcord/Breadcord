@@ -171,10 +171,11 @@ class ModuleManifest(pydantic.BaseModel):
         max_length=128,
     ) = ''
     version: Version | None = None
+    # TODO: add SPDX license validation to the license field
     license: pydantic.constr(
         strip_whitespace=True,
         min_length=1,
-        max_length=16,
+        max_length=64,
     ) = 'No license specified'
     authors: list[pydantic.constr(
         strip_whitespace=True,
