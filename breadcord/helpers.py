@@ -243,3 +243,15 @@ class HTTPModuleCog(ModuleCog):
                 self.logger.warning("Session wasn't closed properly, closing it now")
                 await self.session.close()
             raise
+
+
+def escape_codeblocks(text: str, *, escape_char: str = "\u200d") -> str:
+    """
+    Escapes codeblocks in a string of text such that they can be used inside other codeblocks .
+    This will only escape multiline codeblocks (```).
+
+    :param text: The text to escape codeblocks in.
+    :param escape_char: The character to use as the escape character, defaults to a zero-width joiner.
+    :return: The text with codeblocks escaped.
+    """
+    return text.replace("```", f"``{escape_char}`")
