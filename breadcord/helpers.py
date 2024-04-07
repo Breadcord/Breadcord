@@ -180,7 +180,7 @@ def simple_transformer(to: type[_T]) -> Callable[[type[_Transformer]], _Transfor
         @app_commands.command()
         async def say_hello(
             interaction: discord.Interaction,
-            all_caps: app_commands.Transform[bool, BooleanTransforer]
+            all_caps: app_commands.Transform[bool, BooleanTransformer]
         ):
             await interaction.response.send_message('HELLO' if all_caps else 'hello')
 
@@ -243,3 +243,29 @@ class HTTPModuleCog(ModuleCog):
                 self.logger.warning("Session wasn't closed properly, closing it now")
                 await self.session.close()
             raise
+
+
+def make_codeblock(content: str, lang: str | None = None, *, escape_backticks: bool = True) -> str:
+    """Wraps a string in a Discord codeblock with optional syntax highlighting and backtick escaping.
+
+    !!! warning
+        While `escape_backticks=True` is useful for ensuring that triple backticks within the codeblock content don't
+        break formatting, it will insert invisible zero-width joiner characters into the content. Be aware that this
+        could potentially interfere with syntax highlighting, or copying the codeblock content to clipboard.
+
+    :param content: The text content contained within the codeblock.
+    :param lang: The language code to use for syntax highlighting (e.g. `py` for Python).
+    :param escape_backticks: Whether to escape triple backticks in the codeblock content - see above warning.
+    :return: The resulting codeblock string.
+    """
+    if not escape_backticks:
+        return f'```{lang or ""}\n{content}\n```'
+
+    zwj = '\u200D'
+    search_start = 0
+    while (found_index := content.find('```', search_start)) != -1:
+        content = content[:found_index] + f'``{zwj}`' + content[found_index + 3:]
+        # ``[ZWJ]`
+        # 123    ^ we're right before the last backtick
+        search_start += 3
+    return f'```{lang or ""}\n{content}\n```'
