@@ -180,7 +180,7 @@ def simple_transformer(to: type[_T]) -> Callable[[type[_Transformer]], _Transfor
         @app_commands.command()
         async def say_hello(
             interaction: discord.Interaction,
-            all_caps: app_commands.Transform[bool, BooleanTransforer]
+            all_caps: app_commands.Transform[bool, BooleanTransformer]
         ):
             await interaction.response.send_message('HELLO' if all_caps else 'hello')
 
