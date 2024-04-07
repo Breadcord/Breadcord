@@ -245,14 +245,22 @@ class HTTPModuleCog(ModuleCog):
             raise
 
 
-def escape_codeblocks(text: str, *, escape_char: str = '\u200d') -> str:
-    """Escapes codeblocks in a string.
+def make_codeblock(code: str, lang: str | None = None, *, escape_backticks: bool = True) -> str:
+    """Wraps a string in a discord codeblock.
 
-    Escapes codeblocks in a string of text such that they can be used inside other codeblocks.
-    This will only escape multiline codeblocks (```).
-
-    :param text: The text to escape codeblocks in.
-    :param escape_char: The character to use as the escape character, defaults to a zero-width joiner.
-    :return: The text with codeblocks escaped.
+    :param code: The code to wrap.
+    :param lang: The language to use for syntax highlighting.
+    :param escape_backticks: Whether to escape backticks in the code.
+    :return: The code wrapped in a codeblock.
     """
-    return text.replace('```', f'``{escape_char}`')
+    if not escape_backticks:
+        return f'```{lang or ""}\n{code}\n```'
+
+    zwj = '\u200D'
+    search_start = 0
+    while (found_index := code.find("```", search_start)) != -1:
+        code = code[:found_index] + f"``{zwj}`" + code[found_index + 3:]
+        # ``[ZWJ]`
+        # 123    ^ we're right before the last backtick
+        search_start += 3
+    return f'```{lang or ""}\n{code}\n```'
