@@ -245,22 +245,27 @@ class HTTPModuleCog(ModuleCog):
             raise
 
 
-def make_codeblock(code: str, lang: str | None = None, *, escape_backticks: bool = True) -> str:
-    """Wraps a string in a discord codeblock.
+def make_codeblock(content: str, lang: str | None = None, *, escape_backticks: bool = True) -> str:
+    """Wraps a string in a Discord codeblock with optional syntax highlighting and backtick escaping.
 
-    :param code: The code to wrap.
-    :param lang: The language to use for syntax highlighting.
-    :param escape_backticks: Whether to escape backticks in the code.
-    :return: The code wrapped in a codeblock.
+    !!! warning
+        While `escape_backticks=True` is useful for ensuring that triple backticks within the codeblock content don't
+        break formatting, it will insert invisible zero-width joiner characters into the content. Be aware that this
+        could potentially interfere with syntax highlighting, or copying the codeblock content to clipboard.
+
+    :param content: The text content contained within the codeblock.
+    :param lang: The language code to use for syntax highlighting (e.g. `py` for Python).
+    :param escape_backticks: Whether to escape triple backticks in the codeblock content - see above warning.
+    :return: The resulting codeblock string.
     """
     if not escape_backticks:
-        return f'```{lang or ""}\n{code}\n```'
+        return f'```{lang or ""}\n{content}\n```'
 
     zwj = '\u200D'
     search_start = 0
-    while (found_index := code.find("```", search_start)) != -1:
-        code = code[:found_index] + f"``{zwj}`" + code[found_index + 3:]
+    while (found_index := content.find('```', search_start)) != -1:
+        content = content[:found_index] + f'``{zwj}`' + content[found_index + 3:]
         # ``[ZWJ]`
         # 123    ^ we're right before the last backtick
         search_start += 3
-    return f'```{lang or ""}\n{code}\n```'
+    return f'```{lang or ""}\n{content}\n```'
