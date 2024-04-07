@@ -117,19 +117,29 @@ class AutoUpdate(breadcord.module.ModuleCog):
         if len(updated) == 0:
             await message.edit(content='No modules were updated.')
         else:
+            embeds = [
+                discord.Embed(
+                    title=f'Updated module `{module_id}`',
+                    description='\n'.join(filter(bool, (
+                        f'**Latest commit message**: {discord.utils.escape_markdown(commit_msg)}',
+                        f'```\n{pull_msg}\n```' if pull_msg else None,
+                    ))),
+                    color=discord.Colour.green(),
+                ).set_footer(text=f'Now on commit {commit_hash}')
+                for module_id, (pull_msg, commit_hash, commit_msg) in updated.items()
+            ]
+
+            max_embeds = 10
+            if len(embeds) > max_embeds:
+                embeds = embeds[:max_embeds-1]
+                embeds.append(discord.Embed(
+                    title='And more...',
+                    description=f'{len(updated) - len(embeds)} more modules were updated.',
+                    color=discord.Colour.orange(),
+                ))
             await message.edit(
                 content='Finished updating modules.',
-                embeds=[
-                    discord.Embed(
-                        color=discord.Colour.green(),
-                        title=f'Updated module `{module_id}`',
-                        description='\n'.join(filter(bool, (
-                            f'**Latest commit message**: {discord.utils.escape_markdown(commit_msg)}',
-                            f'```\n{pull_msg}\n```' if pull_msg else None,
-                        ))),
-                    ).set_footer(text=f'Now on commit {commit_hash}')
-                    for module_id, (pull_msg, commit_hash, commit_msg) in updated.items()
-                ],
+                embeds=embeds,
             )
 
 
