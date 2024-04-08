@@ -136,7 +136,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
                         make_codeblock(pull_msg),
                     )),
                     color=discord.Colour.green(),
-                ).set_footer(text=f'Now on commit {commit_hash}')
+                ).set_footer(text=f'Now on commit {commit_hash}'),
             )
 
         max_embeds = 10
