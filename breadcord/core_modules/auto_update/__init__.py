@@ -10,6 +10,7 @@ import discord
 from discord.ext import commands, tasks
 
 import breadcord
+from breadcord.helpers import make_codeblock
 
 
 @cache
@@ -118,21 +119,29 @@ class AutoUpdate(breadcord.module.ModuleCog):
             await message.edit(content='No modules were updated.')
             return
 
-        embeds = [
-            discord.Embed(
-                title=f'Updated module `{module_id}`',
-                description='\n'.join(filter(bool, (
-                    f'**Latest commit message**: {discord.utils.escape_markdown(commit_msg)}',
-                    f'```\n{pull_msg}\n```' if pull_msg else None,
-                ))),
-                color=discord.Colour.green(),
-            ).set_footer(text=f'Now on commit {commit_hash}')
-            for module_id, (pull_msg, commit_hash, commit_msg) in updated.items()
-        ]
+        commit_message_length = 1000
+        pull_message_length = 2500
+        embeds = []
+        for module_id, (pull_msg, commit_hash, commit_msg) in updated.items():
+            if len(commit_msg) > commit_message_length:
+                commit_msg = f'{commit_msg[:commit_message_length]}...'  # noqa: PLW2901  # Would be effort to fix
+            if len(pull_msg) > pull_message_length:
+                pull_msg = f'{pull_msg[:pull_message_length]}...'        # noqa: PLW2901  # Would be effort to fix
+
+            embeds.append(
+                discord.Embed(
+                    title=f'Updated module `{module_id}`',
+                    description='\n'.join((
+                        f'**Latest commit message**: {discord.utils.escape_markdown(commit_msg)}',
+                        make_codeblock(pull_msg),
+                    )),
+                    color=discord.Colour.green(),
+                ).set_footer(text=f'Now on commit {commit_hash}'),
+            )
 
         max_embeds = 10
         if len(embeds) > max_embeds:
-            embeds = embeds[:max_embeds-1]
+            embeds = embeds[:max_embeds]
             embeds.append(discord.Embed(
                 title='And more...',
                 description=f'{len(updated) - len(embeds)} more modules were updated.',
