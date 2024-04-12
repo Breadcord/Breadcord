@@ -82,10 +82,10 @@ class AutoUpdate(breadcord.module.ModuleCog):
                 ahead = (await git('rev-list', '--count', '@{u}..HEAD', cwd=module.path)).strip()
                 behind = (await git('rev-list', '--count', 'HEAD..@{u}', cwd=module.path)).strip()
 
-                if ahead != "0":
+                if ahead != '0':
                     self.logger.warning(f'Module {module.id} is ahead of the remote repository by {ahead} commits.')
                     continue
-                if behind == "0":
+                if behind == '0':
                     self.logger.debug(f'Module {module.id} is up-to-date.')
                     continue
                 self.logger.warning(f'Module {module.id} is out-of-date by {behind} commits.')
