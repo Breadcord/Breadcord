@@ -79,14 +79,17 @@ class AutoUpdate(breadcord.module.ModuleCog):
                 continue
             try:
                 await git('fetch', cwd=module.path)
-                if (
-                    await git('rev-parse', '@{u}', cwd=module.path)
-                    ==
-                    await git('rev-parse', 'HEAD', cwd=module.path)
-                ):
+                ahead = (await git('rev-list', '--count', '@{u}..HEAD', cwd=module.path)).strip()
+                behind = (await git('rev-list', '--count', 'HEAD..@{u}', cwd=module.path)).strip()
+
+                if ahead != '0':
+                    self.logger.warning(f'Module {module.id} is ahead of the remote repository by {ahead} commits.')
+                    continue
+                if behind == '0':
                     self.logger.debug(f'Module {module.id} is up-to-date.')
                     continue
-                self.logger.warning(f'Module {module.id} is out-of-date.')
+                self.logger.warning(f'Module {module.id} is out-of-date by {behind} commits.')
+
                 pull_msg, commit_hash, commit_msg = await self.update_module(module)
                 updated_modules[module.id] = pull_msg, commit_hash, commit_msg
             except subprocess.CalledProcessError as error:
