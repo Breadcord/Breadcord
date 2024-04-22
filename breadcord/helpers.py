@@ -96,6 +96,7 @@ def search_for(
         only exact matches will be returned.
     :param max_results: The maximum number of results to be returned from the search. This can be set to ``None`` to
         return all results which pass the threshold.
+    :return: A sequence of objects which passed the threshold, sorted by similarity.
     """
     if not query:
         return objects[:max_results]
