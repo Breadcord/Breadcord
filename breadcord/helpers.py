@@ -79,7 +79,7 @@ def search_for(
     key: Callable[[_T], str] | None = None,
     threshold: float = 80,
     max_results: int | None = 25,
-) -> Sequence[_T]:
+) -> list[_T]:
     """A custom implementation of a fuzzy search algorithm.
 
     The algorithm works by assigning each string a two-part score: The partial ratio score (a metric for similarity),
@@ -96,9 +96,10 @@ def search_for(
         only exact matches will be returned.
     :param max_results: The maximum number of results to be returned from the search. This can be set to ``None`` to
         return all results which pass the threshold.
+    :return: A list of objects which pass the similarity threshold, in order of decreasing relevance.
     """
     if not query:
-        return objects[:max_results]
+        return list(objects[:max_results])
 
     query = query.strip().lower()
     scored_objs: defaultdict[tuple[float, int], list[_T]] = defaultdict(list)
