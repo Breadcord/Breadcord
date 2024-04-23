@@ -37,8 +37,6 @@ class Module:
         self.manifest = parse_manifest(config.load_settings(self.path / 'manifest.toml'))
 
         self.id = self.manifest.id
-        if self.id != self.path.name:
-            self.logger.warning(f"Module ID '{self.id}' does not match directory name")
 
     @property
     def storage_path(self) -> Path:
