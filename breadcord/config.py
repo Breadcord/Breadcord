@@ -15,6 +15,28 @@ if TYPE_CHECKING:
 _logger = getLogger('breadcord.config')
 
 
+_T = TypeVar('_T')
+
+
+class _MissingSentinel:
+    __slots__ = ()
+
+    def __eq__(self, other) -> bool:
+        return False
+
+    def __bool__(self) -> bool:
+        return False
+
+    def __hash__(self) -> int:
+        return 0
+
+    def __repr__(self):
+        return '...'
+
+
+MISSING: Any = _MissingSentinel()
+
+
 class SettingsNode:
     """An abstract base class representing a node in a settings tree structure.
 
@@ -289,15 +311,28 @@ class SettingsGroup(SettingsNode):
                 next_chunk.reverse()
             chunk = next_chunk
 
+    @overload
     def get(self, key: str) -> Setting:
+        ...
+    
+    @overload
+    def get(self, key: str, default: _T) -> Setting | _T:
+        ...
+
+    def get(self, key: str, default: _T = MISSING) -> Setting | _T:
         """Get a :class:`Setting` object by its key.
 
         :class:`SettingsGroup` implements ``__getattr__``, so a setting can be accessed by attribute as a shortcut.
         For example, ``settings.debug`` can be used instead of ``settings.get('debug')``.
 
         :param key: The key for the setting (the identifier before the equals sign in a TOML document).
+        :param default: The value to return if the key doesn't exist, by default ``None``.
+        :returns: The setting object if it exists, otherwise the default value.
         """
-        return self._settings[key]
+        if default is MISSING:
+            return self._settings[key]
+        else:
+            return self._settings.get(key, default)
 
     def set(self, key: str, value: Any, *, strict: bool = True) -> None:
         """Set the value for a setting by its key, creating new settings as necessary if not using strict mode.
