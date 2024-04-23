@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from functools import partial, wraps
 from logging import getLogger
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar, overload
 
 import tomlkit
+from tomlkit import TOMLDocument
 from tomlkit.items import Comment, Item, Key, Table, Whitespace
-from tomlkit.toml_file import TOMLDocument, TOMLFile
+from tomlkit.toml_file import TOMLFile
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, KeysView, ValuesView
