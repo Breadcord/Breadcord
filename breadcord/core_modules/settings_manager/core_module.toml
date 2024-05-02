@@ -1,0 +1,3 @@
+id = "settings_manager"
+name = "Settings Manager"
+description = "Provides commands to get, set and edit the bot's settings directly from Discord"

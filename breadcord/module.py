@@ -25,20 +25,23 @@ _logger = getLogger('breadcord.module')
 
 
 class Module:
-    def __init__(self, bot: Bot, module_path: str | PathLike[str]) -> None:
+    def __init__(self, bot: Bot, module_path: str | PathLike[str], *, is_core_module: bool = False) -> None:
         self.bot = bot
         self.path = Path(module_path).resolve()
         self.import_string = self.path.relative_to(Path().resolve()).as_posix().replace('/', '.')
         self.logger = getLogger(self.import_string.removeprefix('breadcord.'))
         self.loaded = False
 
-        if not (self.path / 'pyproject.toml').is_file():
-            raise FileNotFoundError('pyproject.toml file not found')
-        self.manifest = ModuleManifest.model_validate(config.load_toml(self.path / 'pyproject.toml'))
+        manifest_file_path = self.path / ('core_module.toml' if is_core_module else 'pyproject.toml')
+        if not manifest_file_path.is_file():
+            raise FileNotFoundError(f'{manifest_file_path.name} file not found')
+
+        if is_core_module:
+            self.manifest = ModuleManifest.from_core_module_manifest(config.load_toml(manifest_file_path))
+        else:
+            self.manifest = ModuleManifest.from_pyproject(config.load_toml(manifest_file_path))
 
         self.id = self.manifest.id
-        if self.id != self.path.name:
-            self.logger.warning(f"Module ID '{self.id}' does not match directory name")
 
     @property
     def storage_path(self) -> Path:
@@ -85,7 +88,7 @@ class Module:
                     return False
             return True
 
-        if missing_requirements := tuple(map(str, filter(is_missing, self.manifest.requirements))):
+        if missing_requirements := tuple(map(str, filter(is_missing, self.manifest.dependencies))):
             subprocess.check_call([sys.executable, '-m', 'pip', 'install', *missing_requirements])  # noqa: S603
 
 
@@ -121,14 +124,22 @@ class Modules:
 
     def discover(self, bot: Bot, search_paths: Iterable[str | PathLike[str]]) -> None:
         self._modules = {}
+
         for path in map(Path, search_paths):
             if not path.is_dir():
                 _logger.warning(f"Module path '{path.as_posix()}' not found")
                 continue
-            for module_path in [path, *list(path.iterdir())]:
-                if not (module_path / 'pyproject.toml').is_file():
-                    continue
-                self.add(Module(bot, module_path))
+
+            for module_path in [path, *path.iterdir()]:
+                if Path('breadcord/core_modules') in module_path.parents:
+                    if not (module_path / 'core_module.toml').is_file():
+                        continue
+                    self.add(Module(bot, module_path, is_core_module=True))
+                else:
+                    if not (module_path / 'pyproject.toml').is_file():
+                        continue
+                    self.add(Module(bot, module_path))
+
                 if module_path == path:
                     break
 
@@ -154,8 +165,11 @@ class ModuleAuthor(pydantic.BaseModel):
     @pydantic.model_validator(mode='after')
     def either_or(self) -> Self:
         if self.name is None and self.email is None:
-            raise ValueError('Either name or email must be specified')
+            raise ValueError('either name or email must be specified')
         return self
+
+    def __str__(self) -> str:
+        return ' '.join(filter(None, (self.name, f'<{self.email}>' if self.email is not None else None)))
 
 
 # PyCharm complains about having @classmethod underneath @pydantic.field_validator
@@ -189,11 +203,11 @@ class ModuleManifest(pydantic.BaseModel):
         max_length=64,
     ) = 'No license specified'
     authors: list[ModuleAuthor] = []
-    requirements: list[Requirement] = []
+    dependencies: list[Requirement] = []
     permissions: discord.Permissions = discord.Permissions.none()
 
     @pydantic.model_validator(mode='after')
-    def validate_core_module(self) -> ModuleManifest:
+    def validate_core_module(self) -> Self:
         if self.is_core_module:
             self.license = self.license or 'GNU LGPLv3'
             self.authors = self.authors or ['Breadcord Team']
@@ -206,7 +220,7 @@ class ModuleManifest(pydantic.BaseModel):
     def parse_version(cls, value: str) -> Version:
         return Version(value)
 
-    @pydantic.field_validator('requirements', mode='before')
+    @pydantic.field_validator('dependencies', mode='before')
     @classmethod
     def parse_requirement(cls, values: list[str]) -> list[Requirement]:
         return [Requirement(value) for value in values]
@@ -216,33 +230,27 @@ class ModuleManifest(pydantic.BaseModel):
     def parse_permissions(cls, value: list[str]) -> discord.Permissions:
         return discord.Permissions(**{permission: True for permission in value})
 
-    @pydantic.model_validator(mode='before')
     @classmethod
-    def parse_manifest(cls, data: dict[str, Any]) -> dict[str, Any]:
+    def from_core_module_manifest(cls, data: dict[str, Any]) -> Self:
+        return cls.model_validate(dict(data, is_core_module=True))
+
+    @classmethod
+    def from_pyproject(cls, data: dict[str, Any]) -> Self:
         pyproject_keymap = {
             'name': 'id',  # I hate this!
             'description': 'description',
             'version': 'version',
-            'dependencies': 'requirements',
+            'dependencies': 'dependencies',
         }
         flattened_data = {
             pyproject_keymap[key]: data['project'][key]
             for key in pyproject_keymap.keys() & data['project'].keys()
         }
 
-        metadata = data.get('tool', {}).get('breadcord')
-        if 'core_module' in metadata:
-            flattened_data['is_core_module'] = True
-            metadata = metadata['core_module']
+        flattened_data['is_core_module'] = False
+        flattened_data.update(data.get('tool', {}).get('breadcord', {}))
 
-        if not metadata:
-            raise KeyError('missing tool.breadcord table in pyproject.toml file')
-        if 'permissions' in metadata:
-            flattened_data['permissions'] = metadata['permissions']
-        if 'display_name' in metadata:
-            flattened_data['name'] = metadata['display_name']
-
-        return flattened_data
+        return cls.model_validate(flattened_data)
 
 
 global_modules = Modules()

@@ -3,14 +3,13 @@ from __future__ import annotations
 import re
 from http import HTTPStatus
 
+import breadcord
 import discord
 import tomlkit
+from breadcord.module import ModuleManifest
 from discord import app_commands
 from discord.ext import commands
 from discord.utils import escape_markdown
-
-import breadcord
-from breadcord.module import parse_manifest
 
 from . import views
 
@@ -73,7 +72,7 @@ class ModuleManager(
             return
 
         async with self.session.get(
-            f'https://api.github.com/repos/{module}/contents/manifest.toml' + (f'?ref={branch}' if branch else ''),
+            f'https://api.github.com/repos/{module}/contents/pyproject.toml' + (f'?ref={branch}' if branch else ''),
             headers={'Accept': 'application/vnd.github.raw'},
         ) as response:
             if response.status != HTTPStatus.OK:
@@ -88,7 +87,7 @@ class ModuleManager(
                 return
 
             content = await response.text()
-            manifest = parse_manifest(tomlkit.loads(content).unwrap())
+            manifest = ModuleManifest.from_pyproject(tomlkit.loads(content).unwrap())
 
         if manifest.id in self.bot.modules:
             await interaction.response.send_message(embed=discord.Embed(
@@ -98,7 +97,7 @@ class ModuleManager(
             ))
             return
 
-        requirements_str = ', '.join(f'`{req}`' for req in manifest.requirements) or 'No requirements specified'
+        requirements_str = ', '.join(f'`{req}`' for req in manifest.dependencies) or 'No dependencies specified'
         permissions = []
         for manifest_permission, bot_permission in zip(manifest.permissions, interaction.app_permissions, strict=True):
             if manifest_permission[1]:
@@ -119,7 +118,7 @@ class ModuleManager(
                 url=f'https://github.com/{module}/{f"tree/{branch}" if branch else ""}',
             ).add_field(
                 name=manifest.name,
-                value=f'**Authors:** {escape_markdown(", ".join(manifest.authors))}\n'
+                value=f'**Authors:**{escape_markdown(", ".join(map(str, manifest.authors)))}\n'
                       f'**License:** {escape_markdown(manifest.license)}\n'
                       f'**Requirements:** {requirements_str}',
                 inline=False,
