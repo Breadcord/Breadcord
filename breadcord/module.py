@@ -5,7 +5,7 @@ import subprocess
 import sys
 from logging import getLogger
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 import discord
 import pydantic
@@ -32,9 +32,9 @@ class Module:
         self.logger = getLogger(self.import_string.removeprefix('breadcord.'))
         self.loaded = False
 
-        if not (self.path / 'manifest.toml').is_file():
-            raise FileNotFoundError('manifest.toml file not found')
-        self.manifest = parse_manifest(config.load_settings(self.path / 'manifest.toml'))
+        if not (self.path / 'pyproject.toml').is_file():
+            raise FileNotFoundError('pyproject.toml file not found')
+        self.manifest = ModuleManifest.model_validate(config.load_toml(self.path / 'pyproject.toml'))
 
         self.id = self.manifest.id
         if self.id != self.path.name:
@@ -126,7 +126,7 @@ class Modules:
                 _logger.warning(f"Module path '{path.as_posix()}' not found")
                 continue
             for module_path in [path, *list(path.iterdir())]:
-                if not (module_path / 'manifest.toml').is_file():
+                if not (module_path / 'pyproject.toml').is_file():
                     continue
                 self.add(Module(bot, module_path))
                 if module_path == path:
@@ -145,6 +145,17 @@ class ModuleCog(commands.Cog):
         if self.module.id not in self.bot.settings.child_keys():
             raise AttributeError(f"module '{self.module.id}' does not have settings")
         return self.bot.settings.get_child(self.module.id)
+
+
+class ModuleAuthor(pydantic.BaseModel):
+    name: str | None = None
+    email: str | None = None
+
+    @pydantic.model_validator(mode='after')
+    def either_or(self) -> Self:
+        if self.name is None and self.email is None:
+            raise ValueError('Either name or email must be specified')
+        return self
 
 
 # PyCharm complains about having @classmethod underneath @pydantic.field_validator
@@ -177,11 +188,7 @@ class ModuleManifest(pydantic.BaseModel):
         min_length=1,
         max_length=64,
     ) = 'No license specified'
-    authors: list[pydantic.constr(
-        strip_whitespace=True,
-        min_length=1,
-        max_length=32,
-    )] = []
+    authors: list[ModuleAuthor] = []
     requirements: list[Requirement] = []
     permissions: discord.Permissions = discord.Permissions.none()
 
@@ -209,16 +216,33 @@ class ModuleManifest(pydantic.BaseModel):
     def parse_permissions(cls, value: list[str]) -> discord.Permissions:
         return discord.Permissions(**{permission: True for permission in value})
 
+    @pydantic.model_validator(mode='before')
+    @classmethod
+    def parse_manifest(cls, data: dict[str, Any]) -> dict[str, Any]:
+        pyproject_keymap = {
+            'name': 'id',  # I hate this!
+            'description': 'description',
+            'version': 'version',
+            'dependencies': 'requirements',
+        }
+        flattened_data = {
+            pyproject_keymap[key]: data['project'][key]
+            for key in pyproject_keymap.keys() & data['project'].keys()
+        }
 
-def parse_manifest(manifest: dict[str, Any]) -> ModuleManifest:
-    match manifest:
-        case {'core_module': data}:
-            return ModuleManifest(**data, is_core_module=True)
-        case {'manifest_version': 1, **data}:
-            flattened_data: dict[str, Any] = data['module']
-            return ModuleManifest(**flattened_data)
-        case _:
-            raise ValueError('invalid manifest version')
+        metadata = data.get('tool', {}).get('breadcord')
+        if 'core_module' in metadata:
+            flattened_data['is_core_module'] = True
+            metadata = metadata['core_module']
+
+        if not metadata:
+            raise KeyError('missing tool.breadcord table in pyproject.toml file')
+        if 'permissions' in metadata:
+            flattened_data['permissions'] = metadata['permissions']
+        if 'display_name' in metadata:
+            flattened_data['name'] = metadata['display_name']
+
+        return flattened_data
 
 
 global_modules = Modules()

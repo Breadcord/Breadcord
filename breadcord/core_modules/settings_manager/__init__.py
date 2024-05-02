@@ -159,7 +159,7 @@ class Settings(
     @app_commands.command(description='Reload bot settings from disk')
     @app_commands.check(breadcord.helpers.administrator_check)
     async def reload(self, interaction: discord.Interaction):
-        self.bot.load_settings()
+        self.bot.load_toml()
         await interaction.response.send_message(
             'Settings reloaded from config file.',
             ephemeral=self.settings.ephemeral.value,

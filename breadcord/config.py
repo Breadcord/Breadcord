@@ -411,7 +411,7 @@ def parse_schema_chunk(chunk: list[tuple[Key | None, Item]]) -> Setting:
     return Setting(chunk[0][0].key, chunk[0][1].unwrap(), description=description.rstrip(), in_schema=True)
 
 
-def load_settings(file_path: str | PathLike[str]) -> dict[str, Any]:
+def load_toml(file_path: str | PathLike[str]) -> dict[str, Any]:
     """Load and deserialise a TOML settings file into a :class:`TOMLDocument` instance.
 
     :param file_path: Path to the TOML settings file.

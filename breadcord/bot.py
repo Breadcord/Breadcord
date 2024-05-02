@@ -256,7 +256,7 @@ class Bot(commands.Bot):
             schema_path='breadcord/settings_schema.toml',
             observers=self.settings.observers,
         )
-        settings.update_from_dict(config.load_settings(file_path), strict=False)
+        settings.update_from_dict(config.load_toml(file_path), strict=False)
         for module in self.modules:
             module.load_settings_schema()
 
