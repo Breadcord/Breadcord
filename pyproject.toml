@@ -44,6 +44,9 @@ ignore = [
     # Too inflexible to be reasonable
     # https://github.com/Breadcord/Breadcord/pull/144#issuecomment-1732071028
     "PLR0913",
+
+    # Warnings on every usage of the random module is outrageous
+    "S311",
 ]
 
 [tool.ruff]

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM python:3.11.8-slim-bullseye as build
+FROM python:3.11.9-slim-bullseye as build
 
 WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -14,7 +14,7 @@ RUN /root/.cargo/bin/uv venv --seed
 RUN /root/.cargo/bin/uv pip install --no-cache -r requirements.txt
 
 
-FROM python:3.11.8-slim-bullseye
+FROM python:3.11.9-slim-bullseye
 
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1

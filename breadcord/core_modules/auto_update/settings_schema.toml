@@ -1,2 +1,2 @@
-# How often (in hours) to try update modules
-update_interval = 6.0
+# How often (in minutes) to try update modules
+update_interval = 120.0

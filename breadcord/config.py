@@ -112,6 +112,8 @@ class Setting(SettingsNode):
     @value.setter
     def value(self, new_value: Any) -> None:
         """Assign a new value to the setting, validating the new value type and triggering necessary observers."""
+        if isinstance(new_value, int) and self.type == float:
+            new_value = float(new_value)
         if not isinstance(new_value, self.type):
             raise TypeError(
                 f"Cannot assign type '{type(new_value).__name__}' to setting with type '{self.type.__name__}'",
