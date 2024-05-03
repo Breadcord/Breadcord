@@ -29,7 +29,6 @@ class Module:
         self.bot = bot
         self.path = Path(module_path).resolve()
         self.import_string = self.path.relative_to(Path().resolve()).as_posix().replace('/', '.')
-        self.logger = getLogger(self.import_string.removeprefix('breadcord.'))
         self.loaded = False
 
         manifest_file_path = self.path / ('core_module.toml' if is_core_module else 'pyproject.toml')
@@ -42,6 +41,7 @@ class Module:
             self.manifest = ModuleManifest.from_pyproject(config.load_toml(manifest_file_path))
 
         self.id = self.manifest.id
+        self.logger = getLogger(('core_modules.' if is_core_module else 'modules.') + self.id)
 
     @property
     def storage_path(self) -> Path:
