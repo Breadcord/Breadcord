@@ -34,7 +34,7 @@ class Module:
 
         if not (self.path / 'manifest.toml').is_file():
             raise FileNotFoundError('manifest.toml file not found')
-        self.manifest = parse_manifest(config.load_settings(self.path / 'manifest.toml'))
+        self.manifest = parse_manifest(config.load_toml(self.path / 'manifest.toml'))
 
         self.id = self.manifest.id
 
