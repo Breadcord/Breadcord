@@ -153,6 +153,10 @@ class Bot(commands.Bot):
         _logger.debug(f'Module search paths: {search_paths}')
         self.modules.discover(self, search_paths=search_paths)
 
+        for loaf in self.modules_dir.glob('*.loaf'):
+            _logger.info(f'Loaf pending install: {loaf.name}')
+            self.modules.install_loaf(self, loaf_path=loaf, install_path=self.modules_dir, delete_source=True)
+
         for module in self.settings.modules.value:
             if module not in self.modules:
                 _logger.warning(f"Module '{module}' enabled but not found")

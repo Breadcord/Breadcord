@@ -6,9 +6,11 @@ import sys
 from logging import getLogger
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+from zipfile import ZipFile
 
 import discord
 import pydantic
+import tomlkit
 from discord.ext import commands
 from packaging.requirements import Requirement
 from packaging.version import Version
@@ -112,21 +114,48 @@ class Modules:
             module.logger.warning(
                 f'Module ID conflicts with {self.get(module.id).import_string} so it will not be loaded',
             )
+            return
+
         self._modules[module.id] = module
 
     def remove(self, module_id: str) -> None:
         del self._modules[module_id]
 
+    def install_loaf(
+        self,
+        bot: Bot,
+        loaf_path: str | PathLike[str],
+        install_path: str | PathLike[str],
+        *,
+        delete_source: bool = False,
+    ) -> None:
+        loaf_path = Path(loaf_path)
+        install_path = Path(install_path)
+
+        with ZipFile(loaf_path, mode='r') as archive:
+            manifest = parse_manifest(tomlkit.loads(archive.read('manifest.toml')).unwrap())
+            module_path = install_path / manifest.id
+            archive.extractall(module_path)
+            module = Module(bot, module_path)
+            self.add(module)
+            _logger.info(f'Installed module {module.id} from path {loaf_path.resolve()}')
+        if delete_source:
+            loaf_path.unlink()
+
     def discover(self, bot: Bot, search_paths: Iterable[str | PathLike[str]]) -> None:
-        self._modules = {}
         for path in map(Path, search_paths):
             if not path.is_dir():
                 _logger.warning(f"Module path '{path.as_posix()}' not found")
                 continue
+
             for module_path in [path, *list(path.iterdir())]:
                 if not (module_path / 'manifest.toml').is_file():
                     continue
-                self.add(Module(bot, module_path))
+
+                module = Module(bot, module_path)
+                if module.id not in self._modules:
+                    self.add(module)
+
                 if module_path == path:
                     break
 
