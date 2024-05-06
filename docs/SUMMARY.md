@@ -1,7 +1,11 @@
-- Getting Started
-    - [Welcome to Breadcord!](index.md)
-- Modules
-    - [Creating a Module](modules/creating-a-module.md)
-    - [Module Manifest](modules/module-manifest.md)
+- [Home](index.md)
+- [BreadBin](https://bin.breadcord.com/)
+- For Users
+    - [Install Breadcord](docs/for-users/install-breadcord.md)
+- For Developers
+    - Module Development
+        - [Creating a Module](docs/for-developers/creating-a-module.md)
+        - [Module Manifest](docs/for-developers/module-manifest.md)
+        - [Building Loaf Packages](docs/for-developers/building-loaf-packages.md)
 - API Reference
-    - api-reference/breadcord.*.md
+    - docs/api-reference/breadcord.*.md

@@ -2,14 +2,27 @@ site_name: Breadcord
 site_url: https://breadcord.com
 site_author: Breadcord Team
 site_description: The modular self-hostable Discord bot framework with customisability that doesn't go against the grain
+copyright: Made with ❤️ and 🍞 by ThatOtherAndrew
 repo_name: Breadcord/Breadcord
 repo_url: https://github.com/Breadcord/Breadcord
 dev_addr: localhost:80
-strict: true
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Breadcord
 
 markdown_extensions:
   - admonition
+  - attr_list
+  - md_in_html
   - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      options:
+        custom_icons:
+          - docs/overrides/.icons
   - pymdownx.superfences
   - toc:
       permalink: true
@@ -24,14 +37,16 @@ plugins:
           options:
             docstring_style: sphinx
             show_source: false
+  - privacy:
+      enabled: true
   - search
 
 theme:
   name: material
   logo: assets/logo.png
   favicon: assets/logo.png
+  custom_dir: docs/overrides
   features:
-    - navigation.instant
     - navigation.tabs
     - navigation.sections
     - navigation.indexes

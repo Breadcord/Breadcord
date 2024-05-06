@@ -1,0 +1,150 @@
+header.md-header {
+    position: fixed;
+    background-color: transparent;
+}
+
+header.md-header > * {
+    background-color: var(--md-default-bg-color--light) !important;
+}
+
+@keyframes hero-reveal {
+    0% {
+        background-position-y: -20px;
+        opacity: 0;
+    }
+    50% {
+        opacity: 100%;
+    }
+    100% {
+        background-position-y: 0;
+    }
+}
+
+#breadcord-hero {
+    position: relative;
+    top: 0;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    font-size: 20px;
+    background-color: var(--md-default-bg-color);
+}
+
+#breadcord-hero .hero-image {
+    width: 100%;
+    height: 100%;
+    background-image: url("/assets/crumb_3d_tpose_particles.webp");
+    background-size: cover;
+    background-position: 0 0;
+    background-repeat: repeat-y;
+    @media (prefers-reduced-motion: no-preference) {
+        animation: 5s ease 0s 1 hero-reveal;
+    }
+}
+
+div.hero-text {
+    position: absolute;
+    top: 30vh;
+    height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    color: white;
+    font-size: x-large;
+}
+
+div.hero-text > h1 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0;
+    color: white;
+    text-align: center;
+    text-wrap: pretty;
+    text-shadow:
+        0 0  5px var(--md-primary-fg-color--light),
+        0 0 10px var(--md-primary-fg-color--light),
+        0 0 15px var(--md-primary-fg-color--light),
+        0 0 20px var(--md-accent-fg-color),
+        0 0 25px var(--md-accent-fg-color);
+    font-size: clamp(40px, 6vw, 80px);
+    font-weight: 900;
+}
+
+div.hero-text > h1 > span.twemoji {
+    margin-right: clamp(0px, 3vw, 50px);
+}
+
+div.hero-text > h2 {
+    font-size: clamp(20px, 2.5vw, 30px);
+    text-wrap: pretty;
+    margin-left: 1em;
+}
+
+div.hero-text > div.hero-buttons {
+    width: 100%;
+    margin-top: auto;
+}
+
+div.hero-text > div.hero-buttons > p {
+    display: flex;
+}
+
+div.hero-text > div.hero-buttons > p > a {
+    font-size: clamp(16px, 2.5vw, 24px);
+    margin-inline: 1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-width: 11em;
+    max-width: 15em;
+}
+
+div.hero-text > div.hero-buttons > p > a > span.twemoji {
+    margin-right: 0.5em;
+    flex-shrink: 0;
+}
+
+@media screen and (max-width: 55em) {
+    div.hero-text {
+        top: 15vh;
+        align-items: center;
+        left: 1em;
+        right: 1em;
+        height: 70vh;
+    }
+
+    div.hero-text > h1 {
+        flex-direction: column;
+    }
+
+    div.hero-text > h1 > span.twemoji {
+        --md-icon-size: 5em;
+        margin-bottom: 1em;
+    }
+
+    div.hero-text > h2 {
+        text-align: center;
+    }
+
+    div.hero-text > div.hero-buttons > p {
+        justify-content: center;
+    }
+}
+
+a.headerlink {
+    display: none !important;
+}
+
+.md-typeset h1 {
+    color: var(--md-default-fg-color);
+}
+
+.bottom-gradient {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 40%;
+    background-image: linear-gradient(to bottom, #0000, var(--md-default-bg-color));
+}
