@@ -4,7 +4,7 @@ header.md-header {
 }
 
 header.md-header > * {
-    background-color: var(--md-default-bg-color--light) !important;
+    background-color: #1e212989 !important;
 }
 
 @keyframes hero-reveal {
@@ -27,7 +27,7 @@ header.md-header > * {
     height: 100vh;
     overflow: hidden;
     font-size: 20px;
-    background-color: var(--md-default-bg-color);
+    background-color: #1e2129;
 }
 
 #breadcord-hero .hero-image {
@@ -146,5 +146,5 @@ a.headerlink {
     bottom: 0;
     width: 100%;
     height: 40%;
-    background-image: linear-gradient(to bottom, #0000, var(--md-default-bg-color));
+    background-image: linear-gradient(to bottom, #0000, #1e2129);
 }

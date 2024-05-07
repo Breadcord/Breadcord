@@ -16,5 +16,4 @@ hide:
 [:material-package-variant:{.lg} Browse Modules](https://bin.breadcord.com/){.md-button}
 
 </div>
-
 </div>
