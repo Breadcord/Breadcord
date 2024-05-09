@@ -23,49 +23,49 @@ if TYPE_CHECKING:
 
     from . import app
 
-_logger = logging.getLogger('breadcord.bot')
+_logger = logging.getLogger("breadcord.bot")
 
 
 class CommandTree(discord.app_commands.CommandTree):
     async def on_error(self, interaction: discord.Interaction, error: discord.app_commands.AppCommandError, /) -> None:
-        if interaction.extras.get('error_handled'):
+        if interaction.extras.get("error_handled"):
             return
 
         if isinstance(error, errors.NotAdministratorError):
             await interaction.response.send_message(embed=discord.Embed(
                 colour=discord.Colour.red(),
-                title='Missing permissions!',
-                description='This operation is restricted to bot owners only.',
+                title="Missing permissions!",
+                description="This operation is restricted to bot owners only.",
             ))
 
         else:
-            _logger.exception(f'{error.__class__.__name__}: {error}', exc_info=error)
+            _logger.exception(f"{error.__class__.__name__}: {error}", exc_info=error)
 
 
 class Bot(commands.Bot):
     def __init__(self, *, tui_app: app.Breadcord | None = None, args: Namespace) -> None:
         self.tui = tui_app
         self.args = args
-        self.settings = config.SettingsGroup('settings', observers={})
+        self.settings = config.SettingsGroup("settings", observers={})
         self.ready = False
 
-        data_dir = self.args.data_dir or Path('data')
+        data_dir = self.args.data_dir or Path("data")
         data_dir.mkdir(exist_ok=True)
         self.data_dir = data_dir.resolve()
 
-        logs_dir = self.args.logs_dir or self.data_dir / 'logs'
+        logs_dir = self.args.logs_dir or self.data_dir / "logs"
         logs_dir.mkdir(exist_ok=True)
         self.logs_dir = logs_dir.resolve()
 
-        modules_dir = self.data_dir / 'modules'
+        modules_dir = self.data_dir / "modules"
         modules_dir.mkdir(exist_ok=True)
         self.modules_dir = modules_dir.resolve()
 
-        storage_dir = self.args.storage_dir or self.data_dir / 'storage'
+        storage_dir = self.args.storage_dir or self.data_dir / "storage"
         storage_dir.mkdir(exist_ok=True)
         self.storage_dir = storage_dir.resolve()
 
-        self.settings_file = (self.args.setting_file or self.data_dir / 'settings.toml').resolve()
+        self.settings_file = (self.args.setting_file or self.data_dir / "settings.toml").resolve()
 
         super().__init__(
             command_prefix=[],
@@ -79,7 +79,7 @@ class Bot(commands.Bot):
 
     def _init_logging(self) -> None:
         def handle_exception(exc_type: type[BaseException], value: BaseException, traceback: TracebackType) -> None:
-            _logger.critical(f'Uncaught {exc_type.__name__}: {value}', exc_info=(exc_type, value, traceback))
+            _logger.critical(f"Uncaught {exc_type.__name__}: {value}", exc_info=(exc_type, value, traceback))
         sys.excepthook = handle_exception
 
         if self.tui is None:
@@ -87,26 +87,26 @@ class Bot(commands.Bot):
         else:
             discord.utils.setup_logging(handler=self.tui.handler)
 
-        log_file = self.logs_dir / 'breadcord_latest.log'
+        log_file = self.logs_dir / "breadcord_latest.log"
         if log_file.is_file():
-            with log_file.open(encoding='utf-8') as file:
+            with log_file.open(encoding="utf-8") as file:
                 timestamp = file.read(10)
             try:
-                datetime.strptime(timestamp, '%Y-%m-%d')
+                datetime.strptime(timestamp, "%Y-%m-%d")
             except ValueError:
-                timestamp = '0000-00-00'
-            base_filename = timestamp + '.{}.log'
+                timestamp = "0000-00-00"
+            base_filename = timestamp + ".{}.log"
             log_number = 1
             while (rename_path := self.logs_dir / base_filename.format(log_number)).is_file():
                 log_number += 1
             log_file.rename(rename_path)
 
         discord.utils.setup_logging(
-            handler=logging.FileHandler(log_file, 'w', encoding='utf-8'),
+            handler=logging.FileHandler(log_file, "w", encoding="utf-8"),
             formatter=logging.Formatter(
-                fmt='{asctime} [{levelname}] {name}: {message}',
-                datefmt='%Y-%m-%d %H:%M:%S',
-                style='{',
+                fmt="{asctime} [{levelname}] {name}: {message}",
+                datefmt="%Y-%m-%d %H:%M:%S",
+                style="{",
             ),
         )
 
@@ -118,15 +118,15 @@ class Bot(commands.Bot):
     ) -> None:
         error = exception.__traceback__
         _logger.debug(error)
-        _logger.exception(f'{exception.__class__.__name__}: {exception}', exc_info=exception)
+        _logger.exception(f"{exception.__class__.__name__}: {exception}", exc_info=exception)
 
     async def start(self, *_, **__) -> None:
         self._init_logging()
 
         if not self.settings_file.is_file():
-            _logger.info('Generating missing settings.toml file')
-            self.settings = config.SettingsGroup('settings', schema_path='breadcord/settings_schema.toml')
-            _logger.warning('Bot token must be supplied to start the bot')
+            _logger.info("Generating missing settings.toml file")
+            self.settings = config.SettingsGroup("settings", schema_path="breadcord/settings_schema.toml")
+            _logger.warning("Bot token must be supplied to start the bot")
             self.ready = True
             await self.close()
             return
@@ -134,27 +134,27 @@ class Bot(commands.Bot):
         self.load_settings()
         if self.settings.debug.value:
             logging.getLogger().setLevel(logging.DEBUG)
-            _logger.debug('Debug mode enabled')
-            logging.getLogger('discord').setLevel(logging.INFO)
+            _logger.debug("Debug mode enabled")
+            logging.getLogger("discord").setLevel(logging.INFO)
         self.command_prefix = commands.when_mentioned_or(*self.settings.command_prefixes.value)
         self.owner_ids = set(self.settings.administrators.value)
 
         await super().start(token=self.settings.token.value)
 
     def run(self, **kwargs) -> None:
-        super().run(token='', log_handler=None, **kwargs)
+        super().run(token="", log_handler=None, **kwargs)
 
     async def setup_hook(self) -> None:
         search_paths = [
             *self.args.module_dirs,
-            Path('breadcord/core_modules'),
+            Path("breadcord/core_modules"),
             self.modules_dir,
         ]
-        _logger.debug(f'Module search paths: {search_paths}')
+        _logger.debug(f"Module search paths: {search_paths}")
         self.modules.discover(self, search_paths=search_paths)
 
-        for loaf in self.modules_dir.glob('*.loaf'):
-            _logger.info(f'Loaf pending install: {loaf.name}')
+        for loaf in self.modules_dir.glob("*.loaf"):
+            _logger.info(f"Loaf pending install: {loaf.name}")
             self.modules.install_loaf(self, loaf_path=loaf, install_path=self.modules_dir, delete_source=True)
 
         for module in self.settings.modules.value:
@@ -185,12 +185,12 @@ class Bot(commands.Bot):
             self.tui.online = True
 
     async def close(self) -> None:
-        _logger.info('Shutting down bot')
+        _logger.info("Shutting down bot")
         await super().close()
         if self.ready:
             self.save_settings()
         else:
-            _logger.warning('Bot not ready, settings have not been saved')
+            _logger.warning("Bot not ready, settings have not been saved")
         root_logger = logging.getLogger()
         for handler in root_logger.handlers:
             handler.close()
@@ -253,11 +253,11 @@ class Bot(commands.Bot):
     def load_settings(self, file_path: str | PathLike[str] | None = None) -> None:
         if file_path is None:
             file_path = self.settings_file
-        _logger.info(f'Loading settings from {Path(file_path).as_posix()}')
+        _logger.info(f"Loading settings from {Path(file_path).as_posix()}")
 
         settings = config.SettingsGroup(
-            'settings',
-            schema_path='breadcord/settings_schema.toml',
+            "settings",
+            schema_path="breadcord/settings_schema.toml",
             observers=self.settings.observers,
         )
         settings.update_from_dict(config.load_toml(file_path), strict=False)
@@ -268,8 +268,8 @@ class Bot(commands.Bot):
 
     def save_settings(self, file_path: str | PathLike[str] | None = None) -> None:
         path = self.settings_file if file_path is None else Path(file_path)
-        _logger.info(f'Saving settings to {path.as_posix()}')
+        _logger.info(f"Saving settings to {path.as_posix()}")
         path.parent.mkdir(parents=True, exist_ok=True)
-        output = self.settings.as_toml().as_string().rstrip() + '\n'
-        with path.open('w', encoding='utf-8') as file:
+        output = self.settings.as_toml().as_string().rstrip() + "\n"
+        with path.open("w", encoding="utf-8") as file:
             file.write(output)

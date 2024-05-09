@@ -14,8 +14,8 @@ from breadcord.module import parse_manifest
 
 from . import views
 
-REPO_PATH = re.compile(r'[\w.-]+/[\w.-]+')
-GH_BASE_URL = re.compile(r'^(https?://)?(www\.)?github\.com/')
+REPO_PATH = re.compile(r"[\w.-]+/[\w.-]+")
+GH_BASE_URL = re.compile(r"^(https?://)?(www\.)?github\.com/")
 
 
 class ModuleTransformer(app_commands.Transformer):
@@ -31,7 +31,7 @@ class ModuleTransformer(app_commands.Transformer):
             for module in breadcord.helpers.search_for(
                 query=value,
                 objects=tuple(interaction.client.modules),
-                key=lambda module: '\n'.join(filter(
+                key=lambda module: "\n".join(filter(
                     bool,
                     (module.id, module.manifest.name, module.manifest.description),
                 )),
@@ -42,8 +42,8 @@ class ModuleTransformer(app_commands.Transformer):
 class ModuleManager(
     breadcord.helpers.HTTPModuleCog,
     commands.GroupCog,
-    group_name='module',
-    group_description='Manage Breadcord modules',
+    group_name="module",
+    group_description="Manage Breadcord modules",
 ):
     async def cog_app_command_error(
         self,
@@ -51,35 +51,35 @@ class ModuleManager(
         error: app_commands.AppCommandError,
     ) -> None:
         if isinstance(error, app_commands.TransformerError) and isinstance(error.transformer, ModuleTransformer):
-            interaction.extras['error_handled'] = True
+            interaction.extras["error_handled"] = True
             await interaction.response.send_message(embed=discord.Embed(
                 colour=discord.Colour.red(),
-                title='Module not found!',
-                description=f'No module with the ID `{error.value}` was found.',
+                title="Module not found!",
+                description=f"No module with the ID `{error.value}` was found.",
             ))
 
-    @app_commands.command(description='Install a module from github')
-    @app_commands.describe(module='A github url or repo path', branch='A branch of the repo')
+    @app_commands.command(description="Install a module from github")
+    @app_commands.describe(module="A github url or repo path", branch="A branch of the repo")
     @app_commands.check(breadcord.helpers.administrator_check)
     async def install(self, interaction: discord.Interaction, module: str, branch: str | None = None):
-        module = GH_BASE_URL.sub('', module).removesuffix('.git').replace(' ', '-')
-        branch = branch.replace(' ', '-') if branch else None
+        module = GH_BASE_URL.sub("", module).removesuffix(".git").replace(" ", "-")
+        branch = branch.replace(" ", "-") if branch else None
         if not REPO_PATH.match(module):
             await interaction.response.send_message(embed=discord.Embed(
                 colour=discord.Colour.red(),
-                title='Invalid module!',
-                description='Try using a `username/repo` reference to the GitHub repository.',
+                title="Invalid module!",
+                description="Try using a `username/repo` reference to the GitHub repository.",
             ))
             return
 
         async with self.session.get(
-            f'https://api.github.com/repos/{module}/contents/manifest.toml' + (f'?ref={branch}' if branch else ''),
-            headers={'Accept': 'application/vnd.github.raw'},
+            f"https://api.github.com/repos/{module}/contents/manifest.toml" + (f"?ref={branch}" if branch else ""),
+            headers={"Accept": "application/vnd.github.raw"},
         ) as response:
             if response.status != HTTPStatus.OK:
                 await interaction.response.send_message(embed=discord.Embed(
                     colour=discord.Colour.red(),
-                    title='Module not found!',
+                    title="Module not found!",
                     description=(
                         "The repository or branch specified does not exist, "
                         "can't be reached or isn't a Breadcord module."
@@ -93,17 +93,17 @@ class ModuleManager(
         if manifest.id in self.bot.modules:
             await interaction.response.send_message(embed=discord.Embed(
                 colour=discord.Colour.red(),
-                title='Module already installed!',
-                description=f'A module with the ID `{manifest.id}` is already installed.',
+                title="Module already installed!",
+                description=f"A module with the ID `{manifest.id}` is already installed.",
             ))
             return
 
-        requirements_str = ', '.join(f'`{req}`' for req in manifest.requirements) or 'No requirements specified'
+        requirements_str = ", ".join(f"`{req}`" for req in manifest.requirements) or "No requirements specified"
         permissions = []
         for manifest_permission, bot_permission in zip(manifest.permissions, interaction.app_permissions, strict=True):
             if manifest_permission[1]:
-                emoji = '✅' if bot_permission[1] else '⚠️'
-                permissions.append(f'{emoji} {manifest_permission[0]}')
+                emoji = "✅" if bot_permission[1] else "⚠️"
+                permissions.append(f"{emoji} {manifest_permission[0]}")
         view = views.ModuleInstallView(
             cog=self,
             user_id=interaction.user.id,
@@ -114,7 +114,7 @@ class ModuleManager(
         await interaction.response.send_message(
             embed=discord.Embed(
                 colour=discord.Colour.blurple(),
-                title='Install this module?',
+                title="Install this module?",
                 description=manifest.description,
                 url=f'https://github.com/{module}/{f"tree/{branch}" if branch else ""}',
             ).add_field(
@@ -124,19 +124,19 @@ class ModuleManager(
                       f'**Requirements:** {requirements_str}',
                 inline=False,
             ).add_field(
-                name='Required permissions',
-                value='\n'.join(permissions) or '❓ No permissions specified',
+                name="Required permissions",
+                value="\n".join(permissions) or "❓ No permissions specified",
                 inline=False,
             ).set_footer(
-                text=f'{manifest.id} v{manifest.version}',
+                text=f"{manifest.id} v{manifest.version}",
             ),
             view=view,
         )
         view.message = await interaction.original_response()
 
-    @app_commands.command(description='Uninstall an installed module')
-    @app_commands.describe(module='The id of the module to be uninstalled')
-    @app_commands.rename(module='module_id')
+    @app_commands.command(description="Uninstall an installed module")
+    @app_commands.describe(module="The id of the module to be uninstalled")
+    @app_commands.rename(module="module_id")
     @app_commands.check(breadcord.helpers.administrator_check)
     async def uninstall(
         self,
@@ -146,9 +146,9 @@ class ModuleManager(
         if module.manifest.is_core_module:
             await interaction.response.send_message(embed=discord.Embed(
                 colour=discord.Colour.red(),
-                title='Cannot uninstall core modules!',
-                description=f'If you know what you are doing, this module can be disabled instead using\n'
-                            f'`/module disable module_id:{module.id}`.',
+                title="Cannot uninstall core modules!",
+                description=f"If you know what you are doing, this module can be disabled instead using\n"
+                            f"`/module disable module_id:{module.id}`.",
             ))
             return
 
@@ -157,22 +157,22 @@ class ModuleManager(
         await interaction.response.send_message(
             embed=discord.Embed(
                 colour=discord.Colour.blurple(),
-                title='Uninstall this module?',
+                title="Uninstall this module?",
                 description=module.manifest.description,
             ).add_field(
                 name=module.manifest.name,
                 value=f'**Authors:** {escape_markdown(", ".join(module.manifest.authors))}\n',
                 inline=False,
             ).set_footer(
-                text=f'{module.manifest.id} v{module.manifest.version}',
+                text=f"{module.manifest.id} v{module.manifest.version}",
             ),
             view=view,
         )
         view.message = await interaction.original_response()
 
-    @app_commands.command(description='Enable an installed module')
-    @app_commands.describe(module='The id of the module to be enabled')
-    @app_commands.rename(module='module_id')
+    @app_commands.command(description="Enable an installed module")
+    @app_commands.describe(module="The id of the module to be enabled")
+    @app_commands.rename(module="module_id")
     @app_commands.check(breadcord.helpers.administrator_check)
     async def enable(
         self,
@@ -186,17 +186,17 @@ class ModuleManager(
         await interaction.response.send_message(
             embed=discord.Embed(
                 colour=discord.Colour.green(),
-                title='Module enabled!',
+                title="Module enabled!",
             ).set_footer(
-                text=f'{module.manifest.id} v{module.manifest.version}',
+                text=f"{module.manifest.id} v{module.manifest.version}",
             ),
             view=view,
         )
         view.message = await interaction.original_response()
 
-    @app_commands.command(description='Disable an installed module')
-    @app_commands.describe(module='The id of the module to be disabled')
-    @app_commands.rename(module='module_id')
+    @app_commands.command(description="Disable an installed module")
+    @app_commands.describe(module="The id of the module to be disabled")
+    @app_commands.rename(module="module_id")
     @app_commands.check(breadcord.helpers.administrator_check)
     async def disable(
         self,
@@ -210,9 +210,9 @@ class ModuleManager(
         await interaction.response.send_message(
             embed=discord.Embed(
                 colour=discord.Colour.green(),
-                title='Module disabled!',
+                title="Module disabled!",
             ).set_footer(
-                text=f'{module.manifest.id} v{module.manifest.version}',
+                text=f"{module.manifest.id} v{module.manifest.version}",
             ),
             view=view,
         )
@@ -220,4 +220,4 @@ class ModuleManager(
 
 
 async def setup(bot: breadcord.Bot):
-    await bot.add_cog(ModuleManager('module_manager'))
+    await bot.add_cog(ModuleManager("module_manager"))

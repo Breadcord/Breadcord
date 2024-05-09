@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Generator, KeysView, ValuesView
     from os import PathLike
 
-_logger = getLogger('breadcord.config')
+_logger = getLogger("breadcord.config")
 
 
 class SettingsNode:
@@ -32,7 +32,7 @@ class SettingsNode:
         self,
         key: str,
         *,
-        description: str = '',
+        description: str = "",
         parent: SettingsGroup | None = None,
         in_schema: bool = False,
     ):
@@ -44,7 +44,7 @@ class SettingsNode:
         self.in_schema = in_schema
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__} {self.path_id()}>'
+        return f"<{self.__class__.__name__} {self.path_id()}>"
 
     @property
     def key(self) -> str:
@@ -59,7 +59,7 @@ class SettingsNode:
 
     def path_id(self):
         """Return a string identifier representing the path to this node from the root node."""
-        return '.'.join(node.key for node in self.path())
+        return ".".join(node.key for node in self.path())
 
     def root(self) -> SettingsGroup:
         """Return the root node of the settings tree this node belongs to.
@@ -93,7 +93,7 @@ class Setting(SettingsNode):
         key: str,
         value: Any,
         *,
-        description: str = '',
+        description: str = "",
         parent: SettingsGroup | None = None,
         in_schema: bool = False,
     ) -> None:
@@ -201,8 +201,8 @@ class SettingsGroup(SettingsNode):
 
     def __repr__(self) -> str:
         return (
-            f'<{self.__class__.__name__} {self.path_id()} '
-            f'settings:{len(self._settings)} children:{len(self._children)}>'
+            f"<{self.__class__.__name__} {self.path_id()} "
+            f"settings:{len(self._settings)} children:{len(self._children)}>"
         )
 
     def __getattr__(self, item: str) -> Setting | SettingsGroup:
@@ -255,8 +255,8 @@ class SettingsGroup(SettingsNode):
         """
         body: list[tuple[Key | None, Item]] = TOMLFile(file_path).read().body if body is None else body
         if body is None:
-            raise ValueError('either file_path or body must be specified')
-        body.append((None, Whitespace('')))
+            raise ValueError("either file_path or body must be specified")
+        body.append((None, Whitespace("")))
 
         chunk = []
         for item in body:
@@ -282,8 +282,8 @@ class SettingsGroup(SettingsNode):
             # This is required as comments after a table are considered a child of the table
             if isinstance(chunk[-1][1], tomlkit.items.Table):
                 for line in reversed(chunk[-1][1].as_string().splitlines()):
-                    if line.startswith('#'):
-                        next_chunk.append((None, tomlkit.comment(line.lstrip('# '))))
+                    if line.startswith("#"):
+                        next_chunk.append((None, tomlkit.comment(line.lstrip("# "))))
                     elif line.strip():
                         break
                 next_chunk.reverse()
@@ -310,7 +310,7 @@ class SettingsGroup(SettingsNode):
             key not in self
             or not self.get(key).in_schema
         ):
-            raise ValueError(f'{self.path_id()}.{key} is not declared in the schema')
+            raise ValueError(f"{self.path_id()}.{key} is not declared in the schema")
 
         if key not in self:
             self._settings[key] = Setting(key, value, parent=self, in_schema=False)
@@ -377,18 +377,18 @@ class SettingsGroup(SettingsNode):
             if setting.in_schema:
                 previous_setting_in_schema = True
             elif warn_schema:
-                _logger.warning(f'{setting.path_id()} is not declared in the schema')
-                document.value.item(setting.key).comment('⚠️ Unrecognised setting')
+                _logger.warning(f"{setting.path_id()} is not declared in the schema")
+                document.value.item(setting.key).comment("⚠️ Unrecognised setting")
 
         for child in self.children():
-            document.add(tomlkit.ws('\n\n'))
+            document.add(tomlkit.ws("\n\n"))
             table = child.as_toml(table=True, warn_schema=child.in_schema)
             if not child.in_schema:
-                table.comment('🚫 Disabled')
+                table.comment("🚫 Disabled")
             for line in child.description.splitlines():
                 document.add(tomlkit.comment(line))
             document.append(child.key, table)
-            table.trivia.indent = ''
+            table.trivia.indent = ""
 
         return document
 
@@ -402,10 +402,10 @@ def parse_schema_chunk(chunk: list[tuple[Key | None, Item]]) -> Setting:
     """
     chunk = chunk.copy()
 
-    description = ''
+    description = ""
     while chunk[0][0] is None:
         if isinstance(chunk[0][1], Comment):
-            description += chunk[0][1].indent(0).as_string().lstrip('# ')
+            description += chunk[0][1].indent(0).as_string().lstrip("# ")
         chunk.pop(0)
 
     return Setting(chunk[0][0].key, chunk[0][1].unwrap(), description=description.rstrip(), in_schema=True)

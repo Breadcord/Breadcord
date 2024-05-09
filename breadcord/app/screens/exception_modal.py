@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 class ExceptionModal(ModalScreen):
     BINDINGS: ClassVar[list[Binding]] = [
-        Binding(key='escape', action='dismiss', description='Close Modal'),
+        Binding(key="escape", action="dismiss", description="Close Modal"),
     ]
 
     def __init__(self, traceback: Traceback):
@@ -24,8 +24,8 @@ class ExceptionModal(ModalScreen):
 
     def compose(self) -> ComposeResult:
         yield VerticalScroll(
-            Static(self.traceback, id='exception'),
-            id='exception_container',
+            Static(self.traceback, id="exception"),
+            id="exception_container",
         )
 
     def on_click(self, event: events.Click) -> None:

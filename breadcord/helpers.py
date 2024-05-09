@@ -22,8 +22,8 @@ if TYPE_CHECKING:
     from discord.ui.item import ItemCallbackType
 
 
-_T = TypeVar('_T')
-_Transformer = TypeVar('_Transformer', bound=discord.app_commands.Transformer)
+_T = TypeVar("_T")
+_Transformer = TypeVar("_Transformer", bound=discord.app_commands.Transformer)
 
 
 async def administrator_check(interaction: discord.Interaction) -> bool:
@@ -145,23 +145,23 @@ def simple_button(
 
     def decorator(func: ItemCallbackType[V, Button[V]]) -> ItemCallbackType[V, Button[V]]:
         if not inspect.iscoroutinefunction(func):
-            raise TypeError('button function must be a coroutine function')
+            raise TypeError("button function must be a coroutine function")
 
         max_id_length = 100
         # noinspection PyUnresolvedReferences
-        custom_id = f'{func.__module__}:{func.__qualname__}'.removeprefix('breadcord.')
+        custom_id = f"{func.__module__}:{func.__qualname__}".removeprefix("breadcord.")
         if len(custom_id) > max_id_length:
-            raise RuntimeError(f'decorated function path exceeds {max_id_length} characters: {custom_id}')
+            raise RuntimeError(f"decorated function path exceeds {max_id_length} characters: {custom_id}")
 
         func.__discord_ui_model_type__ = discord.ui.Button
         func.__discord_ui_model_kwargs__ = {
-            'style': style,
-            'custom_id': custom_id,
-            'url': None,
-            'disabled': disabled,
-            'label': label,
-            'emoji': emoji,
-            'row': row,
+            "style": style,
+            "custom_id": custom_id,
+            "url": None,
+            "disabled": disabled,
+            "label": label,
+            "emoji": emoji,
+            "row": row,
         }
 
         return func
@@ -216,7 +216,7 @@ class HTTPModuleCog(ModuleCog):
         super().__init__(*args, **kwargs)
 
         if headers:
-            headers['User-Agent'] = headers.get('User-Agent') or (
+            headers["User-Agent"] = headers.get("User-Agent") or (
                 f'Breadcord (https://breadcord.com/) '
                 f'{self.module.manifest.id}/{self.module.manifest.version} '
                 f'Python/{".".join(map(str, sys.version_info[:3]))} '
@@ -262,10 +262,10 @@ def make_codeblock(content: str, lang: str | None = None, *, escape_backticks: b
     if not escape_backticks:
         return f'```{lang or ""}\n{content}\n```'
 
-    zwj = '\u200D'
+    zwj = "\u200D"
     search_start = 0
-    while (found_index := content.find('```', search_start)) != -1:
-        content = content[:found_index] + f'``{zwj}`' + content[found_index + 3:]
+    while (found_index := content.find("```", search_start)) != -1:
+        content = content[:found_index] + f"``{zwj}`" + content[found_index + 3:]
         # ``[ZWJ]`
         # 123    ^ we're right before the last backtick
         search_start += 3

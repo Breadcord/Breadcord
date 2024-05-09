@@ -15,9 +15,9 @@ class ColouredHeaderTitle(HeaderTitle):
 
         :returns: The value to render.
         """
-        text = Text(self.text, no_wrap=True, overflow='ellipsis')
+        text = Text(self.text, no_wrap=True, overflow="ellipsis")
         if self.sub_text:
-            text = Text.assemble(text, (' — ', 'dim'), self.sub_text)
+            text = Text.assemble(text, (" — ", "dim"), self.sub_text)
         return text
 
 
@@ -26,7 +26,7 @@ class BetterHeader(Widget):
 
     # noinspection ALL
     # language=SCSS
-    DEFAULT_CSS = '''
+    DEFAULT_CSS = """
     BetterHeader {
         dock: top;
         width: 100%;
@@ -34,7 +34,7 @@ class BetterHeader(Widget):
         color: $text;
         height: 1;
     }
-    '''
+    """
 
     # noinspection PyShadowingBuiltins
     def __init__(
@@ -66,5 +66,5 @@ class BetterHeader(Widget):
         def set_sub_title(sub_title: str) -> None:
             self.query_one(HeaderTitle).sub_text = sub_title
 
-        self.watch(self.app, 'title', set_title)
-        self.watch(self.app, 'sub_title', set_sub_title)
+        self.watch(self.app, "title", set_title)
+        self.watch(self.app, "sub_title", set_sub_title)

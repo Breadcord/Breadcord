@@ -19,17 +19,17 @@ if TYPE_CHECKING:
 
 class TableLog(DataTable):
     COMPONENT_CLASSES: ClassVar[set[str]] = {
-        'tablelog--debug',
-        'tablelog--info',
-        'tablelog--warning',
-        'tablelog--error',
-        'tablelog--critical',
-        'tablelog--unknown',
+        "tablelog--debug",
+        "tablelog--info",
+        "tablelog--warning",
+        "tablelog--error",
+        "tablelog--critical",
+        "tablelog--unknown",
     }
 
     # noinspection ALL
     # language=SCSS
-    DEFAULT_CSS = '''
+    DEFAULT_CSS = """
     TableLog > .tablelog--debug {
         color: $accent;
     }
@@ -49,15 +49,15 @@ class TableLog(DataTable):
     TableLog > .tablelog--unknown {
         background: $accent;
     }
-    '''
+    """
 
     def __init__(self, handler: TUIHandler, **kwargs):
         super().__init__(**kwargs)
         self.handler = handler
-        self.add_column('Time', key='time')
-        self.add_column('Level', key='level', width=8)
-        self.add_column('Source', key='source')
-        self.add_column('Message', key='message')
+        self.add_column("Time", key="time")
+        self.add_column("Level", key="level", width=8)
+        self.add_column("Source", key="source")
+        self.add_column("Message", key="message")
 
     def _render_line(self, y: int, x1: int, x2: int, base_style: Style) -> Strip:
         try:
@@ -66,9 +66,9 @@ class TableLog(DataTable):
             return Strip.blank(self.size.width, base_style)
 
         if row_key.value is not None:
-            component_class = f'tablelog--{self.get_row(row_key)[1].lower()}'
+            component_class = f"tablelog--{self.get_row(row_key)[1].lower()}"
             if component_class not in self.COMPONENT_CLASSES:
-                component_class = 'tablelog--unknown'
+                component_class = "tablelog--unknown"
             base_style = self.get_component_rich_style(component_class)
 
         return super()._render_line(y, x1, x2, base_style)
@@ -80,7 +80,7 @@ class TableLog(DataTable):
             record.name,
             record.message,
             key=str(record_id),
-            height=record.message.count('\n') + 1,
+            height=record.message.count("\n") + 1,
         )
 
         if round(self.max_scroll_y - self.scroll_y) <= 1:

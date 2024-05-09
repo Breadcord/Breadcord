@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from argparse import Namespace
     from types import TracebackType
 
-_logger = logging.getLogger('breadcord.app')
+_logger = logging.getLogger("breadcord.app")
 
 
 class TUIHandler(logging.Handler):
@@ -39,10 +39,10 @@ class TUIHandler(logging.Handler):
 
 
 class Breadcord(app.App):
-    CSS_PATH = 'app.tcss'
+    CSS_PATH = "app.tcss"
     BINDINGS: ClassVar[list[binding.Binding]] = [
-        binding.Binding(key='ctrl+c', action='quit', description='Quit', priority=True),
-        binding.Binding(key='ctrl+p', action='toggle_bot', description='Toggle Bot On/Off'),
+        binding.Binding(key="ctrl+c", action="quit", description="Quit", priority=True),
+        binding.Binding(key="ctrl+p", action="toggle_bot", description="Toggle Bot On/Off"),
     ]
 
     def __init__(self, args: Namespace) -> None:
@@ -54,17 +54,17 @@ class Breadcord(app.App):
         self._online = False
 
     def compose(self) -> app.ComposeResult:
-        header = BetterHeader(id='header', show_clock=True)
+        header = BetterHeader(id="header", show_clock=True)
         yield header
 
-        self.output_log = TableLog(handler=self.handler, id='output_log')
+        self.output_log = TableLog(handler=self.handler, id="output_log")
         yield self.output_log
 
         yield widgets.Footer()
 
     def on_mount(self) -> None:
         self.online = False
-        self.console.set_window_title('Breadcord TUI')
+        self.console.set_window_title("Breadcord TUI")
         self.bot_worker = self.start_bot()
 
     @property
@@ -74,17 +74,17 @@ class Breadcord(app.App):
     @online.setter
     def online(self, value: bool) -> None:
         # noinspection PyTypeChecker
-        header_title = self.query_one('HeaderTitle', expect_type=ColouredHeaderTitle)
-        previous = 'Offline' if isinstance(header_title.sub_text, str) else header_title.sub_text.plain
+        header_title = self.query_one("HeaderTitle", expect_type=ColouredHeaderTitle)
+        previous = "Offline" if isinstance(header_title.sub_text, str) else header_title.sub_text.plain
 
         if value:
-            sub_text = Text(current := 'Online ', self.get_css_variables()['success'])
+            sub_text = Text(current := "Online ", self.get_css_variables()["success"])
             if previous != current:
-                self.notify('Bot is online!', severity='information')
+                self.notify("Bot is online!", severity="information")
         else:
-            sub_text = Text(current := 'Offline', self.get_css_variables()['error'])
+            sub_text = Text(current := "Offline", self.get_css_variables()["error"])
             if previous != current:
-                self.notify('Bot is offline!', severity='error')
+                self.notify("Bot is offline!", severity="error")
 
         header_title.sub_text = sub_text
         self._online = value
@@ -95,7 +95,7 @@ class Breadcord(app.App):
         try:
             await bot.start()
         except CancelledError:
-            _logger.info('Interrupt received')
+            _logger.info("Interrupt received")
         except:  # noqa: E722
             sys.excepthook(*sys.exc_info())
         finally:
