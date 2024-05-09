@@ -1,6 +1,0 @@
--r requirements.txt
--r docs_requirements.txt
-
-gitignore-parser==0.1.11
-ruff
-textual-dev==1.5.1

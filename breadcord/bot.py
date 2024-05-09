@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from . import app
 
 _logger = logging.getLogger('breadcord.bot')
+schema_path = Path(__file__).parent / 'settings_schema.toml'
 
 
 class CommandTree(discord.app_commands.CommandTree):
@@ -48,9 +49,12 @@ class Bot(commands.Bot):
         self.args = args
         self.settings = config.SettingsGroup('settings', observers={})
         self.ready = False
+        self._new_data_dir = False
 
         data_dir = self.args.data_dir or Path('data')
-        data_dir.mkdir(exist_ok=True)
+        if not data_dir.is_dir():
+            self._new_data_dir = True
+            data_dir.mkdir()
         self.data_dir = data_dir.resolve()
 
         logs_dir = self.args.logs_dir or self.data_dir / 'logs'
@@ -123,9 +127,12 @@ class Bot(commands.Bot):
     async def start(self, *_, **__) -> None:
         self._init_logging()
 
+        if self._new_data_dir:
+            _logger.info('Creating new data directory in current location')
+
         if not self.settings_file.is_file():
             _logger.info('Generating missing settings.toml file')
-            self.settings = config.SettingsGroup('settings', schema_path='breadcord/settings_schema.toml')
+            self.settings = config.SettingsGroup('settings', schema_path=schema_path)
             _logger.warning('Bot token must be supplied to start the bot')
             self.ready = True
             await self.close()
@@ -257,7 +264,7 @@ class Bot(commands.Bot):
 
         settings = config.SettingsGroup(
             'settings',
-            schema_path='breadcord/settings_schema.toml',
+            schema_path=schema_path,
             observers=self.settings.observers,
         )
         settings.update_from_dict(config.load_toml(file_path), strict=False)

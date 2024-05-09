@@ -17,7 +17,7 @@ try:
 except ImportError:
     console.print(
         '[red]! gitignore_parser dependency missing. Did you install dev dependencies?\n'
-        '  $ [bold bright_red]python -m pip install -r dev_requirements.txt',
+        '  $ [bold bright_red]python -m pip install breadcord[dev]',
     )
     raise SystemExit(1) from None
 
