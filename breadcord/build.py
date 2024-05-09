@@ -24,19 +24,23 @@ except ImportError:
 BREAD = '🍞🥐🥖🥪🫓🥙'
 
 parser = argparse.ArgumentParser(description='Build an unpacked Breadcord module into a .loaf file.')
-parser.add_argument('path', nargs='?', type=Path, default=Path())
+parser.add_argument('path', type=Path)
 
 
 def build(module_path: Path) -> None:
     build_string = f'[bold yellow]Building module... [bright_black]({escape(str(module_path))})'
     console.print(build_string)
 
-    with console.status(build_string, spinner='dots', spinner_style='blue'):
-        manifest_file = module_path / 'manifest.toml'
-        if not manifest_file.is_file():
-            console.print('[red]! manifest.toml file not found')
-            raise SystemExit(1)
+    if not module_path.is_dir():
+        console.print('[red]! Directory not found')
+        raise SystemExit(1)
 
+    manifest_file = module_path / 'manifest.toml'
+    if not manifest_file.is_file():
+        console.print('[red]! manifest.toml file not found')
+        raise SystemExit(1)
+
+    with console.status(build_string, spinner='dots', spinner_style='blue'):
         manifest = parse_manifest(load_toml(manifest_file))
         console.print(f'[blue]* Manifest loaded for module: [bold cyan]{escape(manifest.id)}')
 
