@@ -58,5 +58,5 @@ line-length = 120
 
 
 [tool.ruff.lint.flake8-quotes]
-inline-quotes = "single"
-multiline-quotes = "single"
+inline-quotes = "double"
+multiline-quotes = "double"
