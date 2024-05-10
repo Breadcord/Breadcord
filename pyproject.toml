@@ -32,6 +32,7 @@ dependencies = [
     "textual==0.58.0",
     "tomlkit==0.12.4",
 ]
+dynamic = ["optional-dependencies"]
 
 [project.optional-dependencies]
 dev = [
@@ -41,12 +42,9 @@ dev = [
     "ruff-lsp",
     "textual-dev==1.5.1",
 ]
-docs = [
-    "mkdocs-literate-nav==0.6.1",
-    "mkdocs-material==9.5.20",
-    "mkdocs-minify-plugin==0.8.0",
-    "mkdocstrings-python==1.10.0",
-]
+
+[tool.setuptools.dynamic.optional-dependencies]
+docs = { file = "docs/docs_requirements.txt" }
 
 [project.scripts]
 breadcord = "breadcord.__main__:app.run"
