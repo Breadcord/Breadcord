@@ -13,7 +13,7 @@ hide:
 <div class="hero-buttons" markdown>
 
 [:material-star-outline:{.lg} Get Started](docs/for-users/install-breadcord.md){.md-button .md-button--primary}
-[:material-package-variant:{.lg} Browse Modules](https://bin.breadcord.com/){.md-button}
+[:material-package-variant:{.lg} Browse Modules](https://github.com/orgs/Breadcord-Toasts/repositories){.md-button}
 
 </div>
 </div>

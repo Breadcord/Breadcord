@@ -1,5 +1,5 @@
 - [Home](index.md)
-- [BreadBin](https://bin.breadcord.com/)
+- [BreadBin](https://github.com/orgs/Breadcord-Toasts/repositories)
 - For Users
     - [Install Breadcord](docs/for-users/install-breadcord.md)
 - For Developers
