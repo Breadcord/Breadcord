@@ -32,19 +32,14 @@ dependencies = [
     "textual==0.58.0",
     "tomlkit==0.12.4",
 ]
-dynamic = ["optional-dependencies"]
 
 [project.optional-dependencies]
 dev = [
-    "breadcord[docs]",
     "gitignore-parser==0.1.11",
     "ruff",
     "ruff-lsp",
     "textual-dev==1.5.1",
 ]
-
-[tool.setuptools.dynamic.optional-dependencies]
-docs = { file = "docs/docs_requirements.txt" }
 
 [project.scripts]
 breadcord = "breadcord.__main__:app.run"
