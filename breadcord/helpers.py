@@ -13,9 +13,9 @@ import breadcord
 from breadcord.module import ModuleCog
 
 if TYPE_CHECKING:
-    # noinspection PyProtectedMember
     from collections.abc import Callable, Sequence
 
+    # noinspection PyProtectedMember
     from discord.ui.button import Button, V
 
     # noinspection PyProtectedMember
