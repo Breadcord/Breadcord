@@ -44,11 +44,12 @@ dev = [
 [project.scripts]
 breadcord = "breadcord.__main__:app.run"
 
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
 packages = ["breadcord"]
 
 
@@ -106,10 +107,8 @@ ignore = [
 [tool.ruff]
 line-length = 120
 
-
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"] # Unused imports in __init__.py are fine
-
 
 [tool.ruff.lint.flake8-quotes]
 inline-quotes = "single"
