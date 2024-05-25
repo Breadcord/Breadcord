@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from . import app
 
 _logger = logging.getLogger('breadcord.bot')
-schema_path = Path(__file__).parent / 'settings_schema.toml'
+module_path = Path(__file__).parent
 
 
 class CommandTree(discord.app_commands.CommandTree):
@@ -132,7 +132,7 @@ class Bot(commands.Bot):
 
         if not self.settings_file.is_file():
             _logger.info('Generating missing settings.toml file')
-            self.settings = config.SettingsGroup('settings', schema_path=schema_path)
+            self.settings = config.SettingsGroup('settings', schema_path=module_path / 'settings_schema.toml')
             _logger.warning('Bot token must be supplied to start the bot')
             self.ready = True
             await self.close()
@@ -154,7 +154,7 @@ class Bot(commands.Bot):
     async def setup_hook(self) -> None:
         search_paths = [
             *self.args.module_dirs,
-            Path('breadcord/core_modules'),
+            module_path / 'core_modules',
             self.modules_dir,
         ]
         _logger.debug(f'Module search paths: {search_paths}')
@@ -264,7 +264,7 @@ class Bot(commands.Bot):
 
         settings = config.SettingsGroup(
             'settings',
-            schema_path=schema_path,
+            schema_path=module_path / 'settings_schema.toml',
             observers=self.settings.observers,
         )
         settings.update_from_dict(config.load_toml(file_path), strict=False)
