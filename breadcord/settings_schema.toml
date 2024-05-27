@@ -17,4 +17,4 @@ case_insensitive_prefix = true
 administrators = []
 
 # Enabled modules
-modules = ["module_manager", "settings_manager"]
+modules = ["oobe"]

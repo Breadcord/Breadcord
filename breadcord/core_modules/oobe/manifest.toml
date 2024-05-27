@@ -1,0 +1,5 @@
+[core_module]
+id = "oobe"
+name = "Out of Box Experience"
+description = "Provides a helpful setup flow the first time the bot is run"
+license = "GNU LGPLv3"
