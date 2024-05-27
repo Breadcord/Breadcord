@@ -18,7 +18,7 @@ from packaging.version import Version
 from breadcord import config
 
 if TYPE_CHECKING:
-    from collections.abc import Generator, Iterable
+    from collections.abc import Generator
     from os import PathLike
 
     from breadcord import Bot
