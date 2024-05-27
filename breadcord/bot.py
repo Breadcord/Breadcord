@@ -152,13 +152,17 @@ class Bot(commands.Bot):
         super().run(token='', log_handler=None, **kwargs)
 
     async def setup_hook(self) -> None:
-        search_paths = [
-            *self.args.module_dirs,
-            module_path / 'core_modules',
-            self.modules_dir,
-        ]
-        _logger.debug(f'Module search paths: {search_paths}')
-        self.modules.discover(self, search_paths=search_paths)
+        for unresolved_path in self.args.module_dirs:
+            path = unresolved_path.resolve()
+            _logger.info(f'Extra module path: {path.as_posix()}')
+            relative_path = path.relative_to(Path().resolve())
+            self.modules.discover(self, search_path=relative_path)
+
+        _logger.debug('Finding core modules')
+        self.modules.discover(self, search_path=module_path / 'core_modules', import_relative_to=module_path.parent)
+
+        _logger.debug(f'Finding user modules ({self.modules_dir.as_posix()})')
+        self.modules.discover(self, search_path=self.modules_dir)
 
         for loaf in self.modules_dir.glob('*.loaf'):
             _logger.info(f'Loaf pending install: {loaf.name}')

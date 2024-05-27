@@ -27,10 +27,15 @@ _logger = getLogger('breadcord.module')
 
 
 class Module:
-    def __init__(self, bot: Bot, module_path: str | PathLike[str]) -> None:
+    def __init__(
+        self,
+        bot: Bot,
+        module_path: str | PathLike[str],
+        import_relative_to: str | PathLike[str] = Path(),
+    ) -> None:
         self.bot = bot
         self.path = Path(module_path).resolve()
-        self.import_string = self.path.relative_to(Path().resolve()).as_posix().replace('/', '.')
+        self.import_string = self.path.relative_to(Path(import_relative_to).resolve()).as_posix().replace('/', '.')
         self.logger = getLogger(self.import_string.removeprefix('breadcord.'))
         self.loaded = False
 
@@ -142,22 +147,27 @@ class Modules:
         if delete_source:
             loaf_path.unlink()
 
-    def discover(self, bot: Bot, search_paths: Iterable[str | PathLike[str]]) -> None:
-        for path in map(Path, search_paths):
-            if not path.is_dir():
-                _logger.warning(f"Module path '{path.as_posix()}' not found")
+    def discover(
+        self,
+        bot: Bot,
+        search_path: str | PathLike[str],
+        import_relative_to: str | PathLike[str] = Path(),
+    ) -> None:
+        path = Path(search_path).resolve()
+
+        if not path.is_dir():
+            raise FileNotFoundError(f"module path '{path.as_posix()}' not found")
+
+        for module_path in [path, *list(path.iterdir())]:
+            if not (module_path / 'manifest.toml').is_file():
                 continue
 
-            for module_path in [path, *list(path.iterdir())]:
-                if not (module_path / 'manifest.toml').is_file():
-                    continue
+            module = Module(bot, module_path, import_relative_to=import_relative_to)
+            _logger.debug(f'Discovered module: {module.import_string}')
+            self.add(module)
 
-                module = Module(bot, module_path)
-                if module.id not in self._modules:
-                    self.add(module)
-
-                if module_path == path:
-                    break
+            if module_path == path:
+                break
 
 
 class ModuleCog(commands.Cog):
