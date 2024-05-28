@@ -4,7 +4,7 @@ import inspect
 import logging
 import sys
 from collections import defaultdict
-from typing import TYPE_CHECKING, ClassVar, Self, TypeVar, overload
+from typing import TYPE_CHECKING, Self, TypeVar, overload
 
 import aiohttp
 import discord
