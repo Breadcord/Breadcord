@@ -292,9 +292,7 @@ class IndentFormatter(logging.Formatter):
                     break
                 if all(char in '0123456789;' for char in string[i+2:end]):
                     i = end + 1
-                    # Avoid IndexError since the escape sequence could be at the end of the string
-                    if i >= len(string):
-                        break
+                    continue
             new += string[i]
             i += 1
         return new
