@@ -278,12 +278,29 @@ class IndentFormatter(logging.Formatter):
         super().__init__()
         self._wrapped = to_wrap or logging.Formatter()
 
+    @staticmethod
+    def _strip_colour_ansi(string: str) -> str:
+        """Strips ANSI colour codes from a string."""
+        # If this does not match everything we want it to, I take no responsibility - Fripe
+        new = ''
+        i = 0
+        while i < len(string):
+            if string[i] == '\x1b' and string[i + 1] == '[':
+                end = string.find('m', i+2)
+                if end == -1:
+                    new += string[i:]
+                    break
+                if all(char in '0123456789;' for char in string[i+2:end]):
+                    i = end + 1
+                    # Avoid IndexError since the escape sequence could be at the end of the string
+                    if i >= len(string):
+                        break
+            new += string[i]
+            i += 1
+        return new
+
     def get_prefix_length(self, record: logging.LogRecord) -> int:
         """Get the length of the prefix of the log message. Will not give wanted results if ANSI is involved."""
-        extra = {}
-        if isinstance(self._wrapped, ColourFormatter):
-            extra['colour'] = False
-
         formatted = self._wrapped.format(logging.LogRecord(
             name=record.name,
             level=record.levelno,
@@ -292,47 +309,12 @@ class IndentFormatter(logging.Formatter):
             msg='',
             args=(),
             exc_info=None,
-        ), **extra)
+        ))
         formatted = formatted.splitlines()[-1]  # Might as well anticipate something scuffed
+        formatted = self._strip_colour_ansi(formatted)
         return len(formatted)
 
     def format(self, record: logging.LogRecord) -> str:
         indent = ' ' * self.get_prefix_length(record)
         initial, *rest = self._wrapped.format(record).splitlines(keepends=True)
         return initial + ''.join(indent + line for line in rest)
-
-
-class ColourFormatter(logging.Formatter):
-    # What is pyright even doing? It does not seem to validate if ClassVars are correct...
-    LEVEL_COLOURS: ClassVar[dict[int, str]] = {
-        logging.DEBUG: '\x1b[40;1m',
-        logging.INFO: '\x1b[34;1m',
-        logging.WARNING: '\x1b[33;1m',
-        logging.ERROR: '\x1b[31m',
-        logging.CRITICAL: '\x1b[41m',
-    }
-    COL_FORMATS: ClassVar[dict[int, logging.Formatter]] = {
-        level: logging.Formatter(
-            f'\x1b[30;1m%(asctime)s\x1b[0m {colour}%(levelname)-8s\x1b[0m \x1b[35m%(name)s\x1b[0m %(message)s',
-            '%Y-%m-%d %H:%M:%S',
-        )
-        for level, colour in LEVEL_COLOURS.items()
-    }
-    STANDARD_FORMAT = logging.Formatter(
-        '%(asctime)s %(levelname)-8s %(name)s %(message)s',
-        '%Y-%m-%d %H:%M:%S',
-    )
-
-    def format(self, record: logging.LogRecord, *, colour: bool = True) -> str:
-        formatter = self.STANDARD_FORMAT
-        if colour:
-            formatter = self.COL_FORMATS.get(record.levelno, self.COL_FORMATS[logging.DEBUG])
-
-        # Override the traceback to always print in red
-        if record.exc_info:
-            text = formatter.formatException(record.exc_info)
-            record.exc_text = f'\x1b[31m{text}\x1b[0m'
-        output = formatter.format(record)
-        # Remove the cache layer
-        record.exc_text = None
-        return output

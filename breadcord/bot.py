@@ -11,7 +11,7 @@ from discord.ext import commands
 from discord.ext.commands.view import StringView
 
 from . import config, errors
-from .helpers import ColourFormatter, IndentFormatter
+from .helpers import IndentFormatter
 from .module import Modules, global_modules
 
 if TYPE_CHECKING:
@@ -85,7 +85,8 @@ class Bot(commands.Bot):
         sys.excepthook = handle_exception
 
         if self.tui is None:
-            discord.utils.setup_logging(formatter=IndentFormatter(ColourFormatter()))
+            # noinspection PyProtectedMember
+            discord.utils.setup_logging(formatter=IndentFormatter(discord.utils._ColourFormatter()))
         else:
             discord.utils.setup_logging(handler=self.tui.handler)
 
