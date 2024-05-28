@@ -291,7 +291,7 @@ class IndentFormatter(logging.Formatter):
             exc_info=None,
         ))
         formatted = formatted.splitlines()[-1]  # Might as well anticipate something scuffed
-        formatted = re.sub(r'\x1b\[[0-9;]*m', '', formatted)
+        formatted = re.sub(r'\x1b\[[0-9;]*m', '', formatted)  # Simple filter for ANSI escape codes
         return len(formatted)
 
     def format(self, record: logging.LogRecord) -> str:
