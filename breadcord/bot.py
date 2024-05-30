@@ -10,10 +10,8 @@ import discord
 from discord.ext import commands
 from discord.ext.commands.view import StringView
 
-# noinspection PyProtectedMember
-from discord.utils import _ColourFormatter
-
 from . import config, errors
+from .helpers import IndentFormatter
 from .module import Modules, global_modules
 
 if TYPE_CHECKING:
@@ -87,7 +85,8 @@ class Bot(commands.Bot):
         sys.excepthook = handle_exception
 
         if self.tui is None:
-            discord.utils.setup_logging(formatter=_ColourFormatter())
+            # noinspection PyProtectedMember
+            discord.utils.setup_logging(formatter=IndentFormatter(discord.utils._ColourFormatter()))
         else:
             discord.utils.setup_logging(handler=self.tui.handler)
 
@@ -107,11 +106,11 @@ class Bot(commands.Bot):
 
         discord.utils.setup_logging(
             handler=logging.FileHandler(log_file, 'w', encoding='utf-8'),
-            formatter=logging.Formatter(
+            formatter=IndentFormatter(logging.Formatter(
                 fmt='{asctime} [{levelname}] {name}: {message}',
                 datefmt='%Y-%m-%d %H:%M:%S',
                 style='{',
-            ),
+            )),
         )
 
     async def on_command_error(
