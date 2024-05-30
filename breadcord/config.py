@@ -332,8 +332,7 @@ class SettingsGroup(SettingsNode):
         """
         if default is MISSING:
             return self._settings[key]
-        else:
-            return self._settings.get(key, default)
+        return self._settings.get(key, default)
 
     def set(self, key: str, value: Any, *, strict: bool = True) -> None:
         """Set the value for a setting by its key, creating new settings as necessary if not using strict mode.
