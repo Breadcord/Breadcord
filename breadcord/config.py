@@ -315,7 +315,7 @@ class SettingsGroup(SettingsNode):
     @overload
     def get(self, key: str) -> Setting:
         ...
-    
+
     @overload
     def get(self, key: str, default: _T) -> Setting | _T:
         ...
