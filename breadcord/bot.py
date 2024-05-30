@@ -166,7 +166,7 @@ class Bot(commands.Bot):
                 self.modules.get(module).loaded = False
                 failed.append(module)
         if failed:
-            _logger.warning('Failed to load modules: ' + ', '.join(f'{module}' for module in failed))
+            _logger.warning('Failed to load modules: ' + ', '.join(module for module in failed))
 
         @self.settings.command_prefixes.observe
         def on_command_prefixes_changed(_, new: list[str]) -> None:
