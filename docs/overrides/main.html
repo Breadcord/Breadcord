@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block footer %}
+  {{ super() }}
+  <img id="peekaboo" src="/assets/crumb_peek_left.webp" alt="Peekaboo!">
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script async defer src="https://sa-api.breadcord.com/latest.js" data-collect-dnt="true"></script>
+  <noscript>
+    <img src="https://sa-api.breadcord.com/noscript.gif" alt="" referrerpolicy="no-referrer-when-downgrade" />
+  </noscript>
+{% endblock %}

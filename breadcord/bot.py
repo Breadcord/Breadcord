@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from . import app
 
 _logger = logging.getLogger('breadcord.bot')
+module_path = Path(__file__).parent
 
 
 class CommandTree(discord.app_commands.CommandTree):
@@ -48,9 +49,12 @@ class Bot(commands.Bot):
         self.args = args
         self.settings = config.SettingsGroup('settings', observers={})
         self.ready = False
+        self._new_data_dir = False
 
         data_dir = self.args.data_dir or Path('data')
-        data_dir.mkdir(exist_ok=True)
+        if not data_dir.is_dir():
+            self._new_data_dir = True
+            data_dir.mkdir()
         self.data_dir = data_dir.resolve()
 
         logs_dir = self.args.logs_dir or self.data_dir / 'logs'
@@ -123,9 +127,12 @@ class Bot(commands.Bot):
     async def start(self, *_, **__) -> None:
         self._init_logging()
 
+        if self._new_data_dir:
+            _logger.info('Creating new data directory in current location')
+
         if not self.settings_file.is_file():
             _logger.info('Generating missing settings.toml file')
-            self.settings = config.SettingsGroup('settings', schema_path='breadcord/settings_schema.toml')
+            self.settings = config.SettingsGroup('settings', schema_path=module_path / 'settings_schema.toml')
             _logger.warning('Bot token must be supplied to start the bot')
             self.ready = True
             await self.close()
@@ -145,13 +152,21 @@ class Bot(commands.Bot):
         super().run(token='', log_handler=None, **kwargs)
 
     async def setup_hook(self) -> None:
-        search_paths = [
-            *self.args.module_dirs,
-            Path('breadcord/core_modules'),
-            self.modules_dir,
-        ]
-        _logger.debug(f'Module search paths: {search_paths}')
-        self.modules.discover(self, search_paths=search_paths)
+        for unresolved_path in self.args.module_dirs:
+            path = unresolved_path.resolve()
+            _logger.info(f'Extra module path: {path.as_posix()}')
+            relative_path = path.relative_to(Path().resolve())
+            self.modules.discover(self, search_path=relative_path)
+
+        _logger.debug('Finding core modules')
+        self.modules.discover(self, search_path=module_path / 'core_modules', import_relative_to=module_path.parent)
+
+        _logger.debug(f'Finding user modules ({self.modules_dir.as_posix()})')
+        self.modules.discover(self, search_path=self.modules_dir)
+
+        for loaf in self.modules_dir.glob('*.loaf'):
+            _logger.info(f'Loaf pending install: {loaf.name}')
+            self.modules.install_loaf(self, loaf_path=loaf, install_path=self.modules_dir, delete_source=True)
 
         for module in self.settings.modules.value:
             if module not in self.modules:
@@ -253,10 +268,10 @@ class Bot(commands.Bot):
 
         settings = config.SettingsGroup(
             'settings',
-            schema_path='breadcord/settings_schema.toml',
+            schema_path=module_path / 'settings_schema.toml',
             observers=self.settings.observers,
         )
-        settings.update_from_dict(config.load_settings(file_path), strict=False)
+        settings.update_from_dict(config.load_toml(file_path), strict=False)
         for module in self.modules:
             module.load_settings_schema()
 

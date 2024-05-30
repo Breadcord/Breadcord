@@ -1,7 +1,7 @@
 *
 
 !breadcord/
-!requirements.txt
+!pyproject.toml
 
 breadcord/**/__pycache__/
 breadcord/**/*.py[cod]

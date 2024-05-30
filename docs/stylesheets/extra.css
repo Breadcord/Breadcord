@@ -1,9 +1,52 @@
+@import url("https://fonts.googleapis.com/css2?family=Lato:wght@900&display=swap");
+
+/* Theme colours */
 :root {
-  --md-primary-fg-color: #936f4b;
-  --md-primary-fg-color--light: #daad80;
-  --md-primary-fg-color--dark: #795c3e;
+    --md-primary-fg-color: #936f4b;
+    --md-primary-fg-color--light: #daad80;
+    --md-primary-fg-color--mediumlight: #a68462;
+    --md-primary-fg-color--dark: #795c3e;
 }
 
+/* More readable link colour */
 [data-md-color-scheme="slate"] {
-  --md-typeset-a-color: var(--md-primary-fg-color--light);
+    --md-typeset-a-color: var(--md-primary-fg-color--light);
+}
+
+/* Animate scrolling to page anchors */
+@media (prefers-reduced-motion: no-preference) {
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+/* Slightly less vanilla heading and button font */
+h1, h2, h3, h4, h5, h6, a.md-button {
+    font-family: "Poppins", var(--md-text-font-family), sans-serif;
+}
+
+/* Slightly nicer button style */
+a.md-button {
+    color: var(--md-primary-fg-color--mediumlight);
+    border-radius: 0.4rem !important;
+    text-align: center;
+    text-wrap: pretty;
+}
+
+.md-typeset .md-button--primary {
+    background-color: var(--md-primary-fg-color--mediumlight);
+    border-color: var(--md-primary-fg-color--mediumlight);
+    color: var(--md-primary-bg-color)
+}
+
+/* Peekaboo! */
+footer.md-footer > div.md-footer-meta > div.md-footer-meta__inner {
+    margin-left: max(50px, calc((100vw - 61rem) / 2));
+}
+
+#peekaboo {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    width: 50px;
 }

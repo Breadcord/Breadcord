@@ -52,7 +52,7 @@ class SettingsFileEditor(discord.ui.Modal, title='Settings File Editor'):
                 title='Settings saved!',
                 colour=discord.Colour.green(),
             ),
-            ephemeral=self.settings.ephemeral.value,
+            ephemeral=self.bot.settings.ephemeral.value,
         )
 
 

@@ -6,9 +6,11 @@ import sys
 from logging import getLogger
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+from zipfile import ZipFile
 
 import discord
 import pydantic
+import tomlkit
 from discord.ext import commands
 from packaging.requirements import Requirement
 from packaging.version import Version
@@ -16,7 +18,7 @@ from packaging.version import Version
 from breadcord import config
 
 if TYPE_CHECKING:
-    from collections.abc import Generator, Iterable
+    from collections.abc import Generator
     from os import PathLike
 
     from breadcord import Bot
@@ -25,20 +27,23 @@ _logger = getLogger('breadcord.module')
 
 
 class Module:
-    def __init__(self, bot: Bot, module_path: str | PathLike[str]) -> None:
+    def __init__(
+        self,
+        bot: Bot,
+        module_path: str | PathLike[str],
+        import_relative_to: str | PathLike[str] = Path(),
+    ) -> None:
         self.bot = bot
         self.path = Path(module_path).resolve()
-        self.import_string = self.path.relative_to(Path().resolve()).as_posix().replace('/', '.')
+        self.import_string = self.path.relative_to(Path(import_relative_to).resolve()).as_posix().replace('/', '.')
         self.logger = getLogger(self.import_string.removeprefix('breadcord.'))
         self.loaded = False
 
         if not (self.path / 'manifest.toml').is_file():
             raise FileNotFoundError('manifest.toml file not found')
-        self.manifest = parse_manifest(config.load_settings(self.path / 'manifest.toml'))
+        self.manifest = parse_manifest(config.load_toml(self.path / 'manifest.toml'))
 
         self.id = self.manifest.id
-        if self.id != self.path.name:
-            self.logger.warning(f"Module ID '{self.id}' does not match directory name")
 
     @property
     def storage_path(self) -> Path:
@@ -114,23 +119,55 @@ class Modules:
             module.logger.warning(
                 f'Module ID conflicts with {self.get(module.id).import_string} so it will not be loaded',
             )
+            return
+
         self._modules[module.id] = module
 
     def remove(self, module_id: str) -> None:
         del self._modules[module_id]
 
-    def discover(self, bot: Bot, search_paths: Iterable[str | PathLike[str]]) -> None:
-        self._modules = {}
-        for path in map(Path, search_paths):
-            if not path.is_dir():
-                _logger.warning(f"Module path '{path.as_posix()}' not found")
+    def install_loaf(
+        self,
+        bot: Bot,
+        loaf_path: str | PathLike[str],
+        install_path: str | PathLike[str],
+        *,
+        delete_source: bool = False,
+    ) -> None:
+        loaf_path = Path(loaf_path)
+        install_path = Path(install_path)
+
+        with ZipFile(loaf_path, mode='r') as archive:
+            manifest = parse_manifest(tomlkit.loads(archive.read('manifest.toml')).unwrap())
+            module_path = install_path / manifest.id
+            archive.extractall(module_path)
+            module = Module(bot, module_path)
+            self.add(module)
+            _logger.info(f'Installed module {module.id} from path {loaf_path.resolve()}')
+        if delete_source:
+            loaf_path.unlink()
+
+    def discover(
+        self,
+        bot: Bot,
+        search_path: str | PathLike[str],
+        import_relative_to: str | PathLike[str] = Path(),
+    ) -> None:
+        path = Path(search_path).resolve()
+
+        if not path.is_dir():
+            raise FileNotFoundError(f"module path '{path.as_posix()}' not found")
+
+        for module_path in [path, *list(path.iterdir())]:
+            if not (module_path / 'manifest.toml').is_file():
                 continue
-            for module_path in [path, *list(path.iterdir())]:
-                if not (module_path / 'manifest.toml').is_file():
-                    continue
-                self.add(Module(bot, module_path))
-                if module_path == path:
-                    break
+
+            module = Module(bot, module_path, import_relative_to=import_relative_to)
+            _logger.debug(f'Discovered module: {module.import_string}')
+            self.add(module)
+
+            if module_path == path:
+                break
 
 
 class ModuleCog(commands.Cog):
@@ -138,7 +175,10 @@ class ModuleCog(commands.Cog):
         self.module = global_modules.get(module_id)
         self.bot = self.module.bot
         self.logger = self.module.logger
-        self.storage_path = self.module.storage_path
+
+    @property
+    def storage_path(self) -> Path:
+        return self.module.storage_path
 
     @property
     def settings(self) -> config.SettingsGroup:
