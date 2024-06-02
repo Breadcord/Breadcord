@@ -27,7 +27,7 @@ dependencies = [
     "discord.py==2.3.2",
     "packaging==24.0",
     "pydantic==2.7.2",
-    "rapidfuzz==3.5.2",
+    "rapidfuzz==3.9.3",
     "rich==13.7.1",
     "textual==0.63.6",
     "tomlkit==0.12.5",
