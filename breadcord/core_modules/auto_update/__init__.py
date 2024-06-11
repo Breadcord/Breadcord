@@ -5,7 +5,7 @@ import shutil
 import subprocess
 from collections.abc import Iterable
 from functools import cache
-from typing import Any, Annotated
+from typing import Annotated, Any
 
 import discord
 from discord.ext import commands, tasks
