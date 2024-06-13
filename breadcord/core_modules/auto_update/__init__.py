@@ -17,11 +17,24 @@ from breadcord.module import Module
 
 class ModuleConverter(commands.Converter):
     async def convert(self, ctx: commands.Context, argument: str) -> Module:
-        argument = argument.strip().lower()
         bot: breadcord.Bot = ctx.bot
+        argument = argument.strip().lower()
         if argument not in bot.modules:
             raise commands.BadArgument(f'Module {argument!r} not found')
         return bot.modules.get(argument)
+
+
+class ModulesConverter(commands.Converter):
+    async def convert(self, ctx: commands.Context, argument: str) -> list[Module]:
+        bot: breadcord.Bot = ctx.bot
+        modules = []
+        for module_id in argument.lower().split():
+            if module_id in ('all', '*'):
+                return [module for module in bot.modules]
+            if module_id not in bot.modules:
+                raise commands.BadArgument(f'Module {module_id!r} not found')
+            modules.append(bot.modules.get(module_id))
+        return modules
 
 
 @cache
@@ -91,7 +104,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
         for module in self.bot.modules:
             if module.id not in to_update:
                 continue
-            if not module.loaded:
+            if not module_ids and not module.loaded:
                 continue
             if not await self.should_update(module):
                 continue
@@ -133,7 +146,8 @@ class AutoUpdate(breadcord.module.ModuleCog):
         self.logger.info(f'Updating {module.id}')
         update_text = await git('pull', cwd=module.path)
         self.logger.debug(f'({module.id}) Git output:\n{update_text.strip()}')
-        await module.reload()
+        if module.loaded:
+            await module.reload()
 
         git_hash_msg = (await git('log', '-1', '--format="%H %s"', cwd=module.path)).strip().strip('"')
         self.logger.debug(f'Updated {module.id} to {git_hash_msg}')
@@ -146,7 +160,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
     async def update(
         self,
         ctx: commands.Context,
-        modules: Annotated[list[Module], commands.Greedy[ModuleConverter]],
+        modules: Annotated[list[Module], ModulesConverter],
     ) -> None:
         response = await ctx.send('Updating...')
         updated = await self.update_modules([module.id for module in modules] if modules else None)
