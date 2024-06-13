@@ -3,25 +3,19 @@ from __future__ import annotations
 import asyncio
 import shutil
 import subprocess
-from collections.abc import Iterable
 from functools import cache
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 import discord
 from discord.ext import commands, tasks
 
 import breadcord
 from breadcord.helpers import make_codeblock
-from breadcord.module import Module
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
-class ModuleConverter(commands.Converter):
-    async def convert(self, ctx: commands.Context, argument: str) -> Module:
-        bot: breadcord.Bot = ctx.bot
-        argument = argument.strip().lower()
-        if argument not in bot.modules:
-            raise commands.BadArgument(f'Module {argument!r} not found')
-        return bot.modules.get(argument)
+    from breadcord.module import Module
 
 
 class ModulesConverter(commands.Converter):
@@ -30,7 +24,7 @@ class ModulesConverter(commands.Converter):
         modules = []
         for module_id in argument.lower().split():
             if module_id in ('all', '*'):
-                return [module for module in bot.modules]
+                return list(bot.modules)
             if module_id not in bot.modules:
                 raise commands.BadArgument(f'Module {module_id!r} not found')
             modules.append(bot.modules.get(module_id))
@@ -94,7 +88,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
         task.add_done_callback(lambda _: self.logger.debug('Auto update task scheduled and ran'))
 
     async def update_modules(self, module_ids: Iterable[str] | None = None) -> dict[str, tuple[str, str, str]]:
-        to_update = set(module_ids) if module_ids else set(module.id for module in self.bot.modules if module.loaded)
+        to_update = set(module_ids) if module_ids else {module.id for module in self.bot.modules if module.loaded}
         not_found = tuple(module_id for module_id in to_update if module_id not in self.bot.modules)
         if not_found:
             self.logger.warning(f'Modules not found: {", ".join(not_found)}')
