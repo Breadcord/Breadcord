@@ -11,11 +11,10 @@ from discord.ext import commands, tasks
 
 import breadcord
 from breadcord.helpers import make_codeblock
+from breadcord.module import Module  # noqa: TCH001
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-
-    from breadcord.module import Module
 
 
 class ModulesConverter(commands.Converter):
@@ -154,10 +153,17 @@ class AutoUpdate(breadcord.module.ModuleCog):
     async def update(
         self,
         ctx: commands.Context,
-        modules: Annotated[list[Module], ModulesConverter],
+        # A bit of a misleading name, but it makes more sense for users
+        module_ids: Annotated[list[Module], ModulesConverter],
     ) -> None:
+        """Update one or more modules to the latest commit on the remote repository.
+
+        If no modules are specified, all loaded modules will be updated.
+        If module IDs are specified, only those modules will be updated, regardless of whether they are loaded.
+        If `all` or `*` is specified, all modules will be updated regardless of whether they are loaded.
+        """
         response = await ctx.send('Updating...')
-        updated = await self.update_modules([module.id for module in modules] if modules else None)
+        updated = await self.update_modules([module.id for module in module_ids] if module_ids else None)
         if len(updated) == 0:
             await response.edit(content='No modules were updated.')
             return
