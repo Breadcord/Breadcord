@@ -24,7 +24,7 @@ requires-python = ">=3.11"
 dependencies = [
     "aiofiles==23.2.1",
     "aiohttp==3.9.5",
-    "discord.py==2.3.2",
+    "discord.py==2.4.0",
     "packaging==24.1",
     "pydantic==2.7.2",
     "rapidfuzz==3.9.3",
