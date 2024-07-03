@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import sys
 from datetime import datetime
@@ -167,11 +168,16 @@ class Bot(commands.Bot):
             _logger.info(f'Loaf pending install: {loaf.name}')
             self.modules.install_loaf(self, loaf_path=loaf, install_path=self.modules_dir, delete_source=True)
 
-        for module in self.settings.modules.value:
-            if module not in self.modules:
-                _logger.warning(f"Module '{module}' enabled but not found")
-                continue
-            await self.modules.get(module).load()
+        async def load_wrapper(module_id: str) -> None:
+            if module_id not in self.modules:
+                _logger.warning(f"Module '{module_id}' enabled but not found")
+                return
+            await self.modules.get(module_id).load()
+
+        await asyncio.gather(*(
+            load_wrapper(module)
+            for module in self.settings.modules.value
+        ))
 
         @self.settings.command_prefixes.observe
         def on_command_prefixes_changed(_, new: list[str]) -> None:
