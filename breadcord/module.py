@@ -113,12 +113,12 @@ class Module:
         self.logger.info('Installing missing requirements: ' + ', '.join(req.name for req in missing_requirements))
 
         if shutil.which('uv'):
-            cmd = ["uv", 'pip', 'install', "--python", sys.executable, *map(str, missing_requirements)]
+            cmd = ['uv', 'pip', 'install', '--python', sys.executable, *map(str, missing_requirements)]
         else:
             cmd = [sys.executable, '-m', 'pip', 'install', *map(str, missing_requirements)]
             self.logger.warning(
-                "uv is not installed, using it is the preferred way to install module requirements. "
-                "Falling back to pip."
+                'uv is not installed, using it is the preferred way to install module requirements. '
+                'Falling back to pip.',
             )
         process = await asyncio.create_subprocess_exec(
             *cmd,
