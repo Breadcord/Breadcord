@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 import importlib.metadata
+import logging
 import subprocess
 import sys
 from logging import getLogger
@@ -18,12 +20,26 @@ from packaging.version import Version
 from breadcord import config
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Callable, Generator
     from os import PathLike
 
     from breadcord import Bot
 
 _logger = getLogger('breadcord.module')
+
+
+class StreamLogger:
+    def __init__(self, logger: logging.Logger, level: int = logging.INFO):
+        self.logger = logger
+        self.level = level
+        self.linebuf = ''
+
+    def write(self, buffer: str) -> int:
+        self.logger.log(self.level, buffer.rstrip())
+        return len(buffer)
+
+    def flush(self):
+        pass
 
 
 class Module:
@@ -56,7 +72,7 @@ class Module:
 
     async def load(self) -> None:
         self.load_settings_schema()
-        self.install_requirements()
+        await self.install_requirements()
         await self.bot.load_extension(self.import_string)
         self.loaded = True
         self.logger.info('Module successfully loaded')
@@ -69,7 +85,7 @@ class Module:
     async def reload(self) -> None:
         self.loaded = False
         self.load_settings_schema()
-        self.install_requirements()
+        await self.install_requirements()
         await self.bot.reload_extension(self.import_string)
         self.loaded = True
         self.logger.info('Module successfully reloaded')
@@ -81,7 +97,7 @@ class Module:
         settings.load_schema(file_path=schema_path)
         settings.in_schema = True
 
-    def install_requirements(self) -> None:
+    async def install_requirements(self) -> None:
         installed_distributions = tuple(importlib.metadata.distributions())
 
         def is_missing(requirement: Requirement) -> bool:
@@ -90,8 +106,30 @@ class Module:
                     return False
             return True
 
-        if missing_requirements := tuple(map(str, filter(is_missing, self.manifest.requirements))):
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', *missing_requirements])  # noqa: S603
+        missing_requirements: tuple[Requirement] = tuple(filter(is_missing, self.manifest.requirements))
+        if not missing_requirements:
+            return
+        self.logger.info('Installing missing requirements: ' + ', '.join(req.name for req in missing_requirements))
+
+        cmd = [sys.executable, '-m', 'pip', 'install', *map(str, missing_requirements)]
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        async def log_stream(stream: asyncio.StreamReader, logger_func: Callable[[str], None]) -> None:
+            while line := (await stream.readline()).decode().rstrip():
+                logger_func(line)
+
+        await asyncio.gather(
+            log_stream(process.stdout, self.logger.info),
+            log_stream(process.stderr, self.logger.error),
+        )
+        return_code = await process.wait()
+        if return_code:
+            self.logger.error(f'Failed to install requirements with exit code {return_code}')
+            raise subprocess.CalledProcessError(return_code, cmd)
 
 
 class Modules:
