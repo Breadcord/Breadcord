@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import importlib.metadata
 import logging
+import shutil
 import subprocess
 import sys
 from logging import getLogger
@@ -111,7 +112,14 @@ class Module:
             return
         self.logger.info('Installing missing requirements: ' + ', '.join(req.name for req in missing_requirements))
 
-        cmd = [sys.executable, '-m', 'pip', 'install', *map(str, missing_requirements)]
+        if shutil.which('uv'):
+            cmd = ['uv', 'pip', 'install', '--python', sys.executable, *map(str, missing_requirements)]
+        else:
+            cmd = [sys.executable, '-m', 'pip', 'install', *map(str, missing_requirements)]
+            self.logger.warning(
+                'uv is not installed, using it is the preferred way to install module requirements. '
+                'Falling back to pip.',
+            )
         process = await asyncio.create_subprocess_exec(
             *cmd,
             stdout=subprocess.PIPE,
@@ -127,7 +135,7 @@ class Module:
             log_stream(process.stderr, self.logger.error),
         )
         return_code = await process.wait()
-        if return_code:
+        if return_code != 0:
             self.logger.error(f'Failed to install requirements with exit code {return_code}')
             raise subprocess.CalledProcessError(return_code, cmd)
 
