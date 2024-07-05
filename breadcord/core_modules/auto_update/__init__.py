@@ -35,8 +35,8 @@ def git_path() -> str:
     if not (path := shutil.which('git')):
         raise FileNotFoundError('git executable not found')
     # A bit of blocking is fine here since this should only be uncached when the module first starts
-    subprocess.check_call(
-        [path, '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5,  # noqa: S603
+    subprocess.check_call(  # noqa: S603
+        [path, '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5,
     )
     return path
 
