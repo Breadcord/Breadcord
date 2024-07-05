@@ -112,7 +112,7 @@ class Setting(SettingsNode):
     @value.setter
     def value(self, new_value: Any) -> None:
         """Assign a new value to the setting, validating the new value type and triggering necessary observers."""
-        if isinstance(new_value, int) and self.type == float:
+        if isinstance(new_value, int) and self.type == float:  # noqa: E721
             new_value = float(new_value)
         if not isinstance(new_value, self.type):
             raise TypeError(
@@ -265,7 +265,7 @@ class SettingsGroup(SettingsNode):
                 continue
 
             setting = parse_schema_chunk(chunk)
-            if setting.type == dict:
+            if setting.type == dict:  # noqa: E721
                 group = self.get_child(setting.key, allow_new=True)
                 group.description = setting.description
                 group.in_schema = True
