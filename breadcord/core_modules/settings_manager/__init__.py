@@ -122,14 +122,14 @@ class Settings(
         current_str = tomlkit.item(setting.value).as_string()
         autocomplete = [app_commands.Choice(name=current_str, value=current_str)]
 
-        if setting.type == int:
+        if setting.type == int:  # noqa: E721
             current = current or '0'
             try:
                 autocomplete.append(app_commands.Choice(name=f'(integer) {int(current)}', value=current))
             except ValueError:
                 return [app_commands.Choice(name=f"⚠️ Invalid integer '{current}'", value=current)]
 
-        elif setting.type == str:
+        elif setting.type == str:  # noqa: E721
             if current[0] + current[-1] in ('""', "''"):
                 current = current[1:-1]
             autocomplete.append(app_commands.Choice(
@@ -137,7 +137,7 @@ class Settings(
                 value=tomlkit.item(current).as_string(),
             ))
 
-        elif setting.type == bool:
+        elif setting.type == bool:  # noqa: E721
             autocomplete.extend(booleans := [
                 app_commands.Choice(name=f'(boolean) {choice}', value=choice)
                 for choice in ('false', 'true')
