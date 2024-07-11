@@ -154,7 +154,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
         self,
         ctx: commands.Context,
         # A bit of a misleading name, but it makes more sense for users
-        module_ids: Annotated[list[Module], ModulesConverter],
+        module_ids: Annotated[list[Module] | None, ModulesConverter] = None,
     ) -> None:
         """Update one or more modules to the latest commit on the remote repository.
 
