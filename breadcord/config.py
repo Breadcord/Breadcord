@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import partial, wraps
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, TypeVar, overload
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import tomlkit
 from tomlkit import TOMLDocument
