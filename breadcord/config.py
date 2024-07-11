@@ -19,25 +19,6 @@ _logger = getLogger('breadcord.config')
 _T = TypeVar('_T')
 
 
-class _MissingSentinel:
-    __slots__ = ()
-
-    def __eq__(self, other) -> bool:
-        return False
-
-    def __bool__(self) -> bool:
-        return False
-
-    def __hash__(self) -> int:
-        return 0
-
-    def __repr__(self):
-        return '...'
-
-
-MISSING: Any = _MissingSentinel()
-
-
 class SettingsNode:
     """An abstract base class representing a node in a settings tree structure.
 
@@ -231,7 +212,7 @@ class SettingsGroup(SettingsNode):
     def __getattr__(self, item: str) -> Setting | SettingsGroup:
         if item in self._children:
             return self.get_child(item)
-        return self.get(item)
+        return self._settings[item]
 
     def __contains__(self, item: str) -> bool:
         if not isinstance(item, str):
@@ -298,7 +279,7 @@ class SettingsGroup(SettingsNode):
             else:
                 setting.parent = self
                 if setting.key in self:
-                    setting.value = self.get(setting.key).value
+                    setting.value = self._settings[setting.key].value
                 self._settings[setting.key] = setting
 
             next_chunk: list[tuple[Key | None, Item]] = []
@@ -312,15 +293,7 @@ class SettingsGroup(SettingsNode):
                 next_chunk.reverse()
             chunk = next_chunk
 
-    @overload
-    def get(self, key: str) -> Setting:
-        ...
-
-    @overload
-    def get(self, key: str, default: _T) -> Setting | _T:
-        ...
-
-    def get(self, key: str, default: _T = MISSING) -> Setting | _T:
+    def get(self, key: str, default: _T = None) -> Setting | _T:
         """Get a :class:`Setting` object by its key.
 
         :class:`SettingsGroup` implements ``__getattr__``, so a setting can be accessed by attribute as a shortcut.
@@ -330,8 +303,6 @@ class SettingsGroup(SettingsNode):
         :param default: The value to return if the key doesn't exist, by default ``None``.
         :returns: The setting object if it exists, otherwise the default value.
         """
-        if default is MISSING:
-            return self._settings[key]
         return self._settings.get(key, default)
 
     def set(self, key: str, value: Any, *, strict: bool = True) -> None:
@@ -343,14 +314,14 @@ class SettingsGroup(SettingsNode):
         """
         if strict and (
             key not in self
-            or not self.get(key).in_schema
+            or not self._settings[key].in_schema
         ):
             raise ValueError(f'{self.path_id()}.{key} is not declared in the schema')
 
         if key not in self:
             self._settings[key] = Setting(key, value, parent=self, in_schema=False)
-
-        self.get(key).value = value
+        else:
+            self._settings[key].value = value
 
     def get_child(self, key: str, allow_new: bool = False) -> SettingsGroup:
         """Get a child :class:`SettingsGroup` object by its key.
