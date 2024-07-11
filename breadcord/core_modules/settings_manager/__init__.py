@@ -10,7 +10,7 @@ import breadcord
 
 @breadcord.helpers.simple_transformer(breadcord.config.Setting)
 class SettingTransformer(app_commands.Transformer):
-    def transform(self, interaction: discord.Interaction, value: str, /) -> breadcord.config.Setting:
+    def transform(self, interaction: discord.Interaction, value: str, /) -> breadcord.config.Setting | None:
         setting: breadcord.config.SettingsGroup = interaction.client.settings
         path = value.split('.')
         for child in path[:-1]:
