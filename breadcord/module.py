@@ -74,12 +74,12 @@ class Module:
     async def load(self) -> None:
         self.load_settings_schema()
         await self.install_requirements()
-        await self.bot.load_extension(self.import_string)
+        await self.bot.load_module(self)
         self.loaded = True
         self.logger.info('Module successfully loaded')
 
     async def unload(self) -> None:
-        await self.bot.unload_extension(self.import_string)
+        await self.bot.unload_module(self)
         self.loaded = False
         self.logger.info('Module successfully unloaded')
 
@@ -87,7 +87,7 @@ class Module:
         self.loaded = False
         self.load_settings_schema()
         await self.install_requirements()
-        await self.bot.reload_extension(self.import_string)
+        await self.bot.reload_module(self)
         self.loaded = True
         self.logger.info('Module successfully reloaded')
 
