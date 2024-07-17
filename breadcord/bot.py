@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import importlib.machinery
+import importlib.util
+import inspect
 import logging
 import sys
 from datetime import datetime
@@ -13,7 +16,7 @@ from discord.ext.commands.view import StringView
 
 from . import config, errors
 from .helpers import IndentFormatter
-from .module import Modules, global_modules
+from .module import Module, Modules, global_modules
 
 if TYPE_CHECKING:
     from argparse import Namespace
@@ -289,3 +292,89 @@ class Bot(commands.Bot):
         output = self.settings.as_toml().as_string().rstrip() + '\n'
         with path.open('w', encoding='utf-8') as file:
             file.write(output)
+
+    async def load_module(self, module: Module) -> None:
+        await self.load_extension(module.import_string, module=module)
+
+    async def unload_module(self, module: Module) -> None:
+        await self.unload_extension(module.import_string)
+
+    async def reload_module(self, module: Module) -> None:
+        await self.reload_extension(module.import_string, module=module)
+
+    async def load_extension(
+        self,
+        name: str,
+        *,
+        package: str | None = None,
+        module: Module | None = None,
+    ) -> None:
+        name = self._resolve_name(name, package)
+        if name in self.extensions:
+            raise commands.errors.ExtensionAlreadyLoaded(name)
+        spec = importlib.util.find_spec(name)
+        if spec is None:
+            raise commands.errors.ExtensionNotFound(name)
+
+        await self._load_from_module_spec(spec, name, module=module)
+
+    async def _load_from_module_spec(
+        self,
+        spec: importlib.machinery.ModuleSpec,
+        key: str,
+        *,
+        module: Module | None = None,
+    ) -> None:
+        lib = importlib.util.module_from_spec(spec)
+        sys.modules[key] = lib
+        try:
+            spec.loader.exec_module(lib)
+        except Exception as e:
+            del sys.modules[key]
+            raise commands.errors.ExtensionFailed(key, e) from e
+        try:
+            setup = getattr(lib, 'setup')  # noqa: B009 # idc what ruff thinks, this is what d.py does
+        except AttributeError:
+            del sys.modules[key]
+            raise commands.errors.NoEntryPointError(key)  # noqa: B904 # idc what ruff thinks, this is what d.py does
+        try:
+            if module is not None and len(inspect.signature(setup).parameters) > 1:
+                await setup(self, module)
+            else:
+                await setup(self)
+        except Exception as e:
+            del sys.modules[key]
+            await self._remove_module_references(lib.__name__)
+            await self._call_module_finalizers(lib, key)
+            raise commands.errors.ExtensionFailed(key, e) from e
+        else:
+            # name mangling
+            # noinspection PyUnresolvedReferences
+            self._BotBase__extensions[key] = lib
+
+    async def reload_extension(
+        self,
+        name: str,
+        *,
+        package: str | None = None,
+        module: Module | None = None,
+    ) -> None:
+        name = self._resolve_name(name, package)
+        lib = self.__extensions.get(name)
+        if lib is None:
+            raise commands.errors.ExtensionNotLoaded(name)
+        # noinspection PyProtectedMember
+        modules = {
+            name: module
+            for name, module in sys.modules.items()
+            if discord.utils._is_submodule(lib.__name__, name)
+        }
+        try:
+            await self._remove_module_references(lib.__name__)
+            await self._call_module_finalizers(lib, name)
+            await self.load_extension(name, module=module)
+        except Exception:
+            await lib.setup(self)
+            self.__extensions[name] = lib
+            sys.modules.update(modules)
+            raise
