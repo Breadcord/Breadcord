@@ -360,7 +360,7 @@ class Bot(commands.Bot):
         module: Module | None = None,
     ) -> None:
         name = self._resolve_name(name, package)
-        lib = self.__extensions.get(name)
+        lib = self.extensions.get(name)
         if lib is None:
             raise commands.errors.ExtensionNotLoaded(name)
         # noinspection PyProtectedMember
@@ -375,6 +375,8 @@ class Bot(commands.Bot):
             await self.load_extension(name, module=module)
         except Exception:
             await lib.setup(self)
-            self.__extensions[name] = lib
+            # name mangling
+            # noinspection PyUnresolvedReferences
+            self._BotBase__extensions[name] = lib
             sys.modules.update(modules)
             raise
