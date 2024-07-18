@@ -108,7 +108,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
                 self.logger.error(f'Failed to update module {module.id!r}: {error}\n{error.stderr}')
 
         if updated_modules:
-            self.logger.info(f'Finished updating len({updated_modules}) modules')
+            self.logger.info(f'Finished updating {len(updated_modules)} modules')
         else:
             self.logger.debug('No modules were updated')
         return updated_modules
