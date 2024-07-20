@@ -186,7 +186,7 @@ class Bot(commands.Bot):
         if len(modules) != len(unduped):
             _logger.warning(
                 f'Duplicate module entries found in settings. '
-                f'Removing {len(modules) - len(unduped)} duplicate(s).'
+                f'Removing {len(modules) - len(unduped)} duplicate(s).',
             )
             modules = self.settings.modules.value = unduped
 
