@@ -177,10 +177,20 @@ class Bot(commands.Bot):
                 return
             await self.modules.get(module_id).load()
 
-        await asyncio.gather(*(
-            load_wrapper(module)
-            for module in self.settings.modules.value
-        ))
+        modules: list[str] = self.settings.modules.value  # type: ignore
+        unduped: list[str] = []
+        for module in modules:
+            if module not in unduped:
+                unduped.append(module)
+
+        if len(modules) != len(unduped):
+            _logger.warning(
+                f'Duplicate module entries found in settings. '
+                f'Removing {len(modules) - len(unduped)} duplicate(s).'
+            )
+            modules = self.settings.modules.value = unduped
+
+        await asyncio.gather(*(load_wrapper(module) for module in modules))
 
         @self.settings.command_prefixes.observe
         def on_command_prefixes_changed(_, new: list[str]) -> None:
