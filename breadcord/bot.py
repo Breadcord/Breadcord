@@ -190,7 +190,7 @@ class Bot(commands.Bot):
             )
             modules = self.settings.modules.value = unduped
 
-        await asyncio.gather(*(load_wrapper(module) for module in modules))
+        await asyncio.gather(*map(load_wrapper, modules))
 
         @self.settings.command_prefixes.observe
         def on_command_prefixes_changed(_, new: list[str]) -> None:
