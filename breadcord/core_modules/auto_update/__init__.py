@@ -86,7 +86,11 @@ class AutoUpdate(breadcord.module.ModuleCog):
         task = asyncio.create_task(wait_for_ready())
         task.add_done_callback(lambda _: self.logger.debug('Auto update task scheduled and ran'))
 
-    async def update_modules(self, module_ids: Iterable[str] | None = None) -> dict[str, tuple[str, str, str]]:
+    async def update_modules(
+        self,
+        module_ids: Iterable[str] | None = None,
+        colour: bool = False,
+    ) -> dict[str, tuple[str, str, str]]:
         to_update = set(module_ids) if module_ids else {module.id for module in self.bot.modules if module.loaded}
         not_found = tuple(module_id for module_id in to_update if module_id not in self.bot.modules)
         if not_found:
@@ -102,7 +106,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
             if not await self.should_update(module):
                 continue
             try:
-                pull_msg, commit_hash, commit_msg = await self.update_module(module)
+                pull_msg, commit_hash, commit_msg = await self.update_module(module, colour=colour)
                 updated_modules[module.id] = pull_msg, commit_hash, commit_msg
             except subprocess.CalledProcessError as error:
                 self.logger.error(f'Failed to update module {module.id!r}: {error}\n{error.stderr}')
@@ -134,10 +138,13 @@ class AutoUpdate(breadcord.module.ModuleCog):
         self.logger.debug(f'Module {module.id} is out-of-date by {behind} commits.')
         return True
 
-    async def update_module(self, module: Module) -> tuple[str, str, str]:
+    async def update_module(self, module: Module, colour: bool = False) -> tuple[str, str, str]:
         """Update a module to the latest commit on the remote repository."""
         self.logger.info(f'Updating {module.id}')
-        update_text = await git('pull', cwd=module.path)
+        update_text = await git(
+            *(('-c', 'color.ui=always') if colour else ()), 'pull',
+            cwd=module.path,
+        )
         self.logger.debug(f'({module.id}) Git output:\n{update_text.strip()}')
         if module.loaded:
             await module.reload()
@@ -163,7 +170,10 @@ class AutoUpdate(breadcord.module.ModuleCog):
         If `all` or `*` is specified, all modules will be updated regardless of whether they are loaded.
         """
         response = await ctx.send('Updating...')
-        updated = await self.update_modules([module.id for module in module_ids] if module_ids else None)
+        updated = await self.update_modules(
+            [module.id for module in module_ids] if module_ids else None,
+            colour=True,
+        )
         if len(updated) == 0:
             await response.edit(content='No modules were updated.')
             return
@@ -181,7 +191,11 @@ class AutoUpdate(breadcord.module.ModuleCog):
                     title=f'Updated module `{module_id}`',
                     description='\n'.join((
                         f'**Latest commit message**: {discord.utils.escape_markdown(commit_msg)}',
-                        make_codeblock(pull_msg),
+                        make_codeblock(
+                            # Discord doesn't understand that nothing means reset
+                            pull_msg.replace('\x1b[m', '\x1b[0m'),
+                            lang='ansi',
+                        ),
                     )),
                     color=discord.Colour.green(),
                 ).set_footer(text=f'Now on commit {commit_hash}'),
