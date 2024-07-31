@@ -142,7 +142,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
         """Update a module to the latest commit on the remote repository."""
         self.logger.info(f'Updating {module.id}')
         update_text = await git(
-            *(('-c', 'color.ui=always') if colour else tuple()), 'pull',
+            *(('-c', 'color.ui=always') if colour else ()), 'pull',
             cwd=module.path,
         )
         self.logger.debug(f'({module.id}) Git output:\n{update_text.strip()}')
