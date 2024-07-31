@@ -143,7 +143,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
         self.logger.info(f'Updating {module.id}')
         update_text = await git(
             *(('-c', 'color.ui=always') if colour else tuple()), 'pull',
-            cwd=module.path
+            cwd=module.path,
         )
         self.logger.debug(f'({module.id}) Git output:\n{update_text.strip()}')
         if module.loaded:
@@ -193,8 +193,8 @@ class AutoUpdate(breadcord.module.ModuleCog):
                         f'**Latest commit message**: {discord.utils.escape_markdown(commit_msg)}',
                         make_codeblock(
                             # Discord doesn't understand that nothing means reset
-                            pull_msg.replace("\x1b[m", '\x1b[0m'),
-                            lang='ansi'
+                            pull_msg.replace('\x1b[m', '\x1b[0m'),
+                            lang='ansi',
                         ),
                     )),
                     color=discord.Colour.green(),
