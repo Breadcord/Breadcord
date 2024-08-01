@@ -170,7 +170,7 @@ class Bot(commands.Bot):
         for loaf in self.modules_dir.glob('*.loaf'):
             _logger.info(f'Loaf pending install: {loaf.name}')
             self.modules.install_loaf(self, loaf_path=loaf, install_path=self.modules_dir, delete_source=True)
-            
+
         modules: list[str] = self.settings.modules.value  # type: ignore
         unduped: list[str] = []
         for module in modules:
@@ -183,9 +183,9 @@ class Bot(commands.Bot):
                 f'Removing {len(modules) - len(unduped)} duplicate(s).',
             )
             modules = self.settings.modules.value = unduped
-            
+
         failed: list[Module] = []
-        
+
         async def load_wrapper(module_id: str) -> None:
             if module_id not in self.modules:
                 _logger.warning(f"Module '{module_id}' enabled but not found")
@@ -198,7 +198,7 @@ class Bot(commands.Bot):
                 # Not needed as of writing (2024/03/29), but it means we won't ever have a "ghost loaded" module
                 module.loaded = False
                 failed.append(module)
-                
+
         await asyncio.gather(*map(load_wrapper, modules))
         if failed:
             _logger.warning('Failed to load modules: ' + ', '.join(module for module in failed))
