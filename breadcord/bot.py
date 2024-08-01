@@ -171,26 +171,7 @@ class Bot(commands.Bot):
             _logger.info(f'Loaf pending install: {loaf.name}')
             self.modules.install_loaf(self, loaf_path=loaf, install_path=self.modules_dir, delete_source=True)
 
-        async def load_wrapper(module_id: str) -> None:
-            if module_id not in self.modules:
-                _logger.warning(f"Module '{module_id}' enabled but not found")
-                return
-            await self.modules.get(module_id).load()
-
-        modules: list[str] = self.settings.modules.value  # type: ignore
-        unduped: list[str] = []
-        for module in modules:
-            if module not in unduped:
-                unduped.append(module)
-
-        if len(modules) != len(unduped):
-            _logger.warning(
-                f'Duplicate module entries found in settings. '
-                f'Removing {len(modules) - len(unduped)} duplicate(s).',
-            )
-            modules = self.settings.modules.value = unduped
-
-        await asyncio.gather(*map(load_wrapper, modules))
+        await self.load_modules()
 
         @self.settings.command_prefixes.observe
         def on_command_prefixes_changed(_, new: list[str]) -> None:
@@ -199,6 +180,39 @@ class Bot(commands.Bot):
         @self.settings.administrators.observe
         def on_administrators_changed(_, new: list[int]) -> None:
             self.owner_ids = set(new)
+
+    async def load_modules(self) -> None:
+        modules: list[str] = self.settings.modules.value
+        unique_modules: list[str] = []
+        for m in modules:
+            if m not in unique_modules:
+                unique_modules.append(m)
+
+        if len(modules) != len(unique_modules):
+            _logger.warning(
+                f'Duplicate module entries found in settings. '
+                f'Removing {len(modules) - len(unique_modules)} duplicate(s).',
+            )
+            self.settings.modules.value = unique_modules
+
+        failed: list[Module] = []
+
+        async def load_wrapper(module_id: str) -> None:
+            if module_id not in self.modules:
+                _logger.warning(f"Module '{module_id}' enabled but not found")
+                return
+            module = self.modules.get(module_id)
+            try:
+                await module.load()
+            except Exception as error:
+                _logger.exception(f'Failed to load module {module!r}: {error}')
+                # Not needed as of writing (2024/03/29), but it means we won't ever have a "ghost loaded" module
+                module.loaded = False
+                failed.append(module)
+
+        await asyncio.gather(*map(load_wrapper, unique_modules))
+        if failed:
+            _logger.warning('Failed to load modules: ' + ', '.join(module.id for module in failed))
 
     async def on_connect(self) -> None:
         if self.tui is not None:

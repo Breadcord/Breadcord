@@ -73,6 +73,9 @@ class Module:
 
     async def load(self) -> None:
         self.load_settings_schema()
+        # Some modules might fail to load because of their settings. We want to save them so the user can fix them
+        self.bot.save_settings()
+
         await self.install_requirements()
         await self.bot.load_module(self)
         self.loaded = True
