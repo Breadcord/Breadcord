@@ -32,7 +32,7 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Install Python dependencies
-        run: pip install -r docs_requirements.txt
+        run: pip install -r docs/docs_requirements.txt
 
       - name: Build site
         run: mkdocs build

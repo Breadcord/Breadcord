@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from breadcord import Bot
+from .bot import Bot
 
 parser = argparse.ArgumentParser(prog='breadcord')
 parser.add_argument(
@@ -50,7 +50,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 if args.ui:
-    from breadcord.app import Breadcord
+    from .app import Breadcord
     app = Breadcord(args=args)
 else:
     app = Bot(args=args)

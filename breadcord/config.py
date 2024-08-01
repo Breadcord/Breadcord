@@ -2,17 +2,21 @@ from __future__ import annotations
 
 from functools import partial, wraps
 from logging import getLogger
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import tomlkit
+from tomlkit import TOMLDocument
 from tomlkit.items import Comment, Item, Key, Table, Whitespace
-from tomlkit.toml_file import TOMLDocument, TOMLFile
+from tomlkit.toml_file import TOMLFile
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator, KeysView, ValuesView
     from os import PathLike
 
 _logger = getLogger('breadcord.config')
+
+
+_T = TypeVar('_T')
 
 
 class SettingsNode:
@@ -112,7 +116,7 @@ class Setting(SettingsNode):
     @value.setter
     def value(self, new_value: Any) -> None:
         """Assign a new value to the setting, validating the new value type and triggering necessary observers."""
-        if isinstance(new_value, int) and self.type == float:
+        if isinstance(new_value, int) and self.type == float:  # noqa: E721
             new_value = float(new_value)
         if not isinstance(new_value, self.type):
             raise TypeError(
@@ -208,7 +212,7 @@ class SettingsGroup(SettingsNode):
     def __getattr__(self, item: str) -> Setting | SettingsGroup:
         if item in self._children:
             return self.get_child(item)
-        return self.get(item)
+        return self._settings[item]
 
     def __contains__(self, item: str) -> bool:
         if not isinstance(item, str):
@@ -265,7 +269,7 @@ class SettingsGroup(SettingsNode):
                 continue
 
             setting = parse_schema_chunk(chunk)
-            if setting.type == dict:
+            if setting.type == dict:  # noqa: E721
                 group = self.get_child(setting.key, allow_new=True)
                 group.description = setting.description
                 group.in_schema = True
@@ -275,7 +279,7 @@ class SettingsGroup(SettingsNode):
             else:
                 setting.parent = self
                 if setting.key in self:
-                    setting.value = self.get(setting.key).value
+                    setting.value = self._settings[setting.key].value
                 self._settings[setting.key] = setting
 
             next_chunk: list[tuple[Key | None, Item]] = []
@@ -289,15 +293,17 @@ class SettingsGroup(SettingsNode):
                 next_chunk.reverse()
             chunk = next_chunk
 
-    def get(self, key: str) -> Setting:
+    def get(self, key: str, default: _T = None) -> Setting | _T:
         """Get a :class:`Setting` object by its key.
 
         :class:`SettingsGroup` implements ``__getattr__``, so a setting can be accessed by attribute as a shortcut.
         For example, ``settings.debug`` can be used instead of ``settings.get('debug')``.
 
         :param key: The key for the setting (the identifier before the equals sign in a TOML document).
+        :param default: The value to return if the key doesn't exist, by default ``None``.
+        :returns: The setting object if it exists, otherwise the default value.
         """
-        return self._settings[key]
+        return self._settings.get(key, default)
 
     def set(self, key: str, value: Any, *, strict: bool = True) -> None:
         """Set the value for a setting by its key, creating new settings as necessary if not using strict mode.
@@ -308,14 +314,14 @@ class SettingsGroup(SettingsNode):
         """
         if strict and (
             key not in self
-            or not self.get(key).in_schema
+            or not self._settings[key].in_schema
         ):
             raise ValueError(f'{self.path_id()}.{key} is not declared in the schema')
 
         if key not in self:
             self._settings[key] = Setting(key, value, parent=self, in_schema=False)
-
-        self.get(key).value = value
+        else:
+            self._settings[key].value = value
 
     def get_child(self, key: str, allow_new: bool = False) -> SettingsGroup:
         """Get a child :class:`SettingsGroup` object by its key.
@@ -411,10 +417,10 @@ def parse_schema_chunk(chunk: list[tuple[Key | None, Item]]) -> Setting:
     return Setting(chunk[0][0].key, chunk[0][1].unwrap(), description=description.rstrip(), in_schema=True)
 
 
-def load_settings(file_path: str | PathLike[str]) -> dict[str, Any]:
-    """Load and deserialise a TOML settings file into a :class:`TOMLDocument` instance.
+def load_toml(file_path: str | PathLike[str]) -> dict[str, Any]:
+    """Load and deserialise a TOML file into a :class:`TOMLDocument` instance.
 
-    :param file_path: Path to the TOML settings file.
+    :param file_path: Path to the TOML file.
     :returns: A dict structure representing the hierarchy of the TOML document.
     """
     return TOMLFile(file_path).read().unwrap()

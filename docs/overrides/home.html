@@ -1,0 +1,58 @@
+{% extends 'main.html' %}
+
+{% block styles %}
+  <link rel="stylesheet" href="/stylesheets/home.css">
+  <link rel="preload" href="/assets/crumb_3d_tpose_particles.webp" as="image">
+  {{ super() }}
+{% endblock %}
+
+{% block header %}
+  {% with features = features + ['navigation.tabs.sticky'] %}
+    {% include "partials/header.html" %}
+  {% endwith %}
+{% endblock %}
+
+{% block hero %}
+  <section id="breadcord-hero">
+    <div class="hero-image"></div>
+    <div class="bottom-gradient"></div>
+  </section>
+{% endblock %}
+
+{% block tabs %}{% endblock %}
+
+{% block config %}
+  {%- set app = {
+    "base": base_url,
+    "features": features + ['navigation.tabs.sticky'],
+    "translations": {},
+    "search": "assets/javascripts/workers/search.b8dbb3d2.min.js" | url
+  } -%}
+  {%- if config.extra.version -%}
+    {%- set mike = config.plugins.get("mike") -%}
+    {%- if not mike or mike.config.version_selector -%}
+      {%- set _ = app.update({ "version": config.extra.version }) -%}
+    {%- endif -%}
+  {%- endif -%}
+  {%- if config.extra.tags -%}
+    {%- set _ = app.update({ "tags": config.extra.tags }) -%}
+  {%- endif -%}
+  {%- set translations = app.translations -%}
+  {%- for key in [
+    "clipboard.copy",
+    "clipboard.copied",
+    "search.result.placeholder",
+    "search.result.none",
+    "search.result.one",
+    "search.result.other",
+    "search.result.more.one",
+    "search.result.more.other",
+    "search.result.term.missing",
+    "select.version"
+  ] -%}
+    {%- set _ = translations.update({ key: lang.t(key) }) -%}
+  {%- endfor -%}
+  <script id="__config" type="application/json">
+    {{- app | tojson -}}
+  </script>
+{% endblock %}

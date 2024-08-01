@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import asyncio
+import importlib.machinery
+import importlib.util
+import inspect
 import logging
 import sys
 from datetime import datetime
@@ -10,11 +14,9 @@ import discord
 from discord.ext import commands
 from discord.ext.commands.view import StringView
 
-# noinspection PyProtectedMember
-from discord.utils import _ColourFormatter
-
 from . import config, errors
-from .module import Modules, global_modules
+from .helpers import IndentFormatter
+from .module import Module, Modules, global_modules
 
 if TYPE_CHECKING:
     from argparse import Namespace
@@ -24,6 +26,7 @@ if TYPE_CHECKING:
     from . import app
 
 _logger = logging.getLogger('breadcord.bot')
+module_path = Path(__file__).parent
 
 
 class CommandTree(discord.app_commands.CommandTree):
@@ -48,9 +51,12 @@ class Bot(commands.Bot):
         self.args = args
         self.settings = config.SettingsGroup('settings', observers={})
         self.ready = False
+        self._new_data_dir = False
 
         data_dir = self.args.data_dir or Path('data')
-        data_dir.mkdir(exist_ok=True)
+        if not data_dir.is_dir():
+            self._new_data_dir = True
+            data_dir.mkdir()
         self.data_dir = data_dir.resolve()
 
         logs_dir = self.args.logs_dir or self.data_dir / 'logs'
@@ -83,7 +89,8 @@ class Bot(commands.Bot):
         sys.excepthook = handle_exception
 
         if self.tui is None:
-            discord.utils.setup_logging(formatter=_ColourFormatter())
+            # noinspection PyProtectedMember
+            discord.utils.setup_logging(formatter=IndentFormatter(discord.utils._ColourFormatter()))
         else:
             discord.utils.setup_logging(handler=self.tui.handler)
 
@@ -103,11 +110,11 @@ class Bot(commands.Bot):
 
         discord.utils.setup_logging(
             handler=logging.FileHandler(log_file, 'w', encoding='utf-8'),
-            formatter=logging.Formatter(
+            formatter=IndentFormatter(logging.Formatter(
                 fmt='{asctime} [{levelname}] {name}: {message}',
                 datefmt='%Y-%m-%d %H:%M:%S',
                 style='{',
-            ),
+            )),
         )
 
     async def on_command_error(
@@ -123,9 +130,12 @@ class Bot(commands.Bot):
     async def start(self, *_, **__) -> None:
         self._init_logging()
 
+        if self._new_data_dir:
+            _logger.info('Creating new data directory in current location')
+
         if not self.settings_file.is_file():
             _logger.info('Generating missing settings.toml file')
-            self.settings = config.SettingsGroup('settings', schema_path='breadcord/settings_schema.toml')
+            self.settings = config.SettingsGroup('settings', schema_path=module_path / 'settings_schema.toml')
             _logger.warning('Bot token must be supplied to start the bot')
             self.ready = True
             await self.close()
@@ -145,26 +155,51 @@ class Bot(commands.Bot):
         super().run(token='', log_handler=None, **kwargs)
 
     async def setup_hook(self) -> None:
-        search_paths = [
-            *self.args.module_dirs,
-            Path('breadcord/core_modules'),
-            self.modules_dir,
-        ]
-        _logger.debug(f'Module search paths: {search_paths}')
-        self.modules.discover(self, search_paths=search_paths)
+        for unresolved_path in self.args.module_dirs:
+            path = unresolved_path.resolve()
+            _logger.info(f'Extra module path: {path.as_posix()}')
+            relative_path = path.relative_to(Path().resolve())
+            self.modules.discover(self, search_path=relative_path)
 
-        failed = []
-        for module in self.settings.modules.value:
-            if module not in self.modules:
-                _logger.warning(f"Module '{module}' enabled but not found")
-                continue
+        _logger.debug('Finding core modules')
+        self.modules.discover(self, search_path=module_path / 'core_modules', import_relative_to=module_path.parent)
+
+        _logger.debug(f'Finding user modules ({self.modules_dir.as_posix()})')
+        self.modules.discover(self, search_path=self.modules_dir)
+
+        for loaf in self.modules_dir.glob('*.loaf'):
+            _logger.info(f'Loaf pending install: {loaf.name}')
+            self.modules.install_loaf(self, loaf_path=loaf, install_path=self.modules_dir, delete_source=True)
+            
+        modules: list[str] = self.settings.modules.value  # type: ignore
+        unduped: list[str] = []
+        for module in modules:
+            if module not in unduped:
+                unduped.append(module)
+
+        if len(modules) != len(unduped):
+            _logger.warning(
+                f'Duplicate module entries found in settings. '
+                f'Removing {len(modules) - len(unduped)} duplicate(s).',
+            )
+            modules = self.settings.modules.value = unduped
+            
+        failed: list[Module] = []
+        
+        async def load_wrapper(module_id: str) -> None:
+            if module_id not in self.modules:
+                _logger.warning(f"Module '{module_id}' enabled but not found")
+                return
+            module = self.modules.get(module_id)
             try:
-                await self.modules.get(module).load()
+                await module.load()
             except Exception as error:
                 _logger.exception(f'Failed to load module {module!r}: {error}')
                 # Not needed as of writing (2024/03/29), but it means we won't ever have a "ghost loaded" module
-                self.modules.get(module).loaded = False
+                module.loaded = False
                 failed.append(module)
+                
+        await asyncio.gather(*map(load_wrapper, modules))
         if failed:
             _logger.warning('Failed to load modules: ' + ', '.join(module for module in failed))
 
@@ -262,10 +297,10 @@ class Bot(commands.Bot):
 
         settings = config.SettingsGroup(
             'settings',
-            schema_path='breadcord/settings_schema.toml',
+            schema_path=module_path / 'settings_schema.toml',
             observers=self.settings.observers,
         )
-        settings.update_from_dict(config.load_settings(file_path), strict=False)
+        settings.update_from_dict(config.load_toml(file_path), strict=False)
         for module in self.modules:
             module.load_settings_schema()
 
@@ -278,3 +313,91 @@ class Bot(commands.Bot):
         output = self.settings.as_toml().as_string().rstrip() + '\n'
         with path.open('w', encoding='utf-8') as file:
             file.write(output)
+
+    async def load_module(self, module: Module) -> None:
+        await self.load_extension(module.import_string, module=module)
+
+    async def unload_module(self, module: Module) -> None:
+        await self.unload_extension(module.import_string)
+
+    async def reload_module(self, module: Module) -> None:
+        await self.reload_extension(module.import_string, module=module)
+
+    async def load_extension(
+        self,
+        name: str,
+        *,
+        package: str | None = None,
+        module: Module | None = None,
+    ) -> None:
+        name = self._resolve_name(name, package)
+        if name in self.extensions:
+            raise commands.errors.ExtensionAlreadyLoaded(name)
+        spec = importlib.util.find_spec(name)
+        if spec is None:
+            raise commands.errors.ExtensionNotFound(name)
+
+        await self._load_from_module_spec(spec, name, module=module)
+
+    async def _load_from_module_spec(
+        self,
+        spec: importlib.machinery.ModuleSpec,
+        key: str,
+        *,
+        module: Module | None = None,
+    ) -> None:
+        lib = importlib.util.module_from_spec(spec)
+        sys.modules[key] = lib
+        try:
+            spec.loader.exec_module(lib)
+        except Exception as e:
+            del sys.modules[key]
+            raise commands.errors.ExtensionFailed(key, e) from e
+        try:
+            setup = getattr(lib, 'setup')  # noqa: B009 # idc what ruff thinks, this is what d.py does
+        except AttributeError:
+            del sys.modules[key]
+            raise commands.errors.NoEntryPointError(key)  # noqa: B904 # idc what ruff thinks, this is what d.py does
+        try:
+            if module is not None and len(inspect.signature(setup).parameters) > 1:
+                await setup(self, module)
+            else:
+                await setup(self)
+        except Exception as e:
+            del sys.modules[key]
+            await self._remove_module_references(lib.__name__)
+            await self._call_module_finalizers(lib, key)
+            raise commands.errors.ExtensionFailed(key, e) from e
+        else:
+            # name mangling
+            # noinspection PyUnresolvedReferences
+            self._BotBase__extensions[key] = lib
+
+    async def reload_extension(
+        self,
+        name: str,
+        *,
+        package: str | None = None,
+        module: Module | None = None,
+    ) -> None:
+        name = self._resolve_name(name, package)
+        lib = self.extensions.get(name)
+        if lib is None:
+            raise commands.errors.ExtensionNotLoaded(name)
+        # noinspection PyProtectedMember
+        modules = {
+            name: module
+            for name, module in sys.modules.items()
+            if discord.utils._is_submodule(lib.__name__, name)
+        }
+        try:
+            await self._remove_module_references(lib.__name__)
+            await self._call_module_finalizers(lib, name)
+            await self.load_extension(name, module=module)
+        except Exception:
+            await lib.setup(self)
+            # name mangling
+            # noinspection PyUnresolvedReferences
+            self._BotBase__extensions[name] = lib
+            sys.modules.update(modules)
+            raise
