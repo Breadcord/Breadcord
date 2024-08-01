@@ -171,18 +171,29 @@ class Bot(commands.Bot):
             _logger.info(f'Loaf pending install: {loaf.name}')
             self.modules.install_loaf(self, loaf_path=loaf, install_path=self.modules_dir, delete_source=True)
 
-        modules: list[str] = self.settings.modules.value  # type: ignore
-        unduped: list[str] = []
-        for module in modules:
-            if module not in unduped:
-                unduped.append(module)
+        await self.load_modules()
 
-        if len(modules) != len(unduped):
+        @self.settings.command_prefixes.observe
+        def on_command_prefixes_changed(_, new: list[str]) -> None:
+            self.command_prefix = commands.when_mentioned_or(*new)
+
+        @self.settings.administrators.observe
+        def on_administrators_changed(_, new: list[int]) -> None:
+            self.owner_ids = set(new)
+
+    async def load_modules(self) -> None:
+        modules: list[str] = self.settings.modules.value
+        unique_modules: list[str] = []
+        for m in modules:
+            if m not in unique_modules:
+                unique_modules.append(m)
+
+        if len(modules) != len(unique_modules):
             _logger.warning(
                 f'Duplicate module entries found in settings. '
-                f'Removing {len(modules) - len(unduped)} duplicate(s).',
+                f'Removing {len(modules) - len(unique_modules)} duplicate(s).',
             )
-            modules = self.settings.modules.value = unduped
+            self.settings.modules.value = unique_modules
 
         failed: list[Module] = []
 
@@ -199,17 +210,9 @@ class Bot(commands.Bot):
                 module.loaded = False
                 failed.append(module)
 
-        await asyncio.gather(*map(load_wrapper, modules))
+        await asyncio.gather(*map(load_wrapper, unique_modules))
         if failed:
-            _logger.warning('Failed to load modules: ' + ', '.join(module for module in failed))
-
-        @self.settings.command_prefixes.observe
-        def on_command_prefixes_changed(_, new: list[str]) -> None:
-            self.command_prefix = commands.when_mentioned_or(*new)
-
-        @self.settings.administrators.observe
-        def on_administrators_changed(_, new: list[int]) -> None:
-            self.owner_ids = set(new)
+            _logger.warning('Failed to load modules: ' + ', '.join(module.id for module in failed))
 
     async def on_connect(self) -> None:
         if self.tui is not None:
