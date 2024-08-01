@@ -22,7 +22,7 @@ classifiers = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "aiofiles==23.2.1",
+    "aiofiles==24.1.0",
     "aiohttp==3.9.5",
     "discord.py==2.4.0",
     "packaging==24.1",
@@ -31,13 +31,13 @@ dependencies = [
     "rich==13.7.1",
     "textual==0.71.0",
     "tomlkit==0.12.5",
-    "uv==0.2.21",
+    "uv==0.2.32",
 ]
 
 [project.optional-dependencies]
 dev = [
     "gitignore-parser==0.1.11",
-    "pre-commit==3.7.1",
+    "pre-commit==3.8.0",
     "ruff",
     "ruff-lsp",
     "textual-dev==1.5.1",
