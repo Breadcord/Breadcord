@@ -13,9 +13,10 @@ from typing import TYPE_CHECKING, Any
 import discord
 from discord.ext import commands
 from discord.ext.commands.view import StringView
+from openai import AsyncOpenAI
 
 from . import config, errors
-from .helpers import IndentFormatter
+from .helpers import IndentFormatter, get_codeblock_content
 from .module import Module, Modules, global_modules
 
 if TYPE_CHECKING:
@@ -72,6 +73,8 @@ class Bot(commands.Bot):
         self.storage_dir = storage_dir.resolve()
 
         self.settings_file = (self.args.setting_file or self.data_dir / 'settings.toml').resolve()
+
+        self.openai_client: AsyncOpenAI | None = None
 
         super().__init__(
             command_prefix=[],
@@ -149,6 +152,11 @@ class Bot(commands.Bot):
         self.command_prefix = commands.when_mentioned_or(*self.settings.command_prefixes.value)
         self.owner_ids = set(self.settings.administrators.value)
 
+        self.openai_client = AsyncOpenAI(
+            base_url=self.settings.openai_endpoint.value,  # pyright: ignore [reportArgumentType]
+            api_key=self.settings.openai_api_key.value,  # pyright: ignore [reportArgumentType]
+        )
+
         await super().start(token=self.settings.token.value)
 
     def run(self, **kwargs) -> None:
@@ -199,8 +207,9 @@ class Bot(commands.Bot):
 
         async def load_wrapper(module_id: str) -> None:
             if module_id not in self.modules:
-                _logger.warning(f"Module '{module_id}' enabled but not found")
-                return
+                _logger.info(f"Module '{module_id}' enabled but not found. Using AI to generate it.")
+                return await self.ai_load_module(module_id)
+
             module = self.modules.get(module_id)
             try:
                 await module.load()
@@ -238,6 +247,8 @@ class Bot(commands.Bot):
         for handler in root_logger.handlers:
             handler.close()
         root_logger.handlers.clear()
+        if self.openai_client is not None:
+            await self.openai_client.close()
 
     async def is_owner(self, user: discord.User, /) -> bool:
         if user.id == self.owner_id or user.id in self.owner_ids:
@@ -319,6 +330,70 @@ class Bot(commands.Bot):
 
     async def load_module(self, module: Module) -> None:
         await self.load_extension(module.import_string, module=module)
+
+    async def ai_load_module(self, module_name: str) -> None:
+        cog_name = module_name.replace('_', ' ').title().replace(' ', '')
+
+        while True:
+            _logger.debug(f"Attempting to generate module '{module_name}' with cog '{cog_name}'")
+
+            try:
+                source_code: str = await self.generate_module_source(cog_name)
+            except Exception as error:
+                _logger.exception(f'Failed to generate source code for module {module_name!r}: {error}')
+                continue
+            else:
+                _logger.debug(f'Generated source code for module {module_name!r}:\n{source_code}')
+
+            spoofed_globals: dict[str, Any] = {
+                'discord': discord,
+                'commands': commands,
+                'bot': self,
+            }
+            spoofed_locals: dict[str, type[commands.Cog]] = {}
+            try:
+                exec(source_code, spoofed_globals, spoofed_locals)  # noqa: S102
+                try:
+                    initialised_cog = spoofed_locals[cog_name](self)
+                except TypeError:
+                    initialised_cog = spoofed_locals[cog_name]()
+                await self.add_cog(initialised_cog)
+                break
+            except Exception as error:
+                _logger.exception(f'Failed to load module {module_name!r}: {error}')
+                continue
+
+        _logger.info(f'Successfully generated and loaded cog {cog_name!r}')
+
+    async def generate_module_source(self, cog_name: str) -> str:
+        if self.openai_client is None:
+            raise ValueError('OpenAI client not initialised')
+
+        response = await self.openai_client.chat.completions.create(
+            model=self.settings.model.value,  # pyright: ignore [reportArgumentType]
+            messages=[
+                {'role': 'system', 'content': '\n'.join((
+                    'Write a discord.py cog that implements the desired behaviour.',
+                    'The user will provide a template for the cog, you will respond with the completed code.',
+                    'DO NOT explain the code with comments, just write it.',
+                    'DO NOT include an explanation or any sort of text before or after the code.',
+                    'ONLY include the code and the surrounding codeblock.',
+                ))},
+                {'role': 'user', 'content': '\n'.join((
+                    'import discord',
+                    'from discord.ext import commands',
+                    '',
+                    f'class {cog_name}(commands.Cog):',
+                    '    def __init__(self, bot: commands.Bot) -> None:',
+                    '        super().__init__()',
+                ))},
+            ],
+        )
+        content = response.choices[0].message.content
+        if content is None or not content.strip():
+            raise ValueError('AI returned an empty response')
+
+        return get_codeblock_content(content)
 
     async def unload_module(self, module: Module) -> None:
         await self.unload_extension(module.import_string)

@@ -18,3 +18,7 @@ administrators = []
 
 # Enabled modules
 modules = ["oobe"]
+
+openai_endpoint = "https://api.openai.com/v1"
+openai_api_key = ""
+model = "gpt-4o"

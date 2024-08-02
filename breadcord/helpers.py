@@ -4,6 +4,7 @@ import inspect
 import logging
 import re
 import sys
+import textwrap
 from collections import defaultdict
 from typing import TYPE_CHECKING, Self, TypeVar, overload
 
@@ -298,3 +299,68 @@ class IndentFormatter(logging.Formatter):
         indent = ' ' * self.get_prefix_length(record)
         initial, *rest = self._wrapped.format(record).splitlines(keepends=True)
         return initial + ''.join(indent + line for line in rest)
+
+
+def get_codeblock_content(
+    codeblock: str,
+    *,
+    greedy: bool = True,
+    language_regex: str = '[a-z]+',
+    optional_lang: bool = True,
+    strip_inline: bool = True,
+    cleanup: bool = True,
+) -> str:
+    """Removes a codeblock surrounding a string and returns the content inside it.
+
+    If no codeblock is found, the original string is returned.
+
+    :param codeblock: The string to process.
+    :param greedy: Whether to consume codeblock content greedily.
+        The default behaviour is greedy, but the discord client renders codeblocks using a non-greedy approach.
+        Greedy matching usually aligns closer with the user's intent when passed as an argument, however.
+    :param language_regex: Regex in string form used to match the language of the codeblock. For example, "py(thon)?".
+    :param optional_lang: Whether the language is optional. Ignored if "language_regex" is empty.
+    :param strip_inline: Whether to strip inline codeblocks.
+    :param cleanup: Whether clean up the codeblock content by dedenting and stripping empty lines.
+    :return: The content inside the codeblock, or the original string if no codeblock was found.
+    """
+    stripped = codeblock.strip()
+
+    if strip_inline:  # noqa: SIM102
+        if len(stripped) >= 3 and (  # noqa: PLR2004
+            stripped[0] == '`' and stripped[-1] == '`'
+        ) and not (
+            stripped[1] == '`' or stripped[-2] == '`'
+        ):
+            return stripped[1:-1]
+
+    if not (stripped.startswith('```') and stripped.endswith('```')):
+        return codeblock
+
+    if language_regex and not language_regex.endswith('\n'):
+        language_regex = f'{language_regex}\n'
+    # noinspection RegExpUnnecessaryNonCapturingGroup
+    regex = re.compile(
+        rf'''
+        ```
+        (?P<language>(?:{language_regex}){'?' if language_regex and optional_lang else ''})
+        (?P<content>.+{'' if greedy else '?'})
+        ```
+        ''',
+        flags=re.DOTALL | re.IGNORECASE | re.VERBOSE,
+    )
+    match = regex.match(stripped)
+    if not match:
+        return codeblock
+
+    content = match['content']
+    if not cleanup:
+        return content
+
+    lines = content.splitlines()
+    while lines and not lines[0].strip():
+        del lines[0]
+    while lines and not lines[-1].strip():
+        del lines[-1]
+    content = '\n'.join(lines)
+    return textwrap.dedent(content)

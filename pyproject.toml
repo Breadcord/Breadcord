@@ -32,6 +32,7 @@ dependencies = [
     "textual==0.74.0",
     "tomlkit==0.12.5",
     "uv==0.2.32",
+    "openai==1.37.2",
 ]
 
 [project.optional-dependencies]

@@ -1,0 +1,6 @@
+{
+    "include": [
+        "breadcord/**/*.py"
+    ],
+    "reportAny": false
+}
