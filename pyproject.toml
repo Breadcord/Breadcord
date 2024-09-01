@@ -30,7 +30,7 @@ dependencies = [
     "rapidfuzz==3.9.3",
     "rich==13.7.1",
     "textual==0.74.0",
-    "tomlkit==0.12.5",
+    "tomlkit==0.13.2",
     "uv==0.2.32",
 ]
 
