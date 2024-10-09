@@ -121,7 +121,7 @@ class Setting(SettingsNode):
         if not isinstance(new_value, self.type):
             raise TypeError(
                 f"Cannot assign type '{type(new_value).__name__}' to setting with type '{self.type.__name__}' "
-                f"({self.path_id()})"
+                f"({self.path_id()})",
             )
 
         old_value = self._value
