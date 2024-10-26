@@ -110,7 +110,7 @@ class Module:
                     return False
             return True
 
-        missing_requirements: tuple[Requirement] = tuple(filter(is_missing, self.manifest.requirements))
+        missing_requirements: tuple[Requirement, ...] = tuple(filter(is_missing, self.manifest.requirements))
         if not missing_requirements:
             return
         self.logger.info('Installing missing requirements: ' + ', '.join(req.name for req in missing_requirements))
