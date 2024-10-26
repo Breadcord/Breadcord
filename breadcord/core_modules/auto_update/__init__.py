@@ -41,7 +41,7 @@ def git_path() -> str:
     return path
 
 
-async def git(*command_arguments: str, timeout: float = 10, **kwargs: Any) -> str:
+async def git(*command_arguments: str, timeout: float = 10, **kwargs: Any) -> str:  # noqa: ASYNC109
     process = await asyncio.wait_for(
         asyncio.create_subprocess_exec(
             git_path(),
@@ -80,7 +80,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
             self.loop.start()
 
         async def wait_for_ready():
-            while not self.bot.ready:
+            while not self.bot.ready: # noqa: ASYNC110
                 await asyncio.sleep(1)
             on_update_interval_changed(0, self.settings.update_interval.value)  # type: ignore[arg-type]
         task = asyncio.create_task(wait_for_ready())
