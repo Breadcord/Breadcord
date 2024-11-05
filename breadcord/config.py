@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from functools import partial, wraps
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar, cast, overload
 
 import tomlkit
+import tomlkit.items
 from tomlkit import TOMLDocument
 from tomlkit.items import Comment, Item, Key, Table, Whitespace
 from tomlkit.toml_file import TOMLFile
@@ -73,10 +74,12 @@ class SettingsNode:
         node = self
         while node.parent is not None:
             node = node.parent
-        return node
+        if __debug__ and not isinstance(node, SettingsGroup):
+            raise ValueError('root node is not a SettingsGroup')
+        return cast(SettingsGroup, node)
 
 
-class Setting(SettingsNode):
+class Setting(SettingsNode, Generic[_T]):
     """A single setting key-value pair, plus metadata such as the setting description.
 
     A :class:`Setting` instance is equivalent to a leaf node in a tree structure, or a file in a filesystem.
@@ -95,7 +98,7 @@ class Setting(SettingsNode):
     def __init__(
         self,
         key: str,
-        value: Any,
+        value: _T,
         *,
         description: str = '',
         parent: SettingsGroup | None = None,
@@ -104,17 +107,17 @@ class Setting(SettingsNode):
 
         super().__init__(key=key, description=description, parent=parent, in_schema=in_schema)
 
-        self._value = value
+        self._value: _T = value
 
         self.type: type = type(value)
 
     @property
-    def value(self) -> Any:
+    def value(self) -> _T:
         """The value held by the setting."""
         return self._value
 
     @value.setter
-    def value(self, new_value: Any) -> None:
+    def value(self, new_value: _T) -> None:
         """Assign a new value to the setting, validating the new value type and triggering necessary observers."""
         if isinstance(new_value, int) and self.type == float:  # noqa: E721
             new_value = float(new_value)
@@ -128,6 +131,8 @@ class Setting(SettingsNode):
         self._value = new_value
 
         root_observers = self.root().observers
+        if root_observers is None:
+            raise ValueError('root node does not have observer mapping')
         path_id = self.path_id()
         if path_id not in root_observers:
             return
@@ -145,7 +150,7 @@ class Setting(SettingsNode):
         This method can be used as a decorator, with optional parentheses for arguments.
 
         :param observer: The callback function. Takes two parameters ``old`` and ``new``, which correspond to the value
-            of the setting before and after it is updateed respectively.
+            of the setting before and after it is updated respectively.
         :param always_trigger: If the observer should be called even if the updated value is equal to the previous
             value.
         """
@@ -159,6 +164,8 @@ class Setting(SettingsNode):
             observer(old, new)
 
         observers = self.root().observers
+        if observers is None:
+            raise ValueError('root node does not have observer mapping')
         path_id = self.path_id()
         if path_id not in observers:
             observers[path_id] = []
@@ -247,6 +254,24 @@ class SettingsGroup(SettingsNode):
             discovered.extend(child.walk(skip_groups=skip_groups, skip_settings=skip_settings))
         return discovered
 
+    @overload
+    def load_schema(
+        self,
+        *,
+        file_path: str | PathLike[str] | None = None,
+        body: None = None,
+    ) -> None:
+        ...
+
+    @overload
+    def load_schema(
+        self,
+        *,
+        file_path: None = None,
+        body: list[tuple[Key | None, Item]],
+    ) -> None:
+        ...
+
     def load_schema(
         self,
         *,
@@ -258,13 +283,17 @@ class SettingsGroup(SettingsNode):
         :param file_path: Path to the schema file.
         :param body: The parsed TOML body data to interpret as. Overrides loading from ``file_path`` when present.
         """
-        body: list[tuple[Key | None, Item]] = TOMLFile(file_path).read().body if body is None else body
-        if body is None:
+        if body is None and file_path is not None:
+            parsed_body = TOMLFile(file_path).read().body
+        elif body is not None:
+            parsed_body = body
+        else:
             raise ValueError('either file_path or body must be specified')
-        body.append((None, Whitespace('')))
+
+        parsed_body.append((None, Whitespace('')))
 
         chunk = []
-        for item in body:
+        for item in parsed_body:
             chunk.append(item)
             if item[0] is None:
                 continue
@@ -362,6 +391,14 @@ class SettingsGroup(SettingsNode):
             else:
                 self.set(key, value, strict=strict)
 
+    @overload
+    def as_toml(self, *, table: Literal[False], warn_schema: bool = True) -> TOMLDocument:
+        ...
+
+    @overload
+    def as_toml(self, *, table: Literal[True], warn_schema: bool = True) -> Table:
+        ...
+
     def as_toml(self, *, table: bool = False, warn_schema: bool = True) -> TOMLDocument | Table:
         """Export the descendent settings as a :class:`TOMLDocument` or :class:`Table` instance.
 
@@ -385,17 +422,18 @@ class SettingsGroup(SettingsNode):
                 previous_setting_in_schema = True
             elif warn_schema:
                 _logger.warning(f'{setting.path_id()} is not declared in the schema')
-                document.value.item(setting.key).comment('⚠️ Unrecognised setting')
+                if isinstance(document, Table):
+                    document.value.item(setting.key).comment('⚠️ Unrecognised setting')
 
         for child in self.children():
             document.add(tomlkit.ws('\n\n'))
-            table = child.as_toml(table=True, warn_schema=child.in_schema)
+            toml_table = child.as_toml(table=True, warn_schema=child.in_schema)
             if not child.in_schema:
-                table.comment('🚫 Disabled')
+                toml_table.comment('🚫 Disabled')
             for line in child.description.splitlines():
                 document.add(tomlkit.comment(line))
-            document.append(child.key, table)
-            table.trivia.indent = ''
+            document.append(child.key, toml_table)
+            toml_table.trivia.indent = ''
 
         return document
 
