@@ -31,7 +31,7 @@ dependencies = [
     "rapidfuzz==3.10.1",
     "textual==0.74.0",
     "tomlkit==0.13.2",
-    "uv==0.2.32",
+    "uv==0.4.29",
 ]
 
 [project.optional-dependencies]
