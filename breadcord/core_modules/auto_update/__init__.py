@@ -102,6 +102,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
         super().__init__(*args, **kwargs)
         git_path()  # Error early if no git path is found
         self.loop = None
+        self.task: asyncio.Task[None] | None = None
 
     async def cog_load(self) -> None:
         @self.settings.update_interval.observe  # type: ignore[arg-type]
@@ -120,7 +121,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
             while not self.bot.ready: # noqa: ASYNC110
                 await asyncio.sleep(1)
             on_update_interval_changed(0, self.settings.update_interval.value)  # type: ignore[arg-type]
-        task = asyncio.create_task(wait_for_ready())
+        self.bot.loop.create_task(wait_for_ready())
 
     async def update_task(self) -> None:
         updated = await self.update_modules()
