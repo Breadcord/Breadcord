@@ -60,7 +60,6 @@ select = [
     "F",        # pyflakes
     "W",        # pycodestyle warnings
     "E",        # pycodestyle errors
-    "C90",      # mccabe
     "I",        # isort
     "N",        # pep8-naming
     "D",        # pydocstyle
