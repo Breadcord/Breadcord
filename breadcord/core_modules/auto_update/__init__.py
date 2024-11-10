@@ -74,6 +74,8 @@ class AutoUpdate(breadcord.module.ModuleCog):
         def on_update_interval_changed(_, new: float) -> None:
             if self.loop is not None:
                 self.loop.stop()
+            if new <= 0:
+                return
             # Are you kidding me? SQL injection in logger.debug?
             self.logger.debug(f'Auto update interval set to {new} minutes')  # noqa: S608
             self.loop = tasks.loop(minutes=new)(self.update_modules)

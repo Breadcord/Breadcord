@@ -1,2 +1,3 @@
 # How often (in minutes) to try update modules
+# If set to 0, auto update will be disabled
 update_interval = 120.0
