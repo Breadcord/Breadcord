@@ -74,7 +74,7 @@ class SettingsNode:
         node = self
         while node.parent is not None:
             node = node.parent
-        # This shouldntever  be possible, but we want the type checker to be happy :D
+        # This should never be possible, but we want the type checker to be happy :D
         if __debug__ and not isinstance(node, SettingsGroup):
             raise ValueError('root node is not a SettingsGroup')
         return cast(SettingsGroup, node)
