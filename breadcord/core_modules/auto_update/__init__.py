@@ -112,15 +112,21 @@ class AutoUpdate(breadcord.module.ModuleCog):
                 return
             # Are you kidding me? SQL injection in logger.debug?
             self.logger.debug(f'Auto update interval set to {new} minutes')  # noqa: S608
-            self.loop = tasks.loop(minutes=new)(self.update_modules)
+            self.loop = tasks.loop(minutes=new)(self.update_task)
             self.loop.start()
+            self.logger.debug('Auto update task scheduled and ran')
 
         async def wait_for_ready():
             while not self.bot.ready: # noqa: ASYNC110
                 await asyncio.sleep(1)
             on_update_interval_changed(0, self.settings.update_interval.value)  # type: ignore[arg-type]
         task = asyncio.create_task(wait_for_ready())
-        task.add_done_callback(lambda _: self.logger.debug('Auto update task scheduled and ran'))
+
+    async def update_task(self) -> None:
+        updated = await self.update_modules()
+        if self.settings.auto_sync.value and any(tree_changed for *_, tree_changed in updated.values()):
+            await self.bot.tree.sync()
+            self.logger.info('Automatically synced commands after updating modules')
 
     async def update_modules(
         self,
