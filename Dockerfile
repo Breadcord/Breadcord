@@ -10,8 +10,8 @@ ADD --chmod=755 https://astral.sh/uv/install.sh ./install.sh
 RUN ./install.sh && rm ./install.sh
 
 COPY . .
-RUN /root/.cargo/bin/uv venv --seed
-RUN /root/.cargo/bin/uv pip install --no-cache .
+RUN /root/.local/bin/uv venv --seed
+RUN /root/.local/bin/uv pip install --no-cache .
 
 
 FROM python:3.11.10-slim-bullseye
