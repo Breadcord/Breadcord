@@ -4,7 +4,7 @@ import asyncio
 import shutil
 import subprocess
 from functools import cache
-from typing import TYPE_CHECKING, Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any, cast
 
 import discord
 from discord.ext import commands, tasks
@@ -49,7 +49,7 @@ class SyncView(discord.ui.View):
     async def on_timeout(self) -> None:
         for item in self.children:
             if hasattr(item, 'disabled'):
-                item.disabled = True  # type: ignore
+                cast(discord.ui.Button, item).disabled = True
         if self.message is not None:
             await self.message.edit(view=self)
 
