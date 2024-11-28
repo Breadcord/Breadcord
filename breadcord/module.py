@@ -17,6 +17,7 @@ import tomlkit
 from discord.ext import commands
 from packaging.requirements import Requirement
 from packaging.version import Version
+import aiofiles
 
 from breadcord import config
 
@@ -141,6 +142,16 @@ class Module:
         if return_code != 0:
             self.logger.error(f'Failed to install requirements with exit code {return_code}')
             raise subprocess.CalledProcessError(return_code, cmd)
+
+    async def register_emoji(self, path: str | PathLike[str]) -> discord.PartialEmoji:
+        return await self.bot.register_custom_emoji(self, Path(path).resolve())
+
+    async def register_emojis(self, *paths: str | PathLike[str]) -> list[discord.PartialEmoji]:
+        return [await self.register_emoji(path) for path in paths]
+
+    def get_emoji(self, path: str | PathLike[str]) -> discord.PartialEmoji | None:
+        # noinspection PyProtectedMember
+        return self.bot._registered_emojis.get((self, Path(path).resolve()))
 
 
 class Modules:
