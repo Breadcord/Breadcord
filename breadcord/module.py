@@ -17,7 +17,6 @@ import tomlkit
 from discord.ext import commands
 from packaging.requirements import Requirement
 from packaging.version import Version
-import aiofiles
 
 from breadcord import config
 

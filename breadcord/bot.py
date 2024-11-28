@@ -35,7 +35,7 @@ module_path = Path(__file__).parent
 
 def _get_emoji_name(module: Module, path: Path, data: bytes) -> str:
     file_hash = hashlib.md5(data).hexdigest()
-    return f"{module.id}_{path.stem}__{file_hash[:6]}"
+    return f'{module.id}_{path.stem}__{file_hash[:6]}'
 
 
 class CommandTree(discord.app_commands.CommandTree):
