@@ -198,18 +198,6 @@ class Bot(commands.Bot):
 
         self.loop.create_task(run_when_ready(self.on_first_connect()))
 
-    async def on_first_connect(self) -> None:
-        application_emojis = await self.fetch_application_emojis()
-
-        for module, path in dict(self._registered_emojis):  # Copy
-            async with aiofiles.open(path, 'rb') as file:
-                name = _get_emoji_name(module, path, await file.read())
-            emoji = discord.utils.get(application_emojis, name=name)
-            if emoji is None:
-                await self.register_custom_emoji(module, path)
-            else:
-                _logger.debug(f'Emoji {emoji} found from {path.relative_to(self.data_dir).as_posix()}')
-
     async def load_modules(self) -> None:
         modules: list[str] = self.settings.modules.value
         unique_modules: list[str] = []
@@ -434,7 +422,25 @@ class Bot(commands.Bot):
             sys.modules.update(modules)
             raise
 
+    async def on_first_connect(self) -> None:
+        application_emojis = await self.fetch_application_emojis()
+
+        for module, path in dict(self._registered_emojis):  # Copy
+            async with aiofiles.open(path, 'rb') as file:
+                name = _get_emoji_name(module, path, await file.read())
+            emoji = discord.utils.get(application_emojis, name=name)
+            if emoji is None:
+                await self.register_custom_emoji(module, path)
+            else:
+                _logger.debug(f'Emoji {emoji} found from {path.relative_to(self.data_dir).as_posix()}')
+                self._registered_emojis[(module, path)] = discord.PartialEmoji(
+                    name=emoji.name,
+                    id=emoji.id,
+                    animated=emoji.animated,
+                )
+
     async def register_custom_emoji(self, module: Module, path: Path) -> discord.PartialEmoji:
+        """Register a custom application emoji. Returned emoji objects will not have an ID if registered before bot ready."""
         if os.path.getsize(path) > 256*1024: # 256 KiB
             raise ValueError(f'Emojis cannot be larger than 256 KiB: {path.as_posix()}')
 
