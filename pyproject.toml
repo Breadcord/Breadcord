@@ -37,7 +37,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "gitignore-parser==0.1.11",
-    "pre-commit==3.8.0",
+    "pre-commit==4.0.1",
     "ruff",
     "ruff-lsp",
     "textual-dev==1.6.1",
