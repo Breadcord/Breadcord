@@ -40,7 +40,7 @@ dev = [
     "pre-commit==3.8.0",
     "ruff",
     "ruff-lsp",
-    "textual-dev==1.6.1",
+    "textual-dev==1.7.0",
 ]
 
 [project.scripts]
