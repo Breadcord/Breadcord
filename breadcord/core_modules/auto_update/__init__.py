@@ -11,7 +11,7 @@ from discord.ext import commands, tasks
 
 import breadcord
 from breadcord.helpers import make_codeblock
-from breadcord.module import Module  # noqa: TCH001
+from breadcord.module import Module  # noqa: TC001
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
