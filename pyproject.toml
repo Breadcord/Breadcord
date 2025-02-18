@@ -29,7 +29,7 @@ dependencies = [
     "pydantic==2.7.2",
     "rich==13.9.3",
     "rapidfuzz==3.10.1",
-    "textual==0.74.0",
+    "textual==2.0.4",
     "tomlkit==0.13.2",
     "uv==0.6.1",
 ]
