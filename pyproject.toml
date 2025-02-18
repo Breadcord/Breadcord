@@ -26,7 +26,7 @@ dependencies = [
     "aiohttp==3.11.12",
     "discord.py==2.5.0",
     "packaging==24.2",
-    "pydantic==2.7.2",
+    "pydantic==2.10.6",
     "rich==13.9.4",
     "rapidfuzz==3.12.1",
     "textual==2.0.4",
