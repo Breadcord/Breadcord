@@ -25,13 +25,13 @@ dependencies = [
     "aiofiles==24.1.0",
     "aiohttp==3.9.5",
     "discord.py==2.4.0",
-    "packaging==24.1",
+    "packaging==24.2",
     "pydantic==2.7.2",
     "rich==13.9.3",
     "rapidfuzz==3.10.1",
     "textual==0.74.0",
     "tomlkit==0.13.2",
-    "uv==0.4.29",
+    "uv==0.6.1",
 ]
 
 [project.optional-dependencies]
