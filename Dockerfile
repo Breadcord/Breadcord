@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM python:3.13.1-slim-bullseye as build
+FROM python:3.13.2-slim-bullseye as build
 
 WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -14,7 +14,7 @@ RUN /root/.local/bin/uv venv --seed
 RUN /root/.local/bin/uv pip install --no-cache .
 
 
-FROM python:3.13.1-slim-bullseye
+FROM python:3.13.2-slim-bullseye
 
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1
