@@ -296,7 +296,7 @@ class ModuleManifest(pydantic.BaseModel):
     @pydantic.field_validator('permissions', mode='before')
     @classmethod
     def parse_permissions(cls, value: list[str]) -> discord.Permissions:
-        return discord.Permissions(**{permission: True for permission in value})
+        return discord.Permissions(**dict.fromkeys(value, True))
 
 
 def parse_manifest(manifest: dict[str, Any]) -> ModuleManifest:
