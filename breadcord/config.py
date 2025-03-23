@@ -77,7 +77,7 @@ class SettingsNode:
         # This should never be possible, but we want the type checker to be happy :D
         if __debug__ and not isinstance(node, SettingsGroup):
             raise ValueError('root node is not a SettingsGroup')
-        return cast(SettingsGroup, node)
+        return cast('SettingsGroup', node)
 
 
 class Setting(SettingsNode, Generic[_T]):
