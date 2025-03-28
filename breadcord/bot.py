@@ -1,15 +1,19 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import importlib.machinery
 import importlib.util
 import inspect
 import logging
+import os.path
 import sys
+from collections.abc import Awaitable
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import aiofiles
 import discord
 from discord.ext import commands
 from discord.ext.commands.view import StringView
@@ -27,6 +31,11 @@ if TYPE_CHECKING:
 
 _logger = logging.getLogger('breadcord.bot')
 module_path = Path(__file__).parent
+
+
+def _get_emoji_name(module: Module, path: Path, data: bytes) -> str:
+    file_hash = hashlib.md5(data).hexdigest()
+    return f'{module.id}_{path.stem}__{file_hash[:6]}'
 
 
 class CommandTree(discord.app_commands.CommandTree):
@@ -50,6 +59,8 @@ class Bot(commands.Bot):
         self.tui = tui_app
         self.args = args
         self.settings = config.SettingsGroup('settings', observers={})
+        self._registered_emojis: dict[tuple[Module, Path], discord.PartialEmoji] = {}
+        # self._cached_application_emojis: set[discord.PartialEmoji] = set()
         self.ready = False
         self._new_data_dir = False
 
@@ -180,6 +191,12 @@ class Bot(commands.Bot):
         @self.settings.administrators.observe
         def on_administrators_changed(_, new: list[int]) -> None:
             self.owner_ids = set(new)
+
+        async def run_when_ready(coroutine: Awaitable) -> None:
+            await self.wait_until_ready()
+            await coroutine
+
+        self.loop.create_task(run_when_ready(self.on_first_connect()))
 
     async def load_modules(self) -> None:
         modules: list[str] = self.settings.modules.value
@@ -404,3 +421,52 @@ class Bot(commands.Bot):
             self._BotBase__extensions[name] = lib
             sys.modules.update(modules)
             raise
+
+    async def on_first_connect(self) -> None:
+        application_emojis = await self.fetch_application_emojis()
+
+        for module, path in dict(self._registered_emojis):  # Copy
+            async with aiofiles.open(path, 'rb') as file:
+                name = _get_emoji_name(module, path, await file.read())
+            emoji = discord.utils.get(application_emojis, name=name)
+            if emoji is None:
+                await self.register_custom_emoji(module, path)
+            else:
+                _logger.debug(f'Emoji {emoji} found from {path.relative_to(self.data_dir).as_posix()}')
+                self._registered_emojis[(module, path)] = discord.PartialEmoji(
+                    name=emoji.name,
+                    id=emoji.id,
+                    animated=emoji.animated,
+                )
+
+    async def register_custom_emoji(self, module: Module, path: Path) -> discord.PartialEmoji:
+        """Register a custom application emoji. Returned emoji objects will not have an ID if registered before bot ready."""
+        if os.path.getsize(path) > 256*1024: # 256 KiB
+            raise ValueError(f'Emojis cannot be larger than 256 KiB: {path.as_posix()}')
+
+        # We use this method before the bot is ready, and deal with that in on_first_connect
+        if not self.ready:
+            partial = discord.PartialEmoji(
+                name=path.stem,
+                id=None,
+                animated=path.suffix == '.gif',
+            )
+            self._registered_emojis[(module, path)] = partial
+            return partial
+
+        if (module, path) in self._registered_emojis:
+            del self._registered_emojis[(module, path)]  # Might error when adding
+
+        async with aiofiles.open(path, 'rb') as file:
+            img_data = await file.read()
+        name = _get_emoji_name(module, path, img_data)
+
+        emoji = await self.create_application_emoji(name=name, image=img_data)
+        partial = discord.PartialEmoji(
+            name=emoji.name,
+            id=emoji.id,
+            animated=emoji.animated,
+        )
+        _logger.debug(f'Emoji {partial} registered from {path.relative_to(self.data_dir).as_posix()}')
+        self._registered_emojis[(module, path)] = partial  # It didn't error
+        return partial
