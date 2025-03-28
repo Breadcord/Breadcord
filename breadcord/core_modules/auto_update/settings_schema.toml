@@ -1,2 +1,6 @@
 # How often (in minutes) to try update modules
+# If set to 0, auto update will be disabled
 update_interval = 120.0
+
+# If set to true, the bot will automatically sync global app commands if they were changed during the update
+auto_sync = true
