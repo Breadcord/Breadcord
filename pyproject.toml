@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "The modular self-hostable Discord bot framework with customisability that doesn't go against the grain"
 urls = { Homepage = "https://github.com/Breadcord/Breadcord" }
 authors = [
-    { name = "ThatOtherAndrew", email = "andrew@breadcord.com" },
+    { name = "Andromeda", email = "andystroev@gmail.com" },
 ]
 readme = "README.md"
 license = { file = "LICENSE" }
