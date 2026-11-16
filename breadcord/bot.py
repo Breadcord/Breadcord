@@ -158,8 +158,7 @@ class Bot(commands.Bot):
         for unresolved_path in self.args.module_dirs:
             path = unresolved_path.resolve()
             _logger.info(f'Extra module path: {path.as_posix()}')
-            relative_path = path.relative_to(Path().resolve())
-            self.modules.discover(self, search_path=relative_path)
+            self.modules.discover(self, search_path=path)
 
         _logger.debug('Finding core modules')
         self.modules.discover(self, search_path=module_path / 'core_modules', import_relative_to=module_path.parent)
