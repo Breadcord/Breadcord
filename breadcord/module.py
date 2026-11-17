@@ -142,6 +142,19 @@ class Module:
             self.logger.error(f'Failed to install requirements with exit code {return_code}')
             raise subprocess.CalledProcessError(return_code, cmd)
 
+    async def register_emoji(self, path: str | PathLike[str]) -> discord.PartialEmoji:
+        """Register a custom application emoji. Returned emoji objects will not have an ID if registered before bot ready."""
+        return await self.bot.register_custom_emoji(self, Path(path).resolve())
+
+    async def register_emojis(self, *paths: str | PathLike[str]) -> list[discord.PartialEmoji]:
+        """Register multiple custom application emojis. Returned emoji objects will not have an ID if registered before bot ready."""
+        return [await self.register_emoji(path) for path in paths]
+
+    def get_emoji(self, path: str | PathLike[str]) -> discord.PartialEmoji | None:
+        """Get a custom application emoji by path. Returns None if the emoji is not registered."""
+        # noinspection PyProtectedMember
+        return self.bot._registered_emojis.get((self, Path(path).resolve()))
+
 
 class Modules:
     def __init__(self, modules: list[Module] | None = None) -> None:
