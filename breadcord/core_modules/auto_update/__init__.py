@@ -4,7 +4,7 @@ import asyncio
 import shutil
 import subprocess
 from functools import cache
-from typing import TYPE_CHECKING, Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any, cast
 
 import discord
 from discord.ext import commands, tasks
@@ -28,6 +28,40 @@ class ModulesConverter(commands.Converter):
                 raise commands.BadArgument(f'Module {module_id!r} not found')
             modules.append(bot.modules.get(module_id))
         return modules
+
+
+class SyncView(discord.ui.View):
+    def __init__(self, *, cog: AutoUpdate, user_id: int, message: discord.Message) -> None:
+        super().__init__()
+        self.user_id = user_id
+        self.cog = cog
+        self.message = message
+
+    async def interaction_check(self, interaction: discord.Interaction, /) -> bool:
+        if interaction.user.id == self.user_id:
+            return True
+        await interaction.response.send_message(
+            f'Only <@{self.user_id}> can perform this action!',
+            ephemeral=True,
+        )
+        return False
+
+    async def on_timeout(self) -> None:
+        for item in self.children:
+            if hasattr(item, 'disabled'):
+                cast(discord.ui.Button, item).disabled = True
+        if self.message is not None:
+            await self.message.edit(view=self)
+
+    @breadcord.helpers.simple_button(label='Sync Slash Commands', style=discord.ButtonStyle.blurple, emoji='🔁')
+    async def sync_slash_commands(self, interaction: discord.Interaction, button: discord.ui.Button):
+        button.label = 'Syncing...'
+        button.style = discord.ButtonStyle.grey
+        button.disabled = True
+        await interaction.response.edit_message(view=self)
+        await self.cog.bot.tree.sync()
+        button.label = 'Synced successfully!'
+        await interaction.edit_original_response(view=self)
 
 
 @cache
@@ -68,35 +102,44 @@ class AutoUpdate(breadcord.module.ModuleCog):
         super().__init__(*args, **kwargs)
         git_path()  # Error early if no git path is found
         self.loop = None
+        self.task: asyncio.Task[None] | None = None
 
     async def cog_load(self) -> None:
         @self.settings.update_interval.observe  # type: ignore[arg-type]
         def on_update_interval_changed(_, new: float) -> None:
             if self.loop is not None:
                 self.loop.stop()
+            if new <= 0:
+                return
             # Are you kidding me? SQL injection in logger.debug?
             self.logger.debug(f'Auto update interval set to {new} minutes')  # noqa: S608
-            self.loop = tasks.loop(minutes=new)(self.update_modules)
+            self.loop = tasks.loop(minutes=new)(self.update_task)
             self.loop.start()
+            self.logger.debug('Auto update task scheduled and ran')
 
         async def wait_for_ready():
             while not self.bot.ready: # noqa: ASYNC110
                 await asyncio.sleep(1)
             on_update_interval_changed(0, self.settings.update_interval.value)  # type: ignore[arg-type]
-        task = asyncio.create_task(wait_for_ready())
-        task.add_done_callback(lambda _: self.logger.debug('Auto update task scheduled and ran'))
+        self.bot.loop.create_task(wait_for_ready())
+
+    async def update_task(self) -> None:
+        updated = await self.update_modules()
+        if self.settings.auto_sync.value and any(tree_changed for *_, tree_changed in updated.values()):
+            await self.bot.tree.sync()
+            self.logger.info('Automatically synced commands after updating modules')
 
     async def update_modules(
         self,
         module_ids: Iterable[str] | None = None,
         colour: bool = False,
-    ) -> dict[str, tuple[str, str, str]]:
+    ) -> dict[str, tuple[str, str, str, bool]]:
         to_update = set(module_ids) if module_ids else {module.id for module in self.bot.modules if module.loaded}
         not_found = tuple(module_id for module_id in to_update if module_id not in self.bot.modules)
         if not_found:
             self.logger.warning(f'Modules not found: {", ".join(not_found)}')
 
-        updated_modules = {}
+        updated_modules: dict[str, tuple[str, str, str, bool]] = {}
         self.logger.info('Attempting to update modules')
         for module in self.bot.modules:
             if module.id not in to_update:
@@ -106,8 +149,8 @@ class AutoUpdate(breadcord.module.ModuleCog):
             if not await self.should_update(module):
                 continue
             try:
-                pull_msg, commit_hash, commit_msg = await self.update_module(module, colour=colour)
-                updated_modules[module.id] = pull_msg, commit_hash, commit_msg
+                pull_msg, commit_hash, commit_msg, tree_changed = await self.update_module(module, colour=colour)
+                updated_modules[module.id] = pull_msg, commit_hash, commit_msg, tree_changed
             except subprocess.CalledProcessError as error:
                 self.logger.error(f'Failed to update module {module.id!r}: {error}\n{error.stderr}')
 
@@ -138,7 +181,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
         self.logger.debug(f'Module {module.id} is out-of-date by {behind} commits.')
         return True
 
-    async def update_module(self, module: Module, colour: bool = False) -> tuple[str, str, str]:
+    async def update_module(self, module: Module, colour: bool = False) -> tuple[str, str, str, bool]:
         """Update a module to the latest commit on the remote repository."""
         self.logger.info(f'Updating {module.id}')
         update_text = await git(
@@ -146,14 +189,17 @@ class AutoUpdate(breadcord.module.ModuleCog):
             cwd=module.path,
         )
         self.logger.debug(f'({module.id}) Git output:\n{update_text.strip()}')
+
+        frozen_tree = [command.to_dict(self.bot.tree) for command in self.bot.tree.get_commands()]
         if module.loaded:
             await module.reload()
+        new_tree = [command.to_dict(self.bot.tree) for command in self.bot.tree.get_commands()]
 
         git_hash_msg = (await git('log', '-1', '--format="%H %s"', cwd=module.path)).strip().strip('"')
         self.logger.debug(f'Updated {module.id} to {git_hash_msg}')
 
         parts = git_hash_msg.strip().split(' ', 1)
-        return update_text, parts[0], ' '.join(parts[1:])
+        return update_text, parts[0], ' '.join(parts[1:]), frozen_tree != new_tree
 
     @commands.command()
     @commands.is_owner()
@@ -181,7 +227,7 @@ class AutoUpdate(breadcord.module.ModuleCog):
         commit_message_length = 1000
         pull_message_length = 2500
         embeds = []
-        for module_id, (pull_msg, commit_hash, commit_msg) in updated.items():
+        for module_id, (pull_msg, commit_hash, commit_msg, _) in updated.items():
             if len(commit_msg) > commit_message_length:
                 commit_msg = f'{commit_msg[:commit_message_length]}...'  # noqa: PLW2901  # Would be effort to fix
             if len(pull_msg) > pull_message_length:
@@ -208,9 +254,15 @@ class AutoUpdate(breadcord.module.ModuleCog):
                 description=f'{len(updated) - len(embeds)} more modules were updated.',
                 color=discord.Colour.orange(),
             ))
+
+        view: SyncView | None = None
+        if any(tree_changed for *_, tree_changed in updated.values()):
+            view = SyncView(cog=self, user_id=ctx.author.id, message=response)
+
         await response.edit(
             content='Finished updating modules.',
             embeds=embeds,
+            view=view,
         )
 
 
